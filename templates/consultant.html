@@ -3,6 +3,34 @@
 {% block title %}Consultant - The Kids Clinic / Allergy and Asthma Center{% endblock %}
 
 {% block content %}
+{% if selected_consultant_id %}
+<div class="row">
+    <div class="col-md-6 d-flex align-items-center mb-4">
+        <h2 class="me-3">
+            <i data-feather="stethoscope"></i>
+            {{ greeting }} {{ selected_consultant.name }}!
+        </h2>
+    </div>
+    <div class="col-md-6 d-flex justify-content-end align-items-center gap-3 mb-4">
+        <!-- Consultant Selection -->
+        <select class="form-select" id="consultantSelect" onchange="selectConsultant()" style="max-width: 250px;">
+            <option value="">Select Consultant</option>
+            {% for consultant in consultants %}
+                <option value="{{ consultant.id }}" 
+                        {% if consultant.id == selected_consultant_id %}selected{% endif %}>
+                    {{ consultant.name }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <button class="btn btn-warning" onclick="endShift()" id="endShiftBtn">
+            <i data-feather="log-out"></i>
+            End Shift
+        </button>
+    </div>
+</div>
+
+{% else %}
 <div class="row">
     <div class="col-12 d-flex justify-content-between align-items-center mb-4">
         <h2>
@@ -24,26 +52,9 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 {% if selected_consultant_id %}
-<!-- Greeting and Shift Management -->
-<div class="row mb-4">
-    <div class="col-md-8">
-        <div class="alert alert-success">
-            <h4 class="mb-2">
-                <i data-feather="sun"></i> 
-                {{ greeting }} {{ selected_consultant.name }}!
-            </h4>
-            <p class="mb-0">Welcome to your consultation dashboard. You have <strong>{{ total_waiting }}</strong> patients waiting and have completed <strong>{{ total_completed }}</strong> consultations today.</p>
-        </div>
-    </div>
-    <div class="col-md-4 text-end">
-        <button class="btn btn-warning btn-lg" onclick="endShift()" id="endShiftBtn">
-            <i data-feather="log-out"></i>
-            End Shift
-        </button>
-    </div>
-</div>
 
 <div class="row">
     <!-- Patient Queue -->
