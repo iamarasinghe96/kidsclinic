@@ -11,6 +11,23 @@ import subprocess
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 
+def install_windows_dependencies():
+    """Install Windows-specific dependencies if not available"""
+    try:
+        import winshell
+        import win32com.client
+        return True
+    except ImportError:
+        print("Installing Windows dependencies...")
+        try:
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pywin32', 'winshell'])
+            print("✅ Windows dependencies installed successfully!")
+            return True
+        except subprocess.CalledProcessError:
+            print("❌ Failed to install Windows dependencies automatically")
+            print("Please run: pip install pywin32 winshell")
+            return False
+
 def get_server_ip():
     """Get the server IP address from user"""
     root = tk.Tk()
@@ -26,18 +43,42 @@ def get_server_ip():
 
 def create_windows_shortcut(name, url, icon_path=None):
     """Create a Windows desktop shortcut"""
+    if not install_windows_dependencies():
+        return None
+        
     import winshell
     from win32com.client import Dispatch
     
     desktop = winshell.desktop()
     shortcut_path = os.path.join(desktop, f"{name}.lnk")
     
+    # Create a batch file that starts server and opens browser
+    batch_dir = os.path.join(os.getcwd(), "shortcuts")
+    os.makedirs(batch_dir, exist_ok=True)
+    batch_file = os.path.join(batch_dir, f"{name.replace(' ', '_').replace('-', '_')}.bat")
+    
+    # Get launcher command from shortcut info
+    launcher_cmd = ""
+    for shortcut_info in shortcuts:
+        if len(shortcut_info) >= 3 and shortcut_info[0] == name:
+            launcher_cmd = shortcut_info[2]
+            break
+    
+    # Create smart batch file using auto-launcher
+    batch_content = f'''@echo off
+title {name}
+cd /d "{os.getcwd()}"
+python clinic_auto_launcher.py {launcher_cmd}
+'''
+    
+    with open(batch_file, 'w') as f:
+        f.write(batch_content)
+    
     shell = Dispatch('WScript.Shell')
     shortcut = shell.CreateShortcut(shortcut_path)
-    shortcut.TargetPath = "C:\\Windows\\System32\\cmd.exe"
-    shortcut.Arguments = f'/c start "" "{url}"'
+    shortcut.TargetPath = batch_file
     shortcut.WorkingDirectory = os.getcwd()
-    shortcut.Description = f"Open {name} - Clinic Management System"
+    shortcut.Description = f"Auto-start {name} - Clinic Management System"
     
     if icon_path and os.path.exists(icon_path):
         shortcut.IconLocation = icon_path
@@ -119,21 +160,23 @@ def main():
     
     print(f"Server URL: {base_url}")
     
-    # Define shortcuts to create
+    # Define shortcuts to create with launcher commands
     shortcuts = [
-        ("Reception - Clinic Management", f"{base_url}/reception"),
-        ("Reports - Clinic Management", f"{base_url}/report")
+        ("Reception - Clinic Management", f"{base_url}/reception", "reception"),
+        ("Reports - Clinic Management", f"{base_url}/report", "reports")
     ]
     
     # Add consultant shortcuts (you can modify consultant IDs as needed)
     for i in range(1, 6):  # Assuming 5 consultants with IDs 1-5
-        shortcuts.append((f"Consultant {i} - Clinic Management", f"{base_url}/consultant?consultant_id={i}"))
+        shortcuts.append((f"Consultant {i} - Clinic Management", f"{base_url}/consultant?consultant_id={i}", f"consultant {i}"))
     
     created_shortcuts = []
     system = platform.system()
     
     try:
-        for name, url in shortcuts:
+        for shortcut_info in shortcuts:
+            name = shortcut_info[0]
+            url = shortcut_info[1]
             print(f"Creating shortcut: {name}")
             
             if system == "Windows":
@@ -146,8 +189,11 @@ def main():
                 print(f"Unsupported operating system: {system}")
                 continue
             
-            created_shortcuts.append(shortcut_path)
-            print(f"✅ Created: {shortcut_path}")
+            if shortcut_path:
+                created_shortcuts.append(shortcut_path)
+                print(f"✅ Created: {shortcut_path}")
+            else:
+                print(f"❌ Failed to create: {name}")
     
     except Exception as e:
         print(f"❌ Error creating shortcuts: {str(e)}")

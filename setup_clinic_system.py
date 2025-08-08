@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Complete setup script for Clinic Management System
@@ -21,29 +20,34 @@ sqlalchemy>=2.0.42
 werkzeug>=3.1.3
 email-validator>=2.2.0
 pytz>=2025.2
+requests>=2.31.0
+winshell>=0.7.0
 """
     return requirements_content
 
 def create_installation_package():
     """Create complete installation package"""
-    
+
     # Create export directory
     export_dir = "clinic_complete_system"
     if os.path.exists(export_dir):
         shutil.rmtree(export_dir)
     os.makedirs(export_dir)
-    
+
     # Files to include for complete system
     files_to_copy = [
         'app.py',
         'main.py', 
         'models.py',
         'routes.py',
+        'clinic_server_launcher.py',
+        'create_clinic_shortcuts.py',
+        'clinic_auto_launcher.py',
         'static/',
         'templates/',
         'instance/'  # Include the database
     ]
-    
+
     # Copy application files
     for item in files_to_copy:
         if os.path.exists(item):
@@ -51,16 +55,16 @@ def create_installation_package():
                 shutil.copytree(item, os.path.join(export_dir, item))
             else:
                 shutil.copy2(item, export_dir)
-    
+
     # Create requirements.txt
     with open(os.path.join(export_dir, 'requirements.txt'), 'w', encoding='utf-8') as f:
         f.write(create_requirements_file())
-    
+
     # Copy the launcher scripts we just created
     for script in ['clinic_server_launcher.py', 'create_clinic_shortcuts.py']:
         if os.path.exists(script):
             shutil.copy2(script, export_dir)
-    
+
     # Create comprehensive README
     readme_content = f"""# Clinic Management System - Complete Setup Guide
 
@@ -187,10 +191,10 @@ For issues, check that:
 3. Both laptops are on same network
 4. Firewall allows port 5000
 """
-    
+
     with open(os.path.join(export_dir, 'SETUP_README.md'), 'w', encoding='utf-8') as f:
         f.write(readme_content)
-    
+
     # Create quick start batch files
     # Windows batch file for server
     server_batch = """@echo off
@@ -202,10 +206,10 @@ echo.
 python clinic_server_launcher.py
 pause
 """
-    
+
     with open(os.path.join(export_dir, 'START_SERVER.bat'), 'w', encoding='utf-8') as f:
         f.write(server_batch)
-    
+
     # Windows batch file for client setup
     client_batch = """@echo off
 echo Setting up Desktop Shortcuts for Clinic Management
@@ -216,10 +220,10 @@ echo.
 python create_clinic_shortcuts.py
 pause
 """
-    
+
     with open(os.path.join(export_dir, 'SETUP_SHORTCUTS.bat'), 'w', encoding='utf-8') as f:
         f.write(client_batch)
-    
+
     # Shell scripts for Mac/Linux
     server_shell = """#!/bin/bash
 echo "Starting Clinic Management Server..."
@@ -229,11 +233,11 @@ echo "Keep this window open while the system is running."
 echo
 python3 clinic_server_launcher.py
 """
-    
+
     with open(os.path.join(export_dir, 'start_server.sh'), 'w', encoding='utf-8') as f:
         f.write(server_shell)
     os.chmod(os.path.join(export_dir, 'start_server.sh'), 0o755)
-    
+
     client_shell = """#!/bin/bash
 echo "Setting up Desktop Shortcuts for Clinic Management"
 echo
@@ -242,11 +246,11 @@ echo "You will be asked for the server laptop's IP address"
 echo
 python3 create_clinic_shortcuts.py
 """
-    
+
     with open(os.path.join(export_dir, 'setup_shortcuts.sh'), 'w', encoding='utf-8') as f:
         f.write(client_shell)
     os.chmod(os.path.join(export_dir, 'setup_shortcuts.sh'), 0o755)
-    
+
     return export_dir
 
 def create_gui_installer():
@@ -254,16 +258,16 @@ def create_gui_installer():
     root = tk.Tk()
     root.title("Clinic Management System - Setup")
     root.geometry("600x500")
-    
+
     # Header
     header = tk.Label(root, text="🏥 Clinic Management System", 
                      font=("Arial", 18, "bold"), fg="blue")
     header.pack(pady=20)
-    
+
     subtitle = tk.Label(root, text="Complete Setup & Deployment Tool", 
                        font=("Arial", 12))
     subtitle.pack(pady=5)
-    
+
     # Instructions
     instructions = tk.Text(root, height=15, width=70, wrap=tk.WORD)
     instructions.pack(pady=20, padx=20)
@@ -296,26 +300,26 @@ KEY FEATURES:
 
 The system will create desktop shortcuts that automatically connect to the correct server IP address.""")
     instructions.config(state=tk.DISABLED)
-    
+
     # Buttons
     buttons_frame = tk.Frame(root)
     buttons_frame.pack(pady=20)
-    
+
     def create_package():
         try:
             export_dir = create_installation_package()
-            
+
             # Create zip file
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             zip_filename = f"clinic_management_complete_{timestamp}.zip"
-            
+
             with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for root_dir, dirs, files in os.walk(export_dir):
                     for file in files:
                         file_path = os.path.join(root_dir, file)
                         arcname = os.path.relpath(file_path, export_dir)
                         zipf.write(file_path, arcname)
-            
+
             messagebox.showinfo("Success!", 
                               f"✅ Installation package created successfully!\n\n"
                               f"📁 Folder: {export_dir}\n"
@@ -324,20 +328,20 @@ The system will create desktop shortcuts that automatically connect to the corre
                               f"1. Copy the folder or zip file to both laptops\n"
                               f"2. Follow the SETUP_README.md instructions\n"
                               f"3. Start with receptionist's laptop first")
-            
+
         except Exception as e:
             messagebox.showerror("Error", f"Failed to create package:\n{str(e)}")
-    
+
     create_btn = tk.Button(buttons_frame, text="🚀 Create Installation Package", 
                           command=create_package, bg="green", fg="white", 
                           font=("Arial", 12, "bold"), padx=30, pady=15)
     create_btn.pack()
-    
+
     # Footer
     footer = tk.Label(root, text="This will create everything needed for deployment", 
                      font=("Arial", 9), fg="gray")
     footer.pack(pady=10)
-    
+
     root.mainloop()
 
 if __name__ == "__main__":
