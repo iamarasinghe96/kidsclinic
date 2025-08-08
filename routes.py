@@ -161,24 +161,13 @@ def consultant():
             func.date(Visit.visit_date) == today
         ).order_by(Visit.visit_date.asc()).limit(8).all()
         
-        # Only show completed visits from current shift (after last end shift)
-        # If there are no waiting patients, it means a new shift is starting
-        active_shift = Visit.query.filter(
+        # Show completed visits from today - they persist until shift ends
+        # The completed queue should remain visible throughout the shift
+        completed_visits = Visit.query.join(Patient).filter(
             Visit.consultant_id == consultant_id,
-            Visit.status == 'waiting',
+            Visit.status == 'completed',
             func.date(Visit.visit_date) == today
-        ).count() > 0
-        
-        if active_shift:
-            # Show completed visits from current active shift
-            completed_visits = Visit.query.join(Patient).filter(
-                Visit.consultant_id == consultant_id,
-                Visit.status == 'completed',
-                func.date(Visit.visit_date) == today
-            ).order_by(Visit.completed_at.desc()).limit(5).all()
-        else:
-            # New shift starting - don't show previous shift's completed visits
-            completed_visits = []
+        ).order_by(Visit.completed_at.desc()).limit(5).all()
         
         # Generate time-based greeting
         from datetime import datetime
@@ -207,23 +196,12 @@ def consultant():
             func.date(Visit.visit_date) == today
         ).count()
         
-        # Check if there's an active shift
-        active_shift_check = Visit.query.filter(
+        # Count all completed visits for today - persists until shift ends
+        total_completed = Visit.query.filter(
             Visit.consultant_id == consultant_id,
-            Visit.status == 'waiting',
+            Visit.status == 'completed',
             func.date(Visit.visit_date) == today
-        ).count() > 0
-        
-        # Match the completed count with what's being displayed
-        if active_shift_check:
-            total_completed = Visit.query.filter(
-                Visit.consultant_id == consultant_id,
-                Visit.status == 'completed',
-                func.date(Visit.visit_date) == today
-            ).count()
-        else:
-            # New shift - no completed visits shown
-            total_completed = 0
+        ).count()
     
     return render_template('consultant.html', 
                          consultants=consultants,
@@ -288,7 +266,7 @@ def report():
         
         # Build query for completed visits within date range (excluding incomplete consultations)
         query = Visit.query.join(Patient).filter(
-            Visit.status == 'completed',  # Only completed visits are counted in reports
+            Visit.status.in_(['completed', 'completed_archived']),  # Include both active and archived completed visits
             func.date(Visit.visit_date) >= start_date,
             func.date(Visit.visit_date) <= end_date
         )
@@ -330,7 +308,7 @@ def download_report_csv():
     
     # Build query for completed visits within date range
     query = Visit.query.join(Patient).filter(
-        Visit.status == 'completed',
+        Visit.status.in_(['completed', 'completed_archived']),
         func.date(Visit.visit_date) >= start_date,
         func.date(Visit.visit_date) <= end_date
     )
@@ -721,9 +699,17 @@ def end_shift():
         visit.status = 'incomplete'
         visit.completed_at = datetime.now(SL_TZ).replace(tzinfo=None)
     
-    # Keep completed visits in database for reporting, but clear from active consultant view
-    # The visits remain with 'completed' status and can be included in reports
-    # No need to delete them - they should persist for historical reporting
+    # Keep completed visits in database for reporting, but mark them as archived
+    # Add a flag to distinguish them from active shift completed visits
+    completed_visits_to_archive = Visit.query.filter(
+        Visit.consultant_id == consultant_id,
+        Visit.status == 'completed',
+        func.date(Visit.visit_date) == today
+    ).all()
+    
+    for visit in completed_visits_to_archive:
+        # Add a shift_ended flag to distinguish archived completed visits
+        visit.status = 'completed_archived'
     
     db.session.commit()
     
