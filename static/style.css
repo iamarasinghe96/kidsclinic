@@ -67,11 +67,11 @@
 }
 
 .patient-item:hover {
-    background-color: var(--bs-gray-100);
+    background-color: #f8f9fa;
 }
 
 .patient-item.active {
-    background-color: var(--bs-primary);
+    background-color: #8EC641;
     color: white;
 }
 
@@ -94,7 +94,7 @@
 }
 
 #searchResultsList .list-group-item:hover {
-    background-color: var(--bs-gray-100);
+    background-color: #f8f9fa;
 }
 
 /* Patient Information Card */
@@ -137,7 +137,7 @@
 .table th {
     border-top: none;
     font-weight: 600;
-    background-color: var(--bs-gray-100);
+    background-color: #f8f9fa;
 }
 
 /* Form improvements */
