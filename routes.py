@@ -161,11 +161,24 @@ def consultant():
             func.date(Visit.visit_date) == today
         ).order_by(Visit.visit_date.asc()).limit(8).all()
         
-        completed_visits = Visit.query.join(Patient).filter(
+        # Only show completed visits from current shift (after last end shift)
+        # If there are no waiting patients, it means a new shift is starting
+        active_shift = Visit.query.filter(
             Visit.consultant_id == consultant_id,
-            Visit.status == 'completed',
+            Visit.status == 'waiting',
             func.date(Visit.visit_date) == today
-        ).order_by(Visit.completed_at.desc()).limit(5).all()
+        ).count() > 0
+        
+        if active_shift:
+            # Show completed visits from current active shift
+            completed_visits = Visit.query.join(Patient).filter(
+                Visit.consultant_id == consultant_id,
+                Visit.status == 'completed',
+                func.date(Visit.visit_date) == today
+            ).order_by(Visit.completed_at.desc()).limit(5).all()
+        else:
+            # New shift starting - don't show previous shift's completed visits
+            completed_visits = []
         
         # Generate time-based greeting
         from datetime import datetime
@@ -696,16 +709,9 @@ def end_shift():
         visit.status = 'incomplete'
         visit.completed_at = datetime.now(SL_TZ).replace(tzinfo=None)
     
-    # Clear completed visits for this consultant for next shift
-    completed_visits = Visit.query.filter(
-        Visit.consultant_id == consultant_id,
-        Visit.status == 'completed',
-        func.date(Visit.visit_date) == today
-    ).all()
-    
-    # Archive or delete completed visits (you can modify this logic as needed)
-    for visit in completed_visits:
-        db.session.delete(visit)
+    # Keep completed visits in database for reporting, but clear from active consultant view
+    # The visits remain with 'completed' status and can be included in reports
+    # No need to delete them - they should persist for historical reporting
     
     db.session.commit()
     
