@@ -261,9 +261,9 @@ def report():
         end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date()
         consultant_id = request.form.get('consultant_id')
         
-        # Build query for completed visits within date range
+        # Build query for completed visits within date range (excluding incomplete consultations)
         query = Visit.query.join(Patient).filter(
-            Visit.status == 'completed',
+            Visit.status == 'completed',  # Only completed visits are counted in reports
             func.date(Visit.visit_date) >= start_date,
             func.date(Visit.visit_date) <= end_date
         )
@@ -399,6 +399,8 @@ def admin_add_consultant():
         return redirect(url_for('admin_login'))
     
     name = request.form.get('name', '').strip()
+    consultation_fee = request.form.get('consultation_fee', 0.0, type=float)
+    
     if not name:
         flash('Consultant name is required', 'error')
         return redirect(url_for('admin_panel'))
@@ -410,7 +412,7 @@ def admin_add_consultant():
         return redirect(url_for('admin_panel'))
     
     try:
-        consultant = Consultant(name=name)
+        consultant = Consultant(name=name, consultation_fee=consultation_fee)
         db.session.add(consultant)
         db.session.commit()
         flash(f'Consultant "{name}" added successfully', 'success')
@@ -427,6 +429,7 @@ def admin_edit_consultant():
     
     consultant_id = request.form.get('consultant_id')
     new_name = request.form.get('name', '').strip()
+    consultation_fee = request.form.get('consultation_fee', 0.0, type=float)
     
     if not new_name:
         flash('Consultant name is required', 'error')
@@ -447,8 +450,9 @@ def admin_edit_consultant():
     try:
         old_name = consultant.name
         consultant.name = new_name
+        consultant.consultation_fee = consultation_fee
         db.session.commit()
-        flash(f'Consultant "{old_name}" updated to "{new_name}"', 'success')
+        flash(f'Consultant "{old_name}" updated successfully', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error updating consultant: {str(e)}', 'error')
@@ -676,6 +680,22 @@ def end_shift():
         func.date(Visit.visit_date) == today
     ).count()
     
+    # Calculate earnings
+    consultation_fee = consultant.consultation_fee or 0
+    total_earnings = total_completed * consultation_fee
+    average_earnings = consultation_fee  # Average per session is the consultation fee
+    
+    # Mark remaining patients as incomplete consultations instead of deleting
+    remaining_visits = Visit.query.filter(
+        Visit.consultant_id == consultant_id,
+        Visit.status == 'waiting',
+        func.date(Visit.visit_date) == today
+    ).all()
+    
+    for visit in remaining_visits:
+        visit.status = 'incomplete'
+        visit.completed_at = datetime.now(SL_TZ).replace(tzinfo=None)
+    
     # Clear completed visits for this consultant for next shift
     completed_visits = Visit.query.filter(
         Visit.consultant_id == consultant_id,
@@ -693,5 +713,8 @@ def end_shift():
         'consultant_name': consultant.name,
         'total_completed': total_completed,
         'remaining_patients': remaining_patients,
-        'shift_date': today.strftime('%d/%m/%Y')
+        'shift_date': today.strftime('%d/%m/%Y'),
+        'consultation_fee': consultation_fee,
+        'total_earnings': total_earnings,
+        'average_earnings': average_earnings
     })

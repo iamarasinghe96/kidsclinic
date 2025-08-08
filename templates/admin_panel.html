@@ -28,13 +28,22 @@
                 <div class="mb-4">
                     <h5>Add New Consultant</h5>
                     <form method="POST" action="{{ url_for('admin_add_consultant') }}">
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" name="name" placeholder="Consultant Name" required>
-                            <button type="submit" class="btn btn-success">
-                                <i data-feather="plus"></i>
-                                Add
-                            </button>
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" name="name" placeholder="Consultant Name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">LKR</span>
+                                    <input type="number" class="form-control" name="consultation_fee" 
+                                           placeholder="0" step="0.01" min="0">
+                                </div>
+                            </div>
                         </div>
+                        <button type="submit" class="btn btn-success">
+                            <i data-feather="plus"></i>
+                            Add
+                        </button>
                     </form>
                 </div>
                 
@@ -48,7 +57,19 @@
                                     <div class="d-flex align-items-center">
                                         <form method="POST" action="{{ url_for('admin_edit_consultant') }}" class="d-flex align-items-center flex-grow-1 me-2">
                                             <input type="hidden" name="consultant_id" value="{{ consultant.id }}">
-                                            <input type="text" class="form-control me-2" name="name" value="{{ consultant.name }}" required>
+                                            <div class="row flex-grow-1 me-2">
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control" name="name" value="{{ consultant.name }}" placeholder="Consultant Name" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">LKR</span>
+                                                        <input type="number" class="form-control" name="consultation_fee" 
+                                                               value="{{ consultant.consultation_fee or 0 }}" 
+                                                               placeholder="0" step="0.01" min="0">
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <button type="submit" class="btn btn-outline-success btn-sm me-2">
                                                 <i data-feather="save"></i>
                                                 Update

@@ -41,6 +41,7 @@ class Patient(db.Model):
 class Consultant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
+    consultation_fee = db.Column(db.Float, default=0.0, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(SL_TZ).replace(tzinfo=None))
     
     def __repr__(self):
@@ -51,7 +52,7 @@ class Visit(db.Model):
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
     consultant_id = db.Column(db.Integer, db.ForeignKey('consultant.id'), nullable=False)
     visit_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(SL_TZ).replace(tzinfo=None))
-    status = db.Column(db.String(20), nullable=False, default='waiting')  # waiting, completed
+    status = db.Column(db.String(20), nullable=False, default='waiting')  # waiting, completed, incomplete
     completed_at = db.Column(db.DateTime)
     
     # Relationships

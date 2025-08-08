@@ -48,17 +48,17 @@ with app.app_context():
     from models import Consultant
     if not Consultant.query.first():
         default_consultants = [
-            "Dr. John Smith",
-            "Dr. Sarah Johnson", 
-            "Dr. Michael Brown",
-            "Dr. Emily Davis",
-            "Dr. David Wilson"
+            ("Dr. John Smith", 5000.0),
+            ("Dr. Sarah Johnson", 4500.0), 
+            ("Dr. Michael Brown", 5500.0),
+            ("Dr. Emily Davis", 4000.0),
+            ("Dr. David Wilson", 6000.0)
         ]
-        for name in default_consultants:
-            consultant = Consultant(name=name)
+        for name, fee in default_consultants:
+            consultant = Consultant(name=name, consultation_fee=fee)
             db.session.add(consultant)
         db.session.commit()
-        logging.info("Default consultants created")
+        logging.info("Default consultants created with consultation fees")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

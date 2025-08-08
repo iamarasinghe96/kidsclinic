@@ -83,6 +83,24 @@
     <!-- Initialize Feather Icons -->
     <script>
         feather.replace();
+        
+        // Auto-dismiss registration success notifications after 3 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.alert-success');
+                alerts.forEach(alert => {
+                    if (alert.textContent.includes('registered successfully')) {
+                        alert.style.transition = 'opacity 0.3s ease';
+                        alert.style.opacity = '0';
+                        setTimeout(() => {
+                            if (alert.parentNode) {
+                                alert.remove();
+                            }
+                        }, 300);
+                    }
+                });
+            }, 3000);
+        });
     </script>
 </body>
 </html>
