@@ -45,14 +45,25 @@
                         <div class="list-group">
                             {% for consultant in consultants %}
                                 <div class="list-group-item">
-                                    <form method="POST" action="{{ url_for('admin_edit_consultant') }}" class="d-flex align-items-center">
-                                        <input type="hidden" name="consultant_id" value="{{ consultant.id }}">
-                                        <input type="text" class="form-control me-2" name="name" value="{{ consultant.name }}" required>
-                                        <button type="submit" class="btn btn-outline-success btn-sm">
-                                            <i data-feather="save"></i>
-                                            Update
-                                        </button>
-                                    </form>
+                                    <div class="d-flex align-items-center">
+                                        <form method="POST" action="{{ url_for('admin_edit_consultant') }}" class="d-flex align-items-center flex-grow-1 me-2">
+                                            <input type="hidden" name="consultant_id" value="{{ consultant.id }}">
+                                            <input type="text" class="form-control me-2" name="name" value="{{ consultant.name }}" required>
+                                            <button type="submit" class="btn btn-outline-success btn-sm me-2">
+                                                <i data-feather="save"></i>
+                                                Update
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('admin_delete_consultant') }}" 
+                                              onsubmit="return confirm('Are you sure you want to delete consultant {{ consultant.name }}? This action cannot be undone!');"
+                                              style="display: inline;">
+                                            <input type="hidden" name="consultant_id" value="{{ consultant.id }}">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <i data-feather="trash-2"></i>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             {% endfor %}
                         </div>

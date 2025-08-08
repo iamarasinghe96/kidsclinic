@@ -542,6 +542,37 @@ def admin_cleanup_data():
     
     return redirect(url_for('admin_panel'))
 
+@app.route('/admin/delete_consultant', methods=['POST'])
+def admin_delete_consultant():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    consultant_id = request.form.get('consultant_id')
+    
+    try:
+        consultant = Consultant.query.get_or_404(consultant_id)
+        consultant_name = consultant.name
+        
+        # Check if consultant has any patients or visits
+        patient_count = Patient.query.filter_by(consultant_id=consultant_id).count()
+        visit_count = Visit.query.filter_by(consultant_id=consultant_id).count()
+        
+        if patient_count > 0 or visit_count > 0:
+            flash(f'Cannot delete consultant "{consultant_name}": {patient_count} patients and {visit_count} visits are assigned to this consultant', 'error')
+            return redirect(url_for('admin_panel'))
+        
+        # Safe to delete - no dependencies
+        db.session.delete(consultant)
+        db.session.commit()
+        
+        flash(f'Consultant "{consultant_name}" deleted successfully', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting consultant: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_panel'))
+
 @app.route('/admin/search_patient_visits')
 def admin_search_patient_visits():
     if not session.get('admin_logged_in'):
