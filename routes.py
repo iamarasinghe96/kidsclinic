@@ -211,32 +211,48 @@ def complete_consultation():
 
 @app.route('/report', methods=['GET', 'POST'])
 def report():
+    consultants = Consultant.query.all()
     report_data = None
     
     if request.method == 'POST':
         start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
         end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date()
+        consultant_id = request.form.get('consultant_id')
         
-        # Get completed visits within date range
-        visits = Visit.query.join(Patient).filter(
+        # Build query for completed visits within date range
+        query = Visit.query.join(Patient).filter(
             Visit.status == 'completed',
             func.date(Visit.visit_date) >= start_date,
             func.date(Visit.visit_date) <= end_date
-        ).order_by(Visit.visit_date.asc()).all()
+        )
+        
+        # Add consultant filter if specified
+        if consultant_id and consultant_id != 'all':
+            query = query.filter(Visit.consultant_id == int(consultant_id))
+        
+        visits = query.order_by(Visit.visit_date.asc()).all()
+        
+        # Get consultant name for report
+        selected_consultant = None
+        if consultant_id and consultant_id != 'all':
+            selected_consultant = Consultant.query.get(int(consultant_id))
         
         report_data = {
             'start_date': start_date,
             'end_date': end_date,
             'total_consultations': len(visits),
-            'visits': visits
+            'visits': visits,
+            'selected_consultant': selected_consultant,
+            'consultant_id': consultant_id
         }
     
-    return render_template('report.html', report_data=report_data)
+    return render_template('report.html', report_data=report_data, consultants=consultants)
 
 @app.route('/download_report_csv')
 def download_report_csv():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
+    consultant_id = request.args.get('consultant_id')
     
     if not start_date or not end_date:
         flash('Invalid date parameters', 'error')
@@ -245,12 +261,18 @@ def download_report_csv():
     start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
     end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
     
-    # Get completed visits within date range
-    visits = Visit.query.join(Patient).filter(
+    # Build query for completed visits within date range
+    query = Visit.query.join(Patient).filter(
         Visit.status == 'completed',
         func.date(Visit.visit_date) >= start_date,
         func.date(Visit.visit_date) <= end_date
-    ).order_by(Visit.visit_date.asc()).all()
+    )
+    
+    # Add consultant filter if specified
+    if consultant_id and consultant_id != 'all':
+        query = query.filter(Visit.consultant_id == int(consultant_id))
+    
+    visits = query.order_by(Visit.visit_date.asc()).all()
     
     # Create CSV data
     output = io.StringIO()
@@ -277,10 +299,17 @@ def download_report_csv():
             visit.completed_at.strftime('%H:%M') if visit.completed_at else '-'
         ])
     
+    # Determine filename suffix
+    consultant_suffix = ""
+    if consultant_id and consultant_id != 'all':
+        consultant = Consultant.query.get(int(consultant_id))
+        if consultant:
+            consultant_suffix = f"_{consultant.name.replace(' ', '_')}"
+    
     # Prepare response
     output.seek(0)
     response = make_response(output.getvalue())
     response.headers['Content-Type'] = 'text/csv'
-    response.headers['Content-Disposition'] = f'attachment; filename=consultation_report_{start_date}_to_{end_date}.csv'
+    response.headers['Content-Disposition'] = f'attachment; filename=consultation_report_{start_date}_to_{end_date}{consultant_suffix}.csv'
     
     return response
