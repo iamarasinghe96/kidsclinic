@@ -78,21 +78,84 @@
                     <strong>Warning:</strong> This action will permanently delete data and cannot be undone.
                 </div>
                 
-                <form method="POST" action="{{ url_for('admin_cleanup_data') }}" 
-                      onsubmit="return confirm('Are you sure you want to delete all visits before this date? This action cannot be undone!');">
-                    <div class="mb-3">
-                        <label for="cleanup_date" class="form-label">Delete visits before this date</label>
-                        <input type="date" class="form-control" id="cleanup_date" name="cleanup_date" required>
-                        <div class="form-text">
-                            All visits before this date will be deleted. Patients with no remaining visits will also be removed.
-                        </div>
+                <!-- Cleanup Tabs -->
+                <ul class="nav nav-tabs mb-3" id="cleanupTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="before-date-tab" data-bs-toggle="tab" href="#before-date">Before Date</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="date-range-tab" data-bs-toggle="tab" href="#date-range">Date Range</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="patient-record-tab" data-bs-toggle="tab" href="#patient-record">Patient Record</a>
+                    </li>
+                </ul>
+                
+                <div class="tab-content">
+                    <!-- Delete Before Date -->
+                    <div class="tab-pane fade show active" id="before-date">
+                        <form method="POST" action="{{ url_for('admin_cleanup_data') }}" 
+                              onsubmit="return confirm('Are you sure you want to delete all visits before this date? This action cannot be undone!');">
+                            <input type="hidden" name="cleanup_type" value="before_date">
+                            <div class="mb-3">
+                                <label for="cleanup_date" class="form-label">Delete visits before this date</label>
+                                <input type="date" class="form-control" id="cleanup_date" name="cleanup_date" required>
+                                <div class="form-text">
+                                    All visits before this date will be deleted. Patients with no remaining visits will also be removed.
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-danger">
+                                <i data-feather="trash-2"></i>
+                                Delete Old Data
+                            </button>
+                        </form>
                     </div>
                     
-                    <button type="submit" class="btn btn-danger">
-                        <i data-feather="trash-2"></i>
-                        Delete Old Data
-                    </button>
-                </form>
+                    <!-- Delete Date Range -->
+                    <div class="tab-pane fade" id="date-range">
+                        <form method="POST" action="{{ url_for('admin_cleanup_data') }}" 
+                              onsubmit="return confirm('Are you sure you want to delete all visits within this date range? This action cannot be undone!');">
+                            <input type="hidden" name="cleanup_type" value="date_range">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="start_date" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="end_date" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" required>
+                                </div>
+                            </div>
+                            <div class="form-text mb-3">
+                                All visits between these dates (inclusive) will be deleted. Patients with no remaining visits will also be removed.
+                            </div>
+                            <button type="submit" class="btn btn-danger">
+                                <i data-feather="trash-2"></i>
+                                Delete Date Range Data
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Delete Patient Record -->
+                    <div class="tab-pane fade" id="patient-record">
+                        <form method="POST" action="{{ url_for('admin_cleanup_data') }}" 
+                              onsubmit="return confirm('Are you sure you want to delete this patient and all their visits? This action cannot be undone!');">
+                            <input type="hidden" name="cleanup_type" value="registration_number">
+                            <div class="mb-3">
+                                <label for="registration_number" class="form-label">Registration Number</label>
+                                <input type="text" class="form-control" id="registration_number" name="registration_number" 
+                                       placeholder="e.g., REG202508001" required>
+                                <div class="form-text">
+                                    Enter the patient's registration number. The patient and all their visits will be permanently deleted.
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-danger">
+                                <i data-feather="user-x"></i>
+                                Delete Patient Record
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

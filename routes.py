@@ -418,37 +418,120 @@ def admin_cleanup_data():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
     
-    cleanup_date = request.form.get('cleanup_date')
-    if not cleanup_date:
-        flash('Please select a cleanup date', 'error')
-        return redirect(url_for('admin_panel'))
+    cleanup_type = request.form.get('cleanup_type')
     
-    cleanup_date = datetime.strptime(cleanup_date, '%Y-%m-%d').date()
+    if cleanup_type == 'date_range':
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        
+        if not start_date or not end_date:
+            flash('Please select both start and end dates', 'error')
+            return redirect(url_for('admin_panel'))
+        
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        if start_date > end_date:
+            flash('Start date must be before end date', 'error')
+            return redirect(url_for('admin_panel'))
+        
+        try:
+            # Delete visits within the specified date range
+            visits_to_delete = Visit.query.filter(
+                func.date(Visit.visit_date) >= start_date,
+                func.date(Visit.visit_date) <= end_date
+            ).all()
+            visit_count = len(visits_to_delete)
+            
+            for visit in visits_to_delete:
+                db.session.delete(visit)
+            
+            # Find patients with no remaining visits and delete them
+            patients_with_no_visits = Patient.query.filter(
+                ~Patient.id.in_(db.session.query(Visit.patient_id))
+            ).all()
+            
+            patient_count = len(patients_with_no_visits)
+            
+            for patient in patients_with_no_visits:
+                db.session.delete(patient)
+            
+            db.session.commit()
+            
+            flash(f'Date range cleanup completed: {visit_count} visits and {patient_count} patients deleted between {start_date} and {end_date}', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error during date range cleanup: {str(e)}', 'error')
     
-    try:
-        # Delete visits before the specified date
-        visits_to_delete = Visit.query.filter(func.date(Visit.visit_date) < cleanup_date).all()
-        visit_count = len(visits_to_delete)
+    elif cleanup_type == 'registration_number':
+        reg_number = request.form.get('registration_number', '').strip()
         
-        for visit in visits_to_delete:
-            db.session.delete(visit)
+        if not reg_number:
+            flash('Please enter a registration number', 'error')
+            return redirect(url_for('admin_panel'))
         
-        # Find patients with no remaining visits and delete them
-        patients_with_no_visits = Patient.query.filter(
-            ~Patient.id.in_(db.session.query(Visit.patient_id))
-        ).all()
-        
-        patient_count = len(patients_with_no_visits)
-        
-        for patient in patients_with_no_visits:
+        try:
+            # Find patient by registration number
+            patient = Patient.query.filter_by(registration_number=reg_number).first()
+            
+            if not patient:
+                flash(f'Patient with registration number "{reg_number}" not found', 'error')
+                return redirect(url_for('admin_panel'))
+            
+            # Get all visits for this patient
+            visits = Visit.query.filter_by(patient_id=patient.id).all()
+            visit_count = len(visits)
+            
+            # Delete all visits for this patient
+            for visit in visits:
+                db.session.delete(visit)
+            
+            # Delete the patient
             db.session.delete(patient)
+            db.session.commit()
+            
+            flash(f'Patient "{patient.full_name}" ({reg_number}) and {visit_count} related visits deleted successfully', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error deleting patient record: {str(e)}', 'error')
+    
+    elif cleanup_type == 'before_date':
+        cleanup_date = request.form.get('cleanup_date')
+        if not cleanup_date:
+            flash('Please select a cleanup date', 'error')
+            return redirect(url_for('admin_panel'))
         
-        db.session.commit()
+        cleanup_date = datetime.strptime(cleanup_date, '%Y-%m-%d').date()
         
-        flash(f'Data cleanup completed: {visit_count} visits and {patient_count} patients deleted', 'success')
-        
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error during data cleanup: {str(e)}', 'error')
+        try:
+            # Delete visits before the specified date
+            visits_to_delete = Visit.query.filter(func.date(Visit.visit_date) < cleanup_date).all()
+            visit_count = len(visits_to_delete)
+            
+            for visit in visits_to_delete:
+                db.session.delete(visit)
+            
+            # Find patients with no remaining visits and delete them
+            patients_with_no_visits = Patient.query.filter(
+                ~Patient.id.in_(db.session.query(Visit.patient_id))
+            ).all()
+            
+            patient_count = len(patients_with_no_visits)
+            
+            for patient in patients_with_no_visits:
+                db.session.delete(patient)
+            
+            db.session.commit()
+            
+            flash(f'Data cleanup completed: {visit_count} visits and {patient_count} patients deleted before {cleanup_date}', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error during data cleanup: {str(e)}', 'error')
+    
+    else:
+        flash('Invalid cleanup type selected', 'error')
     
     return redirect(url_for('admin_panel'))
