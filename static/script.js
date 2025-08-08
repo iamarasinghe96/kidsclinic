@@ -280,17 +280,24 @@ function printPatientInfo() {
             const currentDateTime = new Date().toLocaleString();
             
             printInfo.innerHTML = `
-                <div style="font-size: 14px; line-height: 1.4;">
-                    <p><strong>Registration #:</strong> ${data.registration_number}</p>
-                    <p><strong>Name:</strong> ${data.full_name}</p>
-                    <p><strong>Age:</strong> ${data.age} years</p>
-                    <p><strong>Gender:</strong> ${data.gender}</p>
-                    <p><strong>Visit Date/Time:</strong> ${currentDateTime}</p>
-                </div>
+                <p><strong>Registration #:</strong><br>${data.registration_number}</p>
+                <p><strong>Name:</strong><br>${data.full_name}</p>
+                <p><strong>Age:</strong><br>${data.age} years</p>
+                <p><strong>Gender:</strong><br>${data.gender}</p>
+                <p><strong>Date of Birth:</strong><br>${data.date_of_birth}</p>
+                <p><strong>Visit Date/Time:</strong><br>${currentDateTime}</p>
             `;
             
-            // Trigger print
-            window.print();
+            // Show the print template and trigger print
+            const printTemplate = document.getElementById('printTemplate');
+            printTemplate.style.display = 'block';
+            
+            // Trigger print after a short delay to ensure content is rendered
+            setTimeout(() => {
+                window.print();
+                // Hide the print template after printing
+                printTemplate.style.display = 'none';
+            }, 100);
         })
         .catch(error => {
             alert('Error loading patient information for printing');

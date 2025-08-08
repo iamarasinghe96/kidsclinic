@@ -131,21 +131,19 @@
 {% endif %}
 
 <!-- Print Template (Hidden) -->
-<div id="printTemplate" style="display: none;">
-    <div class="print-content">
-        <div style="text-align: right; margin-bottom: 20px;">
-            <div id="printPatientInfo"></div>
+<div id="printTemplate" class="print-only" style="display: none;">
+    <div class="print-patient-info">
+        <div id="printPatientInfo">
+            <!-- Patient information will be populated here -->
         </div>
-        <div style="margin-top: 30px;">
-            <h5>Consultation Notes:</h5>
-            <div style="margin-top: 20px;">
-                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
-                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
-                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
-                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
-                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
-            </div>
-        </div>
+    </div>
+    <div class="print-consultation-notes">
+        <h3>Consultation Notes:</h3>
+        <div class="print-line"></div>
+        <div class="print-line"></div>
+        <div class="print-line"></div>
+        <div class="print-line"></div>
+        <div class="print-line"></div>
     </div>
 </div>
 {% endblock %}
