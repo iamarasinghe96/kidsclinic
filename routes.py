@@ -1,9 +1,11 @@
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify, make_response
 from datetime import datetime, date
 from sqlalchemy import or_, func
 from app import app, db
 from models import Patient, Consultant, Visit
 import logging
+import io
+import csv
 
 def generate_registration_number():
     """Generate a unique registration number"""
@@ -142,8 +144,8 @@ def consultant():
     consultants = Consultant.query.all()
     consultant_id = request.args.get('consultant_id', type=int)
     
-    waiting_patients = []
-    completed_patients = []
+    waiting_visits = []
+    completed_visits = []
     
     if consultant_id:
         # Get today's visits for this consultant
@@ -159,14 +161,11 @@ def consultant():
             Visit.status == 'completed',
             func.date(Visit.visit_date) == today
         ).order_by(Visit.completed_at.desc()).all()
-        
-        waiting_patients = [visit.patient for visit in waiting_visits]
-        completed_patients = [visit.patient for visit in completed_visits]
     
     return render_template('consultant.html', 
                          consultants=consultants,
-                         waiting_patients=waiting_patients,
-                         completed_patients=completed_patients,
+                         waiting_visits=waiting_visits,
+                         completed_visits=completed_visits,
                          selected_consultant_id=consultant_id)
 
 @app.route('/get_patient_details/<reg_number>')
@@ -233,3 +232,55 @@ def report():
         }
     
     return render_template('report.html', report_data=report_data)
+
+@app.route('/download_report_csv')
+def download_report_csv():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    if not start_date or not end_date:
+        flash('Invalid date parameters', 'error')
+        return redirect(url_for('report'))
+    
+    start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    
+    # Get completed visits within date range
+    visits = Visit.query.join(Patient).filter(
+        Visit.status == 'completed',
+        func.date(Visit.visit_date) >= start_date,
+        func.date(Visit.visit_date) <= end_date
+    ).order_by(Visit.visit_date.asc()).all()
+    
+    # Create CSV data
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow([
+        'Registration Number',
+        'Patient Name', 
+        'Consultant',
+        'Visit Date',
+        'Visit Time',
+        'Completed Time'
+    ])
+    
+    # Write data rows
+    for visit in visits:
+        writer.writerow([
+            visit.patient.registration_number,
+            visit.patient.full_name,
+            visit.consultant.name,
+            visit.visit_date.strftime('%Y-%m-%d'),
+            visit.visit_date.strftime('%H:%M'),
+            visit.completed_at.strftime('%H:%M') if visit.completed_at else '-'
+        ])
+    
+    # Prepare response
+    output.seek(0)
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = f'attachment; filename=consultation_report_{start_date}_to_{end_date}.csv'
+    
+    return response

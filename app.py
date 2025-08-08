@@ -29,6 +29,13 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Initialize the app with the extension
 db.init_app(app)
 
+def format_datetime(dt):
+    """Format datetime as DD/MM - H:MM AM/PM"""
+    return dt.strftime('%d/%m - %I:%M %p')
+
+# Add filter to Jinja2 environment
+app.jinja_env.filters['datetime'] = format_datetime
+
 with app.app_context():
     # Import models and routes
     import models

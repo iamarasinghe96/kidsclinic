@@ -157,8 +157,8 @@ function loadPatientInfo(regNumber) {
             displayPatientInfo(data);
             currentPatientRegNumber = regNumber;
             
-            // Enable print and complete consultation buttons
-            document.getElementById('printBtn').disabled = false;
+            // Show patient actions buttons
+            document.getElementById('patientActions').style.display = 'block';
         })
         .catch(error => {
             console.error('Error loading patient info:', error);
@@ -258,7 +258,7 @@ function resetPatientInfo() {
     }
     
     currentPatientRegNumber = null;
-    document.getElementById('printBtn').disabled = true;
+    document.getElementById('patientActions').style.display = 'none';
     feather.replace();
 }
 
@@ -306,8 +306,8 @@ function printPatientInfo() {
                             top: 20px;
                             right: 20px;
                             border: 2px solid #000;
-                            padding: 15px;
-                            width: 300px;
+                            padding: 10px;
+                            width: 200px;
                             background: white;
                         }
                         
@@ -347,20 +347,12 @@ function printPatientInfo() {
                 </head>
                 <body>
                     <div class="patient-info">
-                        <p><strong>Registration #:</strong><br>${data.registration_number}</p>
-                        <p><strong>Name:</strong><br>${data.full_name}</p>
-                        <p><strong>Age:</strong><br>${data.age} years</p>
-                        <p><strong>Gender:</strong><br>${data.gender}</p>
-                        <p><strong>Date of Birth:</strong><br>${data.date_of_birth}</p>
-                        <p><strong>Visit Date/Time:</strong><br>${currentDateTime}</p>
-                    </div>
-                    <div class="consultation-notes">
-                        <h3>Consultation Notes:</h3>
-                        <div class="line"></div>
-                        <div class="line"></div>
-                        <div class="line"></div>
-                        <div class="line"></div>
-                        <div class="line"></div>
+                        <p><strong>Registration #:</strong> ${data.registration_number}</p>
+                        <p><strong>Name:</strong> ${data.full_name}</p>
+                        <p><strong>Age:</strong> ${data.age} years</p>
+                        <p><strong>Gender:</strong> ${data.gender}</p>
+                        <p><strong>Date of Birth:</strong> ${data.date_of_birth}</p>
+                        <p><strong>Visit Date/Time:</strong> ${currentDateTime}</p>
                     </div>
                 </body>
                 </html>
@@ -403,17 +395,17 @@ function validateForm(formId) {
 let autoRefreshInterval;
 
 function startAutoRefresh() {
-    // Refresh every 30 seconds if on consultant page
+    // Refresh every 10 seconds if on consultant page
     if (window.location.pathname === '/consultant') {
         autoRefreshInterval = setInterval(() => {
             const consultantId = document.getElementById('consultantSelect').value;
             if (consultantId) {
-                // Only refresh if no modal is open
-                if (!document.querySelector('.modal.show')) {
+                // Only refresh if no modal is open and no patient is actively selected
+                if (!document.querySelector('.modal.show') && !currentPatientRegNumber) {
                     location.reload();
                 }
             }
-        }, 30000);
+        }, 10000);
     }
 }
 

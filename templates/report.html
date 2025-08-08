@@ -46,10 +46,17 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4><i data-feather="info"></i> Report Summary</h4>
-                <button class="btn btn-secondary btn-sm" onclick="window.print()">
-                    <i data-feather="printer"></i>
-                    Print Report
-                </button>
+                <div>
+                    <a href="{{ url_for('download_report_csv', start_date=report_data.start_date, end_date=report_data.end_date) }}" 
+                       class="btn btn-success btn-sm">
+                        <i data-feather="download"></i>
+                        Download CSV
+                    </a>
+                    <button class="btn btn-secondary btn-sm" onclick="window.print()">
+                        <i data-feather="printer"></i>
+                        Print Report
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
