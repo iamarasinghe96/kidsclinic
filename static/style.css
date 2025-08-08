@@ -72,6 +72,7 @@
 .patient-item {
     cursor: pointer;
     transition: background-color 0.2s;
+    border: 2px solid transparent;
 }
 
 .patient-item:hover {
@@ -81,6 +82,70 @@
 .patient-item.active {
     background-color: #8EC641;
     color: white;
+    border-color: #8EC641;
+}
+
+.patient-item:focus {
+    border-color: #8EC641;
+    box-shadow: 0 0 0 0.2rem rgba(142, 198, 65, 0.25);
+    outline: none;
+}
+
+/* Custom green theme overrides */
+:root {
+    --clinic-green: #8EC641;
+    --clinic-green-hover: #7ab837;
+    --clinic-green-dark: #6aa030;
+}
+
+.btn-primary {
+    background-color: var(--clinic-green);
+    border-color: var(--clinic-green);
+}
+
+.btn-primary:hover {
+    background-color: var(--clinic-green-hover);
+    border-color: var(--clinic-green-hover);
+}
+
+.btn-primary:focus, .btn-primary.focus {
+    box-shadow: 0 0 0 0.2rem rgba(142, 198, 65, 0.25);
+    background-color: var(--clinic-green-hover);
+    border-color: var(--clinic-green-hover);
+}
+
+.btn-primary:not(:disabled):not(.disabled):active, 
+.btn-primary:not(:disabled):not(.disabled).active {
+    background-color: var(--clinic-green-dark);
+    border-color: var(--clinic-green-dark);
+}
+
+.btn-outline-primary {
+    color: var(--clinic-green);
+    border-color: var(--clinic-green);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--clinic-green);
+    border-color: var(--clinic-green);
+}
+
+.text-primary {
+    color: var(--clinic-green) !important;
+}
+
+.bg-primary {
+    background-color: var(--clinic-green) !important;
+}
+
+.border-primary {
+    border-color: var(--clinic-green) !important;
+}
+
+/* Form controls focus state */
+.form-control:focus, .form-select:focus {
+    border-color: var(--clinic-green);
+    box-shadow: 0 0 0 0.2rem rgba(142, 198, 65, 0.25);
 }
 
 .card-header h4, .card-header h5 {
