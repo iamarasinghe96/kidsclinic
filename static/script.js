@@ -207,12 +207,7 @@ function displayPatientInfo(patient) {
                 }
             </div>
             
-            <div class="mt-3">
-                <button class="btn btn-success btn-sm" onclick="completeConsultation()">
-                    <i data-feather="check"></i>
-                    Complete Consultation
-                </button>
-            </div>
+
         </div>
     `;
     feather.replace();

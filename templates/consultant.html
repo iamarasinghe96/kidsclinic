@@ -199,9 +199,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="startNewShift()">
-                    <i data-feather="refresh-cw"></i>
-                    Start New Shift
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="window.location.href='/consultant'">
+                    <i data-feather="check"></i>
+                    Close
                 </button>
             </div>
         </div>
@@ -268,7 +268,7 @@ async function endShift() {
 function showShiftSummary(data) {
     const summaryContent = document.getElementById('summaryContent');
     
-    // Create animated summary content
+    // Create animated summary content with earnings
     summaryContent.innerHTML = `
         <div class="shift-summary-animation">
             <div class="mb-4">
@@ -277,7 +277,7 @@ function showShiftSummary(data) {
             </div>
             
             <div class="row text-center mb-4">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card bg-light">
                         <div class="card-body">
                             <div class="h3 text-warning animate-number" data-target="${data.remaining_patients}">0</div>
@@ -285,7 +285,15 @@ function showShiftSummary(data) {
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <div class="h5 text-success">LKR ${data.total_earnings.toFixed(2)}</div>
+                            <small>Total Earnings</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
                     <div class="card bg-light">
                         <div class="card-body">
                             <div class="h5 text-muted">${data.shift_date}</div>
@@ -298,7 +306,7 @@ function showShiftSummary(data) {
             <div class="alert alert-success">
                 <i data-feather="award"></i>
                 <strong>Great work, ${data.consultant_name}!</strong><br>
-                You have successfully completed your shift for today.
+                Average earnings for the session: LKR ${data.average_earnings.toFixed(2)}
             </div>
         </div>
     `;
