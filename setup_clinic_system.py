@@ -53,7 +53,7 @@ def create_installation_package():
                 shutil.copy2(item, export_dir)
     
     # Create requirements.txt
-    with open(os.path.join(export_dir, 'requirements.txt'), 'w') as f:
+    with open(os.path.join(export_dir, 'requirements.txt'), 'w', encoding='utf-8') as f:
         f.write(create_requirements_file())
     
     # Copy the launcher scripts we just created
@@ -188,7 +188,7 @@ For issues, check that:
 4. Firewall allows port 5000
 """
     
-    with open(os.path.join(export_dir, 'SETUP_README.md'), 'w') as f:
+    with open(os.path.join(export_dir, 'SETUP_README.md'), 'w', encoding='utf-8') as f:
         f.write(readme_content)
     
     # Create quick start batch files
@@ -203,7 +203,7 @@ python clinic_server_launcher.py
 pause
 """
     
-    with open(os.path.join(export_dir, 'START_SERVER.bat'), 'w') as f:
+    with open(os.path.join(export_dir, 'START_SERVER.bat'), 'w', encoding='utf-8') as f:
         f.write(server_batch)
     
     # Windows batch file for client setup
@@ -217,7 +217,7 @@ python create_clinic_shortcuts.py
 pause
 """
     
-    with open(os.path.join(export_dir, 'SETUP_SHORTCUTS.bat'), 'w') as f:
+    with open(os.path.join(export_dir, 'SETUP_SHORTCUTS.bat'), 'w', encoding='utf-8') as f:
         f.write(client_batch)
     
     # Shell scripts for Mac/Linux
@@ -230,7 +230,7 @@ echo
 python3 clinic_server_launcher.py
 """
     
-    with open(os.path.join(export_dir, 'start_server.sh'), 'w') as f:
+    with open(os.path.join(export_dir, 'start_server.sh'), 'w', encoding='utf-8') as f:
         f.write(server_shell)
     os.chmod(os.path.join(export_dir, 'start_server.sh'), 0o755)
     
@@ -243,7 +243,7 @@ echo
 python3 create_clinic_shortcuts.py
 """
     
-    with open(os.path.join(export_dir, 'setup_shortcuts.sh'), 'w') as f:
+    with open(os.path.join(export_dir, 'setup_shortcuts.sh'), 'w', encoding='utf-8') as f:
         f.write(client_shell)
     os.chmod(os.path.join(export_dir, 'setup_shortcuts.sh'), 0o755)
     
