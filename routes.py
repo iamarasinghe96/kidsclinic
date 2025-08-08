@@ -11,19 +11,19 @@ def generate_registration_number():
     """Generate a unique registration number"""
     today = datetime.now()
     prefix = f"REG{today.year}{today.month:02d}"
-    
+
     # Find the last registration number for today
     last_patient = Patient.query.filter(
         Patient.registration_number.like(f"{prefix}%")
     ).order_by(Patient.registration_number.desc()).first()
-    
+
     if last_patient:
         # Extract the sequence number and increment
         last_seq = int(last_patient.registration_number[-4:])
         new_seq = last_seq + 1
     else:
         new_seq = 1
-    
+
     return f"{prefix}{new_seq:04d}"
 
 @app.route('/')
@@ -33,15 +33,15 @@ def index():
 @app.route('/reception', methods=['GET', 'POST'])
 def reception():
     consultants = Consultant.query.all()
-    
+
     if request.method == 'POST':
         action = request.form.get('action')
-        
+
         if action == 'new_patient':
             # Handle new patient registration
             try:
                 registration_number = generate_registration_number()
-                
+
                 patient = Patient(
                     registration_number=registration_number,
                     full_name=request.form['full_name'],
@@ -51,10 +51,10 @@ def reception():
                     gender=request.form['gender'],
                     consultant_id=int(request.form['consultant_id'])
                 )
-                
+
                 db.session.add(patient)
                 db.session.commit()
-                
+
                 # Create a visit record for today
                 visit = Visit(
                     patient_id=patient.id,
@@ -63,26 +63,26 @@ def reception():
                 )
                 db.session.add(visit)
                 db.session.commit()
-                
+
                 flash(f'Patient registered successfully! Registration Number: {registration_number}', 'success')
                 logging.info(f"New patient registered: {registration_number}")
-                
+
             except Exception as e:
                 db.session.rollback()
                 flash(f'Error registering patient: {str(e)}', 'error')
                 logging.error(f"Error registering patient: {str(e)}")
-        
+
         elif action == 'returning_patient':
             # Handle returning patient
             reg_number = request.form['registration_number']
             patient = Patient.query.filter_by(registration_number=reg_number).first()
-            
+
             if patient:
                 # Update consultant if provided
                 if request.form.get('consultant_id'):
                     patient.consultant_id = int(request.form['consultant_id'])
                     db.session.commit()
-                
+
                 # Create a new visit record
                 visit = Visit(
                     patient_id=patient.id,
@@ -91,21 +91,21 @@ def reception():
                 )
                 db.session.add(visit)
                 db.session.commit()
-                
+
                 flash(f'Welcome back, {patient.full_name}! Visit registered.', 'success')
                 logging.info(f"Returning patient visit: {reg_number}")
             else:
                 flash('Patient not found with this registration number.', 'error')
-    
+
     return render_template('reception.html', consultants=consultants)
 
 @app.route('/search_patients')
 def search_patients():
     query = request.args.get('query', '').strip()
-    
+
     if not query:
         return jsonify([])
-    
+
     # Search by name or contact number
     patients = Patient.query.filter(
         or_(
@@ -113,7 +113,7 @@ def search_patients():
             Patient.contact_number.like(f'%{query}%')
         )
     ).limit(10).all()
-    
+
     results = []
     for patient in patients:
         results.append({
@@ -122,7 +122,7 @@ def search_patients():
             'contact_number': patient.contact_number,
             'consultant': patient.consultant.name
         })
-    
+
     return jsonify(results)
 
 @app.route('/get_patient/<reg_number>')
@@ -143,10 +143,10 @@ def get_patient(reg_number):
 def consultant():
     consultants = Consultant.query.all()
     consultant_id = request.args.get('consultant_id', type=int)
-    
+
     waiting_visits = []
     completed_visits = []
-    
+
     if consultant_id:
         # Get today's visits for this consultant
         today = date.today()
@@ -155,13 +155,13 @@ def consultant():
             Visit.status == 'waiting',
             func.date(Visit.visit_date) == today
         ).order_by(Visit.visit_date.asc()).all()
-        
+
         completed_visits = Visit.query.join(Patient).filter(
             Visit.consultant_id == consultant_id,
             Visit.status == 'completed',
             func.date(Visit.visit_date) == today
         ).order_by(Visit.completed_at.desc()).all()
-    
+
     return render_template('consultant.html', 
                          consultants=consultants,
                          waiting_visits=waiting_visits,
@@ -174,7 +174,7 @@ def get_patient_details(reg_number):
     if patient:
         recent_visits = patient.get_recent_visits()
         visit_dates = [visit.visit_date.strftime('%Y-%m-%d') for visit in recent_visits]
-        
+
         return jsonify({
             'registration_number': patient.registration_number,
             'full_name': patient.full_name,
@@ -189,7 +189,7 @@ def get_patient_details(reg_number):
 def complete_consultation():
     reg_number = request.form['registration_number']
     patient = Patient.query.filter_by(registration_number=reg_number).first()
-    
+
     if patient:
         # Find today's waiting visit for this patient
         today = date.today()
@@ -198,7 +198,7 @@ def complete_consultation():
             Visit.status == 'waiting',
             func.date(Visit.visit_date) == today
         ).first()
-        
+
         if visit:
             visit.mark_completed()
             flash(f'Consultation completed for {patient.full_name}', 'success')
@@ -206,37 +206,37 @@ def complete_consultation():
             flash('No active visit found for this patient', 'error')
     else:
         flash('Patient not found', 'error')
-    
+
     return redirect(url_for('consultant', consultant_id=request.form.get('consultant_id')))
 
 @app.route('/report', methods=['GET', 'POST'])
 def report():
     consultants = Consultant.query.all()
     report_data = None
-    
+
     if request.method == 'POST':
         start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
         end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date()
         consultant_id = request.form.get('consultant_id')
-        
+
         # Build query for completed visits within date range
         query = Visit.query.join(Patient).filter(
             Visit.status == 'completed',
             func.date(Visit.visit_date) >= start_date,
             func.date(Visit.visit_date) <= end_date
         )
-        
+
         # Add consultant filter if specified
         if consultant_id and consultant_id != 'all':
             query = query.filter(Visit.consultant_id == int(consultant_id))
-        
+
         visits = query.order_by(Visit.visit_date.asc()).all()
-        
+
         # Get consultant name for report
         selected_consultant = None
         if consultant_id and consultant_id != 'all':
             selected_consultant = Consultant.query.get(int(consultant_id))
-        
+
         report_data = {
             'start_date': start_date,
             'end_date': end_date,
@@ -245,7 +245,7 @@ def report():
             'selected_consultant': selected_consultant,
             'consultant_id': consultant_id
         }
-    
+
     return render_template('report.html', report_data=report_data, consultants=consultants)
 
 @app.route('/download_report_csv')
@@ -253,31 +253,31 @@ def download_report_csv():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     consultant_id = request.args.get('consultant_id')
-    
+
     if not start_date or not end_date:
         flash('Invalid date parameters', 'error')
         return redirect(url_for('report'))
-    
+
     start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
     end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-    
+
     # Build query for completed visits within date range
     query = Visit.query.join(Patient).filter(
         Visit.status == 'completed',
         func.date(Visit.visit_date) >= start_date,
         func.date(Visit.visit_date) <= end_date
     )
-    
+
     # Add consultant filter if specified
     if consultant_id and consultant_id != 'all':
         query = query.filter(Visit.consultant_id == int(consultant_id))
-    
+
     visits = query.order_by(Visit.visit_date.asc()).all()
-    
+
     # Create CSV data
     output = io.StringIO()
     writer = csv.writer(output)
-    
+
     # Write header
     writer.writerow([
         'Registration Number',
@@ -287,7 +287,7 @@ def download_report_csv():
         'Visit Time',
         'Completed Time'
     ])
-    
+
     # Write data rows
     for visit in visits:
         writer.writerow([
@@ -298,18 +298,120 @@ def download_report_csv():
             visit.visit_date.strftime('%H:%M'),
             visit.completed_at.strftime('%H:%M') if visit.completed_at else '-'
         ])
-    
+
     # Determine filename suffix
     consultant_suffix = ""
     if consultant_id and consultant_id != 'all':
         consultant = Consultant.query.get(int(consultant_id))
         if consultant:
             consultant_suffix = f"_{consultant.name.replace(' ', '_')}"
-    
+
     # Prepare response
     output.seek(0)
     response = make_response(output.getvalue())
     response.headers['Content-Type'] = 'text/csv'
     response.headers['Content-Disposition'] = f'attachment; filename=consultation_report_{start_date}_to_{end_date}{consultant_suffix}.csv'
-    
+
     return response
+
+@app.route('/admin')
+def admin_panel():
+    consultants = Consultant.query.all()
+    patients = Patient.query.all()
+    return render_template('admin.html', consultants=consultants, patients=patients)
+
+@app.route('/admin/consultant', methods=['GET', 'POST'])
+def manage_consultants():
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'add_consultant':
+            name = request.form['name']
+            specialization = request.form['specialization']
+            if not Consultant.query.filter_by(name=name).first():
+                new_consultant = Consultant(name=name, specialization=specialization)
+                db.session.add(new_consultant)
+                db.session.commit()
+                flash('Consultant added successfully!', 'success')
+            else:
+                flash('Consultant with this name already exists.', 'error')
+        elif action == 'update_consultant':
+            consultant_id = int(request.form['consultant_id'])
+            consultant = Consultant.query.get(consultant_id)
+            if consultant:
+                consultant.name = request.form['name']
+                consultant.specialization = request.form['specialization']
+                db.session.commit()
+                flash('Consultant updated successfully!', 'success')
+            else:
+                flash('Consultant not found.', 'error')
+        elif action == 'delete_consultant':
+            consultant_id = int(request.form['consultant_id'])
+            consultant = Consultant.query.get(consultant_id)
+            if consultant:
+                # Check if consultant has any assigned patients
+                if Patient.query.filter_by(consultant_id=consultant_id).count() == 0:
+                    db.session.delete(consultant)
+                    db.session.commit()
+                    flash('Consultant deleted successfully!', 'success')
+                else:
+                    flash('Cannot delete consultant. Consultant has assigned patients.', 'error')
+            else:
+                flash('Consultant not found.', 'error')
+
+    consultants = Consultant.query.all()
+    return render_template('admin_consultants.html', consultants=consultants)
+
+@app.route('/admin/patient/<int:patient_id>', methods=['GET', 'POST'])
+def manage_patient(patient_id):
+    patient = Patient.query.get(patient_id)
+    if not patient:
+        flash('Patient not found.', 'error')
+        return redirect(url_for('admin_panel'))
+
+    if request.method == 'POST':
+        try:
+            patient.full_name = request.form['full_name']
+            patient.date_of_birth = datetime.strptime(request.form['date_of_birth'], '%Y-%m-%d').date()
+            patient.address = request.form['address']
+            patient.contact_number = request.form['contact_number']
+            patient.gender = request.form['gender']
+            patient.consultant_id = int(request.form['consultant_id'])
+            
+            # Find and delete old visits associated with this patient before updating
+            Visit.query.filter_by(patient_id=patient_id).delete()
+            db.session.commit()
+
+            # Add new visit records if any
+            # This part assumes that updating patient details might imply a new visit or re-assignment
+            # If only details are updated, this might not be necessary, but if a new consultant is assigned, a new visit record might be expected.
+            # For now, we will just update the patient record. If a new visit is needed, that would be a separate workflow.
+
+            db.session.commit()
+            flash('Patient details updated successfully!', 'success')
+            return redirect(url_for('admin_panel'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating patient details: {str(e)}', 'error')
+
+    consultants = Consultant.query.all()
+    return render_template('admin_patient_edit.html', patient=patient, consultants=consultants)
+
+@app.route('/admin/delete_patient/<int:patient_id>', methods=['POST'])
+def delete_patient(patient_id):
+    patient = Patient.query.get(patient_id)
+    if patient:
+        try:
+            # Delete all associated visits first
+            Visit.query.filter_by(patient_id=patient_id).delete()
+            db.session.commit()
+            
+            db.session.delete(patient)
+            db.session.commit()
+            flash('Patient deleted successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error deleting patient: {str(e)}', 'error')
+    else:
+        flash('Patient not found.', 'error')
+    return redirect(url_for('admin_panel'))

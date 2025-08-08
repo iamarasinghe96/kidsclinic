@@ -50,6 +50,13 @@
                             Reports
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white {% if request.endpoint == 'admin' %}fw-bold{% endif %}" 
+                           href="{{ url_for('admin') }}">
+                            <i data-feather="settings"></i>
+                            Admin
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
