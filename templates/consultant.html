@@ -278,25 +278,25 @@ function showShiftSummary(data) {
             
             <div class="row text-center mb-4">
                 <div class="col-md-4">
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <div class="h3 text-warning animate-number" data-target="${data.remaining_patients}">0</div>
+                    <div class="card bg-light h-100">
+                        <div class="card-body d-flex flex-column justify-content-center" style="min-height: 100px;">
+                            <div class="h3 text-warning animate-number mb-2" data-target="${data.remaining_patients}">0</div>
                             <small>Remaining Patients</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <div class="h5 text-success">LKR ${data.total_earnings.toFixed(2)}</div>
+                    <div class="card bg-light h-100">
+                        <div class="card-body d-flex flex-column justify-content-center" style="min-height: 100px;">
+                            <div class="h3 text-success mb-2">LKR ${data.total_earnings.toFixed(2)}</div>
                             <small>Total Earnings</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <div class="h5 text-muted">${data.shift_date}</div>
+                    <div class="card bg-light h-100">
+                        <div class="card-body d-flex flex-column justify-content-center" style="min-height: 100px;">
+                            <div class="h3 text-muted mb-2">${data.shift_date}</div>
                             <small>Shift Date</small>
                         </div>
                     </div>
