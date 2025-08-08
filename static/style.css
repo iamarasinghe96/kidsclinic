@@ -1,62 +1,70 @@
 /* Print Styles */
 @media print {
+    /* Hide everything first */
     * {
         visibility: hidden;
     }
     
-    .print-only, .print-only * {
+    /* Show only print content */
+    .print-page, .print-page * {
         visibility: visible;
     }
     
-    body {
-        margin: 0;
-        padding: 0;
-    }
-    
-    .print-only {
-        position: absolute;
+    .print-page {
+        position: fixed;
         left: 0;
         top: 0;
         width: 100%;
         height: 100vh;
-        padding: 20px;
-        box-sizing: border-box;
+        background: white;
+        color: black;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.4;
+        padding: 0;
+        margin: 0;
     }
     
     .print-patient-info {
         position: absolute;
         top: 20px;
         right: 20px;
-        border: 1px solid #000;
+        border: 2px solid #000;
         padding: 15px;
         background: white;
-        font-size: 14px;
-        line-height: 1.4;
-        min-width: 250px;
+        font-size: 12px;
+        line-height: 1.3;
+        width: 300px;
+    }
+    
+    .print-patient-info p {
+        margin: 8px 0;
+        font-size: 12px;
+    }
+    
+    .print-patient-info strong {
+        font-weight: bold;
     }
     
     .print-consultation-notes {
-        margin-top: 120px;
-        padding-top: 20px;
+        margin-top: 180px;
+        margin-left: 20px;
+        margin-right: 20px;
     }
     
     .print-consultation-notes h3 {
-        font-size: 18px;
-        margin-bottom: 20px;
+        font-size: 16px;
+        margin-bottom: 25px;
         border-bottom: 2px solid #000;
-        padding-bottom: 5px;
+        padding-bottom: 8px;
+        font-weight: bold;
     }
     
     .print-line {
         border-bottom: 1px solid #000;
-        height: 30px;
-        margin-bottom: 20px;
+        height: 25px;
+        margin-bottom: 25px;
         width: 100%;
-    }
-    
-    /* Hide all other elements */
-    .navbar, .alert, .btn, .card, .container, main {
-        display: none !important;
     }
 }
 

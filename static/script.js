@@ -276,28 +276,107 @@ function printPatientInfo() {
                 throw new Error(data.error);
             }
             
-            const printInfo = document.getElementById('printPatientInfo');
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank');
             const currentDateTime = new Date().toLocaleString();
             
-            printInfo.innerHTML = `
-                <p><strong>Registration #:</strong><br>${data.registration_number}</p>
-                <p><strong>Name:</strong><br>${data.full_name}</p>
-                <p><strong>Age:</strong><br>${data.age} years</p>
-                <p><strong>Gender:</strong><br>${data.gender}</p>
-                <p><strong>Date of Birth:</strong><br>${data.date_of_birth}</p>
-                <p><strong>Visit Date/Time:</strong><br>${currentDateTime}</p>
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Patient Consultation - ${data.full_name}</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                        body {
+                            font-family: Arial, sans-serif;
+                            font-size: 12px;
+                            line-height: 1.4;
+                            background: white;
+                            color: black;
+                            padding: 20px;
+                        }
+                        
+                        .patient-info {
+                            position: absolute;
+                            top: 20px;
+                            right: 20px;
+                            border: 2px solid #000;
+                            padding: 15px;
+                            width: 300px;
+                            background: white;
+                        }
+                        
+                        .patient-info p {
+                            margin: 8px 0;
+                        }
+                        
+                        .patient-info strong {
+                            font-weight: bold;
+                        }
+                        
+                        .consultation-notes {
+                            margin-top: 180px;
+                            margin-left: 20px;
+                            margin-right: 20px;
+                        }
+                        
+                        .consultation-notes h3 {
+                            font-size: 16px;
+                            margin-bottom: 25px;
+                            border-bottom: 2px solid #000;
+                            padding-bottom: 8px;
+                            font-weight: bold;
+                        }
+                        
+                        .line {
+                            border-bottom: 1px solid #000;
+                            height: 25px;
+                            margin-bottom: 25px;
+                            width: 100%;
+                        }
+                        
+                        @media print {
+                            body { margin: 0; padding: 20px; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="patient-info">
+                        <p><strong>Registration #:</strong><br>${data.registration_number}</p>
+                        <p><strong>Name:</strong><br>${data.full_name}</p>
+                        <p><strong>Age:</strong><br>${data.age} years</p>
+                        <p><strong>Gender:</strong><br>${data.gender}</p>
+                        <p><strong>Date of Birth:</strong><br>${data.date_of_birth}</p>
+                        <p><strong>Visit Date/Time:</strong><br>${currentDateTime}</p>
+                    </div>
+                    <div class="consultation-notes">
+                        <h3>Consultation Notes:</h3>
+                        <div class="line"></div>
+                        <div class="line"></div>
+                        <div class="line"></div>
+                        <div class="line"></div>
+                        <div class="line"></div>
+                    </div>
+                </body>
+                </html>
             `;
             
-            // Show the print template and trigger print
-            const printTemplate = document.getElementById('printTemplate');
-            printTemplate.style.display = 'block';
+            printWindow.document.open();
+            printWindow.document.write(printContent);
+            printWindow.document.close();
             
-            // Trigger print after a short delay to ensure content is rendered
-            setTimeout(() => {
-                window.print();
-                // Hide the print template after printing
-                printTemplate.style.display = 'none';
-            }, 100);
+            // Wait for content to load, then print and close
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 500);
+            };
         })
         .catch(error => {
             alert('Error loading patient information for printing');
