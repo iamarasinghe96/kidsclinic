@@ -1,0 +1,140 @@
+/* Print Styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    .print-content, .print-content * {
+        visibility: visible;
+    }
+    
+    .print-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+    }
+    
+    /* Hide navigation and other elements when printing */
+    .navbar, .alert, .btn {
+        display: none !important;
+    }
+}
+
+/* Custom Styles */
+.patient-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.patient-item:hover {
+    background-color: var(--bs-gray-100);
+}
+
+.patient-item.active {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.card-header h4, .card-header h5 {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.text-muted i {
+    margin-right: 8px;
+}
+
+/* Search Results Styling */
+#searchResultsList .list-group-item {
+    cursor: pointer;
+    border: 1px solid var(--bs-border-color);
+    margin-bottom: 2px;
+}
+
+#searchResultsList .list-group-item:hover {
+    background-color: var(--bs-gray-100);
+}
+
+/* Patient Information Card */
+#patientInfo .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--bs-gray-200);
+}
+
+#patientInfo .info-label {
+    font-weight: 600;
+    color: var(--bs-gray-600);
+}
+
+#patientInfo .info-value {
+    color: var(--bs-body-color);
+}
+
+/* Complete Consultation Button */
+.complete-consultation-btn {
+    position: sticky;
+    bottom: 20px;
+    z-index: 1000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .col-lg-4 {
+        margin-bottom: 1rem;
+    }
+    
+    .card-header .btn-sm {
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Table improvements */
+.table th {
+    border-top: none;
+    font-weight: 600;
+    background-color: var(--bs-gray-100);
+}
+
+/* Form improvements */
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Alert improvements */
+.alert {
+    border: none;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    border-left-color: var(--bs-success);
+}
+
+.alert-danger {
+    border-left-color: var(--bs-danger);
+}
+
+.alert-info {
+    border-left-color: var(--bs-info);
+}
+
+/* Icon spacing */
+[data-feather] {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+}
+
+.navbar-brand [data-feather] {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}

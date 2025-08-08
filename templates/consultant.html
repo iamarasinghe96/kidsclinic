@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Consultant - Clinic Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i data-feather="stethoscope"></i>
+            Consultant Dashboard
+        </h2>
+        
+        <!-- Consultant Selection -->
+        <div class="col-md-4">
+            <select class="form-select" id="consultantSelect" onchange="selectConsultant()">
+                <option value="">Select Consultant</option>
+                {% for consultant in consultants %}
+                    <option value="{{ consultant.id }}" 
+                            {% if consultant.id == selected_consultant_id %}selected{% endif %}>
+                        {{ consultant.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+{% if selected_consultant_id %}
+<div class="row">
+    <!-- Patient Queue -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="clock"></i> Patient Queue ({{ waiting_patients|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if waiting_patients %}
+                    <div class="list-group">
+                        {% for patient in waiting_patients %}
+                            <a href="#" class="list-group-item list-group-item-action patient-item" 
+                               data-reg-number="{{ patient.registration_number }}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ patient.full_name }}</h6>
+                                    <small>{{ patient.created_at.strftime('%H:%M') }}</small>
+                                </div>
+                                <p class="mb-1">Reg: {{ patient.registration_number }}</p>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i data-feather="users"></i>
+                        <p>No patients waiting</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Patient Information -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i data-feather="user"></i> Patient Information</h5>
+                <div>
+                    <button class="btn btn-sm btn-secondary" onclick="resetPatientInfo()">
+                        <i data-feather="refresh-cw"></i> Reset
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="printPatientInfo()" id="printBtn" disabled>
+                        <i data-feather="printer"></i> Print
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="patientInfo">
+                    <div class="text-center text-muted">
+                        <i data-feather="info"></i>
+                        <p>Select a patient from the queue to view details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Completed Queue -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="check-circle"></i> Completed Queue ({{ completed_patients|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if completed_patients %}
+                    <div class="list-group">
+                        {% for patient in completed_patients %}
+                            <a href="#" class="list-group-item list-group-item-action patient-item" 
+                               data-reg-number="{{ patient.registration_number }}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ patient.full_name }}</h6>
+                                    <small class="text-success">Completed</small>
+                                </div>
+                                <p class="mb-1">Reg: {{ patient.registration_number }}</p>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i data-feather="check-circle"></i>
+                        <p>No completed consultations</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Consultation Complete Form -->
+<form method="POST" action="{{ url_for('complete_consultation') }}" id="completeForm" class="d-none">
+    <input type="hidden" name="registration_number" id="completeRegNumber">
+    <input type="hidden" name="consultant_id" value="{{ selected_consultant_id }}">
+</form>
+
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <i data-feather="info"></i>
+            Please select a consultant from the dropdown above to view the patient queue.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Print Template (Hidden) -->
+<div id="printTemplate" style="display: none;">
+    <div class="print-content">
+        <div style="text-align: right; margin-bottom: 20px;">
+            <div id="printPatientInfo"></div>
+        </div>
+        <div style="margin-top: 30px;">
+            <h5>Consultation Notes:</h5>
+            <div style="margin-top: 20px;">
+                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
+                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
+                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
+                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
+                <div style="border-bottom: 1px solid #000; margin-bottom: 20px; height: 25px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
