@@ -1,6 +1,10 @@
 from app import db
 from datetime import datetime
 from sqlalchemy import func
+import pytz
+
+# Sri Lankan timezone
+SL_TZ = pytz.timezone('Asia/Colombo')
 
 class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -11,7 +15,7 @@ class Patient(db.Model):
     contact_number = db.Column(db.String(20), nullable=False)
     gender = db.Column(db.String(10), nullable=False)
     consultant_id = db.Column(db.Integer, db.ForeignKey('consultant.id'), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(SL_TZ).replace(tzinfo=None))
     
     # Relationships
     consultant = db.relationship('Consultant', backref='patients')
@@ -37,7 +41,7 @@ class Patient(db.Model):
 class Consultant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(SL_TZ).replace(tzinfo=None))
     
     def __repr__(self):
         return f'<Consultant {self.name}>'
@@ -46,7 +50,7 @@ class Visit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
     consultant_id = db.Column(db.Integer, db.ForeignKey('consultant.id'), nullable=False)
-    visit_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    visit_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(SL_TZ).replace(tzinfo=None))
     status = db.Column(db.String(20), nullable=False, default='waiting')  # waiting, completed
     completed_at = db.Column(db.DateTime)
     
@@ -59,5 +63,5 @@ class Visit(db.Model):
     def mark_completed(self):
         """Mark this visit as completed"""
         self.status = 'completed'
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(SL_TZ).replace(tzinfo=None)
         db.session.commit()
