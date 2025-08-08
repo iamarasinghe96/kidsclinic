@@ -151,4 +151,17 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Admin Panel Link (Bottom of Reports Page Only) -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="text-center">
+            <hr>
+            <a href="{{ url_for('admin_login') }}" class="btn btn-outline-secondary btn-sm">
+                <i data-feather="settings"></i>
+                Admin Panel
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import render_template, request, redirect, url_for, flash, jsonify, make_response, session
 from datetime import datetime, date
 from sqlalchemy import or_, func
 from app import app, db
@@ -313,3 +313,142 @@ def download_report_csv():
     response.headers['Content-Disposition'] = f'attachment; filename=consultation_report_{start_date}_to_{end_date}{consultant_suffix}.csv'
     
     return response
+
+# Admin Panel Routes
+@app.route('/admin_login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username == 'drajitha' and password == 'ajith@galle':
+            session['admin_logged_in'] = True
+            flash('Admin login successful', 'success')
+            return redirect(url_for('admin_panel'))
+        else:
+            flash('Invalid credentials', 'error')
+    
+    return render_template('admin_login.html')
+
+@app.route('/admin_panel')
+def admin_panel():
+    if not session.get('admin_logged_in'):
+        flash('Please log in to access admin panel', 'error')
+        return redirect(url_for('admin_login'))
+    
+    consultants = Consultant.query.all()
+    total_patients = Patient.query.count()
+    total_visits = Visit.query.count()
+    
+    return render_template('admin_panel.html', 
+                         consultants=consultants,
+                         total_patients=total_patients,
+                         total_visits=total_visits)
+
+@app.route('/admin_logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    flash('Logged out successfully', 'success')
+    return redirect(url_for('report'))
+
+@app.route('/admin/add_consultant', methods=['POST'])
+def admin_add_consultant():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    name = request.form.get('name', '').strip()
+    if not name:
+        flash('Consultant name is required', 'error')
+        return redirect(url_for('admin_panel'))
+    
+    # Check if consultant already exists
+    existing = Consultant.query.filter_by(name=name).first()
+    if existing:
+        flash('Consultant with this name already exists', 'error')
+        return redirect(url_for('admin_panel'))
+    
+    try:
+        consultant = Consultant(name=name)
+        db.session.add(consultant)
+        db.session.commit()
+        flash(f'Consultant "{name}" added successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error adding consultant: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/edit_consultant', methods=['POST'])
+def admin_edit_consultant():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    consultant_id = request.form.get('consultant_id')
+    new_name = request.form.get('name', '').strip()
+    
+    if not new_name:
+        flash('Consultant name is required', 'error')
+        return redirect(url_for('admin_panel'))
+    
+    consultant = Consultant.query.get_or_404(consultant_id)
+    
+    # Check if new name already exists (excluding current consultant)
+    existing = Consultant.query.filter(
+        Consultant.name == new_name,
+        Consultant.id != consultant_id
+    ).first()
+    
+    if existing:
+        flash('Another consultant with this name already exists', 'error')
+        return redirect(url_for('admin_panel'))
+    
+    try:
+        old_name = consultant.name
+        consultant.name = new_name
+        db.session.commit()
+        flash(f'Consultant "{old_name}" updated to "{new_name}"', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating consultant: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/cleanup_data', methods=['POST'])
+def admin_cleanup_data():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    cleanup_date = request.form.get('cleanup_date')
+    if not cleanup_date:
+        flash('Please select a cleanup date', 'error')
+        return redirect(url_for('admin_panel'))
+    
+    cleanup_date = datetime.strptime(cleanup_date, '%Y-%m-%d').date()
+    
+    try:
+        # Delete visits before the specified date
+        visits_to_delete = Visit.query.filter(func.date(Visit.visit_date) < cleanup_date).all()
+        visit_count = len(visits_to_delete)
+        
+        for visit in visits_to_delete:
+            db.session.delete(visit)
+        
+        # Find patients with no remaining visits and delete them
+        patients_with_no_visits = Patient.query.filter(
+            ~Patient.id.in_(db.session.query(Visit.patient_id))
+        ).all()
+        
+        patient_count = len(patients_with_no_visits)
+        
+        for patient in patients_with_no_visits:
+            db.session.delete(patient)
+        
+        db.session.commit()
+        
+        flash(f'Data cleanup completed: {visit_count} visits and {patient_count} patients deleted', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error during data cleanup: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_panel'))
