@@ -207,11 +207,23 @@ def consultant():
             func.date(Visit.visit_date) == today
         ).count()
         
-        total_completed = Visit.query.filter(
+        # Check if there's an active shift
+        active_shift_check = Visit.query.filter(
             Visit.consultant_id == consultant_id,
-            Visit.status == 'completed',
+            Visit.status == 'waiting',
             func.date(Visit.visit_date) == today
-        ).count()
+        ).count() > 0
+        
+        # Match the completed count with what's being displayed
+        if active_shift_check:
+            total_completed = Visit.query.filter(
+                Visit.consultant_id == consultant_id,
+                Visit.status == 'completed',
+                func.date(Visit.visit_date) == today
+            ).count()
+        else:
+            # New shift - no completed visits shown
+            total_completed = 0
     
     return render_template('consultant.html', 
                          consultants=consultants,
