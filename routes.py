@@ -464,38 +464,44 @@ def admin_cleanup_data():
             db.session.rollback()
             flash(f'Error during date range cleanup: {str(e)}', 'error')
     
-    elif cleanup_type == 'registration_number':
-        reg_number = request.form.get('registration_number', '').strip()
+    elif cleanup_type == 'selected_visits':
+        visit_ids = request.form.getlist('visit_ids')
+        delete_patient = request.form.get('delete_patient') == 'on'
         
-        if not reg_number:
-            flash('Please enter a registration number', 'error')
+        if not visit_ids:
+            flash('Please select at least one visit to delete', 'error')
             return redirect(url_for('admin_panel'))
         
         try:
-            # Find patient by registration number
-            patient = Patient.query.filter_by(registration_number=reg_number).first()
+            # Get visits to delete
+            visits_to_delete = Visit.query.filter(Visit.id.in_(visit_ids)).all()
+            patient = visits_to_delete[0].patient if visits_to_delete else None
             
-            if not patient:
-                flash(f'Patient with registration number "{reg_number}" not found', 'error')
-                return redirect(url_for('admin_panel'))
-            
-            # Get all visits for this patient
-            visits = Visit.query.filter_by(patient_id=patient.id).all()
-            visit_count = len(visits)
-            
-            # Delete all visits for this patient
-            for visit in visits:
+            # Delete selected visits
+            for visit in visits_to_delete:
                 db.session.delete(visit)
             
-            # Delete the patient
-            db.session.delete(patient)
+            deleted_count = len(visits_to_delete)
+            
+            # Delete patient if requested and no other visits remain
+            patient_deleted = False
+            if delete_patient and patient:
+                remaining_visits = Visit.query.filter_by(patient_id=patient.id).filter(~Visit.id.in_(visit_ids)).count()
+                if remaining_visits == 0:
+                    db.session.delete(patient)
+                    patient_deleted = True
+            
             db.session.commit()
             
-            flash(f'Patient "{patient.full_name}" ({reg_number}) and {visit_count} related visits deleted successfully', 'success')
+            message = f'{deleted_count} visit(s) deleted successfully'
+            if patient_deleted:
+                message += f' and patient "{patient.full_name}" removed'
+            
+            flash(message, 'success')
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Error deleting patient record: {str(e)}', 'error')
+            flash(f'Error deleting visits: {str(e)}', 'error')
     
     elif cleanup_type == 'before_date':
         cleanup_date = request.form.get('cleanup_date')
@@ -535,3 +541,39 @@ def admin_cleanup_data():
         flash('Invalid cleanup type selected', 'error')
     
     return redirect(url_for('admin_panel'))
+
+@app.route('/admin/search_patient_visits')
+def admin_search_patient_visits():
+    if not session.get('admin_logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    reg_number = request.args.get('reg_number', '').strip()
+    if not reg_number:
+        return jsonify({'error': 'Registration number is required'}), 400
+    
+    patient = Patient.query.filter_by(registration_number=reg_number).first()
+    if not patient:
+        return jsonify({'error': f'Patient with registration number "{reg_number}" not found'}), 404
+    
+    visits = Visit.query.filter_by(patient_id=patient.id).order_by(Visit.visit_date.desc()).all()
+    
+    visit_data = []
+    for visit in visits:
+        visit_data.append({
+            'id': visit.id,
+            'visit_date': visit.visit_date.strftime('%Y-%m-%d'),
+            'visit_time': visit.visit_date.strftime('%H:%M'),
+            'status': visit.status,
+            'consultant': visit.consultant.name,
+            'completed_at': visit.completed_at.strftime('%H:%M') if visit.completed_at else None
+        })
+    
+    return jsonify({
+        'patient': {
+            'registration_number': patient.registration_number,
+            'full_name': patient.full_name,
+            'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d'),
+            'contact_number': patient.contact_number
+        },
+        'visits': visit_data
+    })
