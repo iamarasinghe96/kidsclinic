@@ -146,27 +146,69 @@ def consultant():
     
     waiting_visits = []
     completed_visits = []
+    selected_consultant = None
+    greeting = ""
     
     if consultant_id:
+        selected_consultant = Consultant.query.get(consultant_id)
         # Get today's visits for this consultant
         today = date.today()
+        
+        # Limit queues to fit page better - 8 waiting, 5 completed
         waiting_visits = Visit.query.join(Patient).filter(
             Visit.consultant_id == consultant_id,
             Visit.status == 'waiting',
             func.date(Visit.visit_date) == today
-        ).order_by(Visit.visit_date.asc()).all()
+        ).order_by(Visit.visit_date.asc()).limit(8).all()
         
         completed_visits = Visit.query.join(Patient).filter(
             Visit.consultant_id == consultant_id,
             Visit.status == 'completed',
             func.date(Visit.visit_date) == today
-        ).order_by(Visit.completed_at.desc()).all()
+        ).order_by(Visit.completed_at.desc()).limit(5).all()
+        
+        # Generate time-based greeting
+        from datetime import datetime
+        import pytz
+        
+        # Sri Lankan timezone
+        lk_tz = pytz.timezone('Asia/Colombo')
+        current_time = datetime.now(lk_tz)
+        hour = current_time.hour
+        
+        if 5 <= hour < 12:
+            greeting = "Good Morning"
+        elif 12 <= hour < 17:
+            greeting = "Good Afternoon"
+        else:
+            greeting = "Good Evening"
+    
+    # Count totals for the day (not limited)
+    total_waiting = 0
+    total_completed = 0
+    if consultant_id:
+        today = date.today()
+        total_waiting = Visit.query.filter(
+            Visit.consultant_id == consultant_id,
+            Visit.status == 'waiting',
+            func.date(Visit.visit_date) == today
+        ).count()
+        
+        total_completed = Visit.query.filter(
+            Visit.consultant_id == consultant_id,
+            Visit.status == 'completed',
+            func.date(Visit.visit_date) == today
+        ).count()
     
     return render_template('consultant.html', 
                          consultants=consultants,
                          waiting_visits=waiting_visits,
                          completed_visits=completed_visits,
-                         selected_consultant_id=consultant_id)
+                         selected_consultant_id=consultant_id,
+                         selected_consultant=selected_consultant,
+                         greeting=greeting,
+                         total_waiting=total_waiting,
+                         total_completed=total_completed)
 
 @app.route('/get_patient_details/<reg_number>')
 def get_patient_details(reg_number):
@@ -607,4 +649,49 @@ def admin_search_patient_visits():
             'contact_number': patient.contact_number
         },
         'visits': visit_data
+    })
+
+@app.route('/end_shift', methods=['POST'])
+def end_shift():
+    consultant_id = request.form.get('consultant_id', type=int)
+    if not consultant_id:
+        return jsonify({'error': 'Consultant ID required'}), 400
+    
+    consultant = Consultant.query.get(consultant_id)
+    if not consultant:
+        return jsonify({'error': 'Consultant not found'}), 404
+    
+    # Get today's shift summary
+    today = date.today()
+    
+    total_completed = Visit.query.filter(
+        Visit.consultant_id == consultant_id,
+        Visit.status == 'completed',
+        func.date(Visit.visit_date) == today
+    ).count()
+    
+    remaining_patients = Visit.query.filter(
+        Visit.consultant_id == consultant_id,
+        Visit.status == 'waiting',
+        func.date(Visit.visit_date) == today
+    ).count()
+    
+    # Clear completed visits for this consultant for next shift
+    completed_visits = Visit.query.filter(
+        Visit.consultant_id == consultant_id,
+        Visit.status == 'completed',
+        func.date(Visit.visit_date) == today
+    ).all()
+    
+    # Archive or delete completed visits (you can modify this logic as needed)
+    for visit in completed_visits:
+        db.session.delete(visit)
+    
+    db.session.commit()
+    
+    return jsonify({
+        'consultant_name': consultant.name,
+        'total_completed': total_completed,
+        'remaining_patients': remaining_patients,
+        'shift_date': today.strftime('%d/%m/%Y')
     })
