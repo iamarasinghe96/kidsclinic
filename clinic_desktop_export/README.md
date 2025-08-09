@@ -64,7 +64,14 @@ pip install winshell
 
 ### STEP 2: Setup Receptionist's Laptop (Database Server)
 
-1. **Start the Server Control Panel**:
+1. **Start the Server Control Panel** (choose one method):
+   
+   **Easy Method** (recommended):
+   ```
+   python start_clinic_system.py
+   ```
+   
+   **Direct Method**:
    ```
    python clinic_server_launcher.py
    ```

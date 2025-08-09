@@ -149,10 +149,26 @@ def create_server_gui():
     root.mainloop()
 
 if __name__ == "__main__":
-    if not os.path.exists("main.py"):
+    # Try to find main.py in current directory or parent directories
+    current_dir = os.getcwd()
+    main_py_path = None
+    
+    # Check current directory
+    if os.path.exists("main.py"):
+        main_py_path = "main.py"
+    # Check if we're in a subdirectory - look one level up
+    elif os.path.exists("../main.py"):
+        os.chdir("..")
+        main_py_path = "main.py"
+    # Check in clinic_desktop_export directory
+    elif os.path.exists("clinic_desktop_export/main.py"):
+        os.chdir("clinic_desktop_export")
+        main_py_path = "main.py"
+    
+    if not main_py_path:
         messagebox.showerror(
             "File Error", 
-            "main.py not found!\nPlease run this script from the clinic management directory."
+            f"main.py not found!\n\nCurrent directory: {current_dir}\n\nPlease ensure you're running this from the clinic management directory or that main.py exists."
         )
         sys.exit(1)
     
