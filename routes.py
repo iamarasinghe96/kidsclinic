@@ -198,6 +198,86 @@ def reception():
     return render_template('reception.html', consultants=consultants)
 
 # New routes for enhanced patient management
+@app.route('/search_patients')
+def search_patients():
+    query = request.args.get('q', '').strip()
+    
+    if len(query) < 2:
+        return jsonify([])
+    
+    # Search by name or contact number or registration number
+    patients = Patient.query.join(Consultant).filter(
+        db.or_(
+            Patient.full_name.ilike(f'%{query}%'),
+            Patient.contact_number.ilike(f'%{query}%'),
+            Patient.registration_number.ilike(f'%{query}%')
+        )
+    ).limit(10).all()
+    
+    results = []
+    for patient in patients:
+        results.append({
+            'id': patient.id,
+            'full_name': patient.full_name,
+            'registration_number': patient.registration_number,
+            'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d'),
+            'contact_number': patient.contact_number,
+            'consultant_name': patient.consultant.name
+        })
+    
+    return jsonify(results)
+
+@app.route('/get_patient_details_by_id/<int:patient_id>')
+def get_patient_details_by_id(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    
+    return jsonify({
+        'id': patient.id,
+        'registration_number': patient.registration_number,
+        'full_name': patient.full_name,
+        'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d'),
+        'contact_number': patient.contact_number,
+        'consultant_name': patient.consultant.name,
+        'consultant_id': patient.consultant_id
+    })
+
+@app.route('/register_returning_patient', methods=['POST'])
+def register_returning_patient():
+    try:
+        patient_id = request.form.get('patient_id')
+        weight_kg = request.form.get('weight_kg')
+        
+        patient = Patient.query.get_or_404(patient_id)
+        
+        # Check if patient already has a visit today
+        today = date.today()
+        existing_visit = Visit.query.filter(
+            Visit.patient_id == patient.id,
+            func.date(Visit.visit_date) == today
+        ).first()
+        
+        if existing_visit:
+            return redirect(url_for('receptionist', error='Patient already registered for today'))
+        
+        # Create new visit
+        visit = Visit(
+            patient_id=patient.id,
+            consultant_id=patient.consultant_id,
+            weight_kg=float(weight_kg) if weight_kg else None
+        )
+        
+        db.session.add(visit)
+        db.session.commit()
+        
+        app.logger.info(f'Returning patient visit created: {patient.registration_number}')
+        
+        return redirect(url_for('receptionist', success=f'Patient {patient.full_name} added to today\'s queue'))
+        
+    except Exception as e:
+        app.logger.error(f'Error registering returning patient: {e}')
+        db.session.rollback()
+        return redirect(url_for('receptionist', error='Error registering returning patient'))
+
 @app.route('/register_patient', methods=['POST'])
 def register_patient():
     """Register a new patient with enhanced data"""
@@ -239,64 +319,8 @@ def register_patient():
     
     return redirect(url_for('receptionist'))
 
-@app.route('/register_returning_patient', methods=['POST'])
-def register_returning_patient():
-    """Register a returning patient visit with weight"""
-    try:
-        reg_number = request.form['registration_number']
-        patient = Patient.query.filter_by(registration_number=reg_number).first()
-        
-        if patient:
-            # Update consultant if provided
-            if request.form.get('consultant_id'):
-                patient.consultant_id = int(request.form['consultant_id'])
-                db.session.commit()
-            
-            # Create a new visit record with weight
-            visit = Visit(
-                patient_id=patient.id,
-                consultant_id=patient.consultant_id,
-                status='waiting',
-                weight_kg=float(request.form['weight_kg']) if request.form.get('weight_kg') else None
-            )
-            db.session.add(visit)
-            db.session.commit()
-            
-            flash(f'Welcome back, {patient.full_name}! Visit registered.', 'success')
-            logging.info(f"Returning patient visit: {reg_number}")
-        else:
-            flash('Patient not found with this registration number.', 'error')
-    
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error registering visit: {str(e)}', 'error')
-        logging.error(f"Error registering returning patient: {str(e)}")
-    
-    return redirect(url_for('receptionist'))
 
-@app.route('/search_patients')
-def search_patients():
-    query = request.args.get('query', '').strip()
-    
-    if not query:
-        return jsonify([])
-    
-    # Search by patient name only
-    patients = Patient.query.filter(
-        Patient.full_name.ilike(f'%{query}%')
-    ).limit(10).all()
-    
-    results = []
-    for patient in patients:
-        results.append({
-            'registration_number': patient.registration_number,
-            'full_name': patient.full_name,
-            'contact_number': patient.contact_number,
-            'consultant': patient.consultant.name,
-            'consultant_id': patient.consultant_id
-        })
-    
-    return jsonify(results)
+
 
 @app.route('/get_patient/<reg_number>')
 def get_patient(reg_number):

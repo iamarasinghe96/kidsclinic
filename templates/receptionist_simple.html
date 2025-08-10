@@ -113,7 +113,7 @@
                         <div class="mb-3">
                             <label for="patientSearch" class="form-label">Search Patient</label>
                             <input type="text" class="form-control" id="patientSearch" 
-                                   placeholder="Enter patient name or registration number">
+                                   placeholder="Enter patient name, registration number, or contact number">
                         </div>
                         
                         <div id="searchResults" class="mb-3"></div>
@@ -212,7 +212,8 @@ function displaySearchResults(patients) {
                     <h6 class="mb-1">${patient.full_name}</h6>
                     <small>${patient.registration_number}</small>
                 </div>
-                <p class="mb-1">DOB: ${patient.date_of_birth} | Consultant: ${patient.consultant_name}</p>
+                <p class="mb-1">DOB: ${patient.date_of_birth} | Contact: ${patient.contact_number}</p>
+                <small class="text-muted">Consultant: ${patient.consultant_name}</small>
             </div>
         `;
     });
