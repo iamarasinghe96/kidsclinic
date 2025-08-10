@@ -1,5 +1,5 @@
 // Global variables
-var currentPatientRegNumber = null;
+let currentPatientRegNumber = null;
 let lastSelectedPatient = null;
 
 // Initialize page when DOM is loaded

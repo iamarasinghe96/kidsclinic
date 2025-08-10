@@ -28,7 +28,7 @@ def generate_registration_number():
 
 @app.route('/')
 def index():
-    return redirect(url_for('receptionist'))
+    return redirect(url_for('reception'))
 
 @app.route('/queue_management')
 def queue_management():

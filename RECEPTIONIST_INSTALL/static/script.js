@@ -1,6 +1,10 @@
-// Global variables
-let currentPatientRegNumber = null;
-let lastSelectedPatient = null;
+// Global variables - avoid redeclaration
+if (typeof currentPatientRegNumber === 'undefined') {
+    var currentPatientRegNumber = null;
+}
+if (typeof lastSelectedPatient === 'undefined') {
+    var lastSelectedPatient = null;
+}
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
