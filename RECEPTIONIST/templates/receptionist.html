@@ -1,0 +1,357 @@
+
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Kids Clinic - Receptionist</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('reception') }}">
+                <i data-feather="heart"></i>
+                The Kids Clinic - Receptionist
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('queue_management') }}">
+                    <i data-feather="users"></i>
+                    Queue Management
+                </a>
+                <a class="nav-link" href="{{ url_for('report') }}">
+                    <i data-feather="bar-chart"></i>
+                    Reports
+                </a>
+                <a class="nav-link" href="{{ url_for('admin_login') }}">
+                    <i data-feather="settings"></i>
+                    Admin
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Left Panel - Patient Registration and List -->
+            <div class="col-md-8">
+                <!-- Patient Registration Form -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i data-feather="user-plus"></i>
+                            Patient Registration
+                        </h5>
+                        <button class="btn btn-sm btn-outline-light" onclick="clearForm()">
+                            <i data-feather="refresh-cw"></i>
+                            Clear Form
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form id="patientForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="patient_name" class="form-label">Patient Name *</label>
+                                    <input type="text" class="form-control" id="patient_name" name="name" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="patient_age" class="form-label">Age</label>
+                                    <input type="number" class="form-control" id="patient_age" name="age" min="0" max="18">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="patient_weight" class="form-label">Weight (kg)</label>
+                                    <input type="number" class="form-control" id="patient_weight" name="weight" step="0.1" min="0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="parent_name" class="form-label">Parent/Guardian Name</label>
+                                    <input type="text" class="form-control" id="parent_name" name="parent_name">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="consultant" class="form-label">Consultant *</label>
+                                    <select class="form-select" id="consultant" name="consultant_id" required>
+                                        <option value="">Select Consultant</option>
+                                        {% for consultant in consultants %}
+                                        <option value="{{ consultant.id }}">{{ consultant.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="patient_phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="patient_phone" name="phone">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="patient_email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="patient_email" name="email">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="plus"></i>
+                                    Register Patient
+                                </button>
+                                <button type="button" class="btn btn-secondary ms-2" onclick="toggleReturningPatient()">
+                                    <i data-feather="search"></i>
+                                    Returning Patient
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Returning Patient Search -->
+                        <div id="returningPatientSection" class="mt-3" style="display: none;">
+                            <hr>
+                            <h6>Search Existing Patients</h6>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="patient_search" 
+                                       placeholder="Search by name or registration number...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                                    <i data-feather="x"></i>
+                                </button>
+                            </div>
+                            <div id="searchResults" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Patients List -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i data-feather="users"></i>
+                            Today's Patients
+                        </h5>
+                        <div>
+                            <select class="form-select form-select-sm d-inline-block w-auto" id="consultantFilter" onchange="filterByConsultant()">
+                                <option value="">All Consultants</option>
+                                {% for consultant in consultants %}
+                                <option value="{{ consultant.id }}">{{ consultant.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-sm btn-outline-light ms-2" onclick="refreshPatientList()">
+                                <i data-feather="refresh-cw"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="patientsList" class="patient-list">
+                            <!-- Patients will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Patient Information -->
+            <div class="col-md-4">
+                <div class="card sticky-top">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="info"></i>
+                            Patient Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="patientInfo">
+                            <div class="text-center text-muted">
+                                <i data-feather="user" style="width: 48px; height: 48px;"></i>
+                                <p class="mt-2">Select a patient to view details</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i data-feather="check-circle"></i>
+                        Success
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="successMessage"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Patient Modal -->
+    <div class="modal fade" id="editPatientModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i data-feather="edit"></i>
+                        Edit Patient Information
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPatientForm">
+                        <input type="hidden" id="edit_patient_id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="edit_patient_name" class="form-label">Patient Name *</label>
+                                <input type="text" class="form-control" id="edit_patient_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_patient_age" class="form-label">Age</label>
+                                <input type="number" class="form-control" id="edit_patient_age" min="0" max="18">
+                            </div>
+                            <div class="col-12">
+                                <label for="edit_parent_name" class="form-label">Parent/Guardian Name</label>
+                                <input type="text" class="form-control" id="edit_parent_name">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_patient_phone" class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="edit_patient_phone">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_patient_email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="edit_patient_email">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_consultant" class="form-label">Consultant</label>
+                                <select class="form-select" id="edit_consultant">
+                                    {% for consultant in consultants %}
+                                    <option value="{{ consultant.id }}">{{ consultant.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_patient_weight" class="form-label">Weight (kg)</label>
+                                <input type="number" class="form-control" id="edit_patient_weight" step="0.1" min="0">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="savePatientChanges()">
+                        <i data-feather="save"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+// Enhanced JavaScript for receptionist interface
+// currentPatientRegNumber and lastSelectedPatient are declared globally in script.js
+
+// Initialize page when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize patient search functionality for returning patients
+    const patientSearchInput = document.getElementById('patient_search');
+    if (patientSearchInput) {
+        let searchTimeout;
+        patientSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchPatients, 300);
+        });
+    }
+
+    // Initialize patient item click handlers
+    initializePatientHandlers();
+    
+    // Set max date for date inputs to today
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    const today = new Date().toISOString().split('T')[0];
+    dateInputs.forEach(input => {
+        if (!input.value) {
+            input.max = today;
+        }
+    });
+});
+
+// Initialize patient click handlers
+function initializePatientHandlers() {
+    document.querySelectorAll('.patient-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const regNumber = this.dataset.regNumber;
+            loadPatientInfo(regNumber);
+            
+            // Update active state
+            document.querySelectorAll('.patient-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+}
+
+// Load and refresh patient list
+function refreshPatientList() {
+    const consultantId = document.getElementById('consultantFilter').value;
+    const url = consultantId ? `/api/patients?consultant_id=${consultantId}` : '/api/patients';
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(patients => {
+            const patientsList = document.getElementById('patientsList');
+            
+            if (patients.length === 0) {
+                patientsList.innerHTML = '<p class="text-muted text-center">No patients registered today</p>';
+                return;
+            }
+            
+            patientsList.innerHTML = patients.map(patient => {
+                const statusColor = patient.current_visit.status === 'waiting' ? 'warning' : 
+                                   patient.current_visit.status === 'completed' ? 'success' : 'secondary';
+                const statusText = patient.current_visit.status === 'waiting' ? 'Waiting' : 
+                                  patient.current_visit.status === 'completed' ? 'Completed' : 'No Visit';
+                                  
+                return `
+                    <div class="patient-item" data-reg-number="${patient.registration_number}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${patient.name} 
+                                    <span class="badge bg-${statusColor} ms-2">${statusText}</span>
+                                </h6>
+                                <small class="text-muted">
+                                    <i data-feather="hash" style="width: 12px; height: 12px;"></i>
+                                    ${patient.registration_number}
+                                    <span class="ms-2">
+                                        <i data-feather="user-check" style="width: 12px; height: 12px;"></i>
+                                        ${patient.consultant_name}
+                                    </span>
+                                    ${patient.age ? `<span class="ms-2"><i data-feather="calendar" style="width: 12px; height: 12px;"></i> ${patient.age}y</span>` : ''}
+                                    ${patient.current_visit.weight ? `<span class="ms-2"><i data-feather="activity" style="width: 12px; height: 12px;"></i> ${patient.current_visit.weight}kg</span>` : ''}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Re-initialize handlers for new elements
+            initializePatientHandlers();
+            feather.replace();
+        })
+        .catch(error => {
+            console.error('Error refreshing patient list:', error);
+            document.getElementById('patientsList').innerHTML = '<p class="text-danger">Error loading patients</p>';
+        });
+}
+
+// Initialize feather icons and load initial data
+feather.replace();
+refreshPatientList();
+
+// Set up auto-refresh
+setInterval(refreshPatientList, 10000); // Refresh every 10 seconds
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+
+/* The Kids Clinic - Custom Styles */
+:root {
+    --clinic-primary: #0d6efd;
+    --clinic-secondary: #6c757d;
+    --clinic-success: #198754;
+    --clinic-warning: #ffc107;
+    --clinic-danger: #dc3545;
+    --clinic-info: #0dcaf0;
+}
+
+body {
+    background-color: #1a1a1a;
+    color: #ffffff;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.navbar-brand i {
+    color: #ff6b9d;
+    margin-right: 8px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+    background-color: #2d3748;
+}
+
+.card-header {
+    background-color: #4a5568;
+    border-bottom: 1px solid #2d3748;
+    font-weight: 600;
+}
+
+.card-header h5 {
+    color: #e2e8f0;
+}
+
+.card-header i {
+    color: var(--clinic-info);
+    margin-right: 8px;
+}
+
+.patient-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.patient-item {
+    padding: 12px;
+    border: 1px solid #4a5568;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #2d3748;
+}
+
+.patient-item:hover {
+    background-color: #4a5568;
+    border-color: var(--clinic-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+}
+
+.patient-item.active {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-color: var(--clinic-primary);
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+}
+
+.queue-item {
+    padding: 15px;
+    border: 1px solid #4a5568;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background-color: #2d3748;
+    transition: all 0.2s ease;
+}
+
+.queue-item:hover {
+    background-color: #4a5568;
+    transform: translateY(-1px);
+}
+
+.queue-item.active {
+    border-color: var(--clinic-primary);
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.consultation-card {
+    border-left: 4px solid var(--clinic-primary);
+}
+
+.waiting-badge {
+    background-color: var(--clinic-warning) !important;
+    color: #000 !important;
+}
+
+.completed-badge {
+    background-color: var(--clinic-success) !important;
+}
+
+.btn-primary {
+    background-color: var(--clinic-primary);
+    border-color: var(--clinic-primary);
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--clinic-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.table-dark {
+    --bs-table-bg: #2d3748;
+    --bs-table-striped-bg: #4a5568;
+}
+
+.alert {
+    border: none;
+    border-radius: 8px;
+}
+
+.modal-content {
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+}
+
+.modal-header {
+    border-bottom: 1px solid #4a5568;
+}
+
+.modal-footer {
+    border-top: 1px solid #4a5568;
+}
+
+/* Print styles */
+@media print {
+    .navbar,
+    .btn,
+    .modal {
+        display: none !important;
+    }
+    
+    body {
+        background-color: white !important;
+        color: black !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        background-color: white !important;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa !important;
+        color: black !important;
+    }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .patient-item,
+    .queue-item {
+        padding: 10px;
+    }
+    
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+    
+    .card-header h5 {
+        font-size: 1rem;
+    }
+}
+
+/* Animation for success messages */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert {
+    animation: slideIn 0.3s ease;
+}
+
+/* Sticky elements */
+.sticky-top {
+    position: sticky;
+    top: 1rem;
+    z-index: 1020;
+}
+
+/* Custom scrollbar */
+.patient-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.patient-list::-webkit-scrollbar-track {
+    background: #2d3748;
+}
+
+.patient-list::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 3px;
+}
+
+.patient-list::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Enhanced form styling */
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #e2e8f0;
+}
+
+.form-control,
+.form-select {
+    background-color: #4a5568;
+    border-color: #718096;
+    color: #ffffff;
+}
+
+.form-control::placeholder {
+    color: #a0aec0;
+}
+
+/* Status indicators */
+.status-waiting {
+    color: var(--clinic-warning);
+}
+
+.status-completed {
+    color: var(--clinic-success);
+}
+
+.status-in-progress {
+    color: var(--clinic-info);
+}
