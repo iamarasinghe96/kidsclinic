@@ -73,18 +73,12 @@
                     </div>
                 </div>
                 
-                <!-- Patient Actions -->
+                <!-- Patient Actions (only visible when patient selected) -->
                 <div id="patientActions" style="display: none;" class="mt-3">
                     <div class="d-grid gap-2">
                         <button type="button" class="btn btn-success" onclick="markComplete()">
                             <i data-feather="check-circle" class="me-2"></i>Mark Consultation Complete
                         </button>
-                    </div>
-                </div>
-                
-                <!-- System Actions (always visible) -->
-                <div class="mt-3">
-                    <div class="d-grid gap-2">
                         <button type="button" class="btn btn-outline-info" onclick="printPatientSummary()" title="Print patient summary">
                             <i data-feather="printer" class="me-2"></i>Print
                         </button>
