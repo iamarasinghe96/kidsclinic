@@ -130,12 +130,33 @@ setInterval(function() {
             if (data.registration_number && data.registration_number !== currentSelectedPatient) {
                 console.log('[CONSULTANT] New patient selected by receptionist:', data.registration_number);
                 showPatientDetails(data.registration_number);
+            } else if (!data.registration_number && currentSelectedPatient) {
+                // Receptionist cleared selection - clear consultant view
+                console.log('[CONSULTANT] Patient selection cleared by receptionist');
+                clearPatientDisplay();
             }
         })
         .catch(error => {
             console.error('[CONSULTANT] Error checking selected patient:', error);
         });
 }, 3000);
+
+// Clear patient display function
+function clearPatientDisplay() {
+    document.getElementById('patientInfo').innerHTML = 
+        '<div class="text-center text-muted">' +
+            '<i data-feather="user"></i>' +
+            '<p>Patient information will appear when receptionist selects a patient</p>' +
+        '</div>';
+    
+    // Remove active state from all items
+    document.querySelectorAll('.patient-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    currentSelectedPatient = null;
+    feather.replace();
+}
 
 // Auto-refresh page every 30 seconds to update queues
 setInterval(function() {

@@ -82,6 +82,9 @@
                         <button type="button" class="btn btn-outline-secondary" onclick="resetPatientDisplay()" title="Clear patient information">
                             <i data-feather="x-circle" class="me-2"></i>Reset
                         </button>
+                        <button type="button" class="btn btn-outline-warning" onclick="endShift()" title="End shift and clear queue">
+                            <i data-feather="power" class="me-2"></i>End Shift
+                        </button>
                     </div>
                 </div>
             </div>
@@ -287,14 +290,16 @@ function printPatientSummary() {
                 return;
             }
             
-            // Create print content similar to the image you showed
-            const printContent = '<div style="border: 2px solid #000; padding: 20px; font-family: Arial, sans-serif; max-width: 400px; margin: 20px auto;">' +
-                '<div style="margin-bottom: 15px;"><strong>Reg:</strong> ' + patient.registration_number + '</div>' +
-                '<div style="margin-bottom: 15px;"><strong>Name:</strong> ' + patient.full_name + '</div>' +
-                '<div style="margin-bottom: 15px;"><strong>DOB:</strong> ' + patient.date_of_birth + ' (' + patient.age + ')</div>' +
-                '<div style="margin-bottom: 15px;"><strong>Gender:</strong> ' + patient.gender + '</div>' +
-                (patient.weight_kg ? '<div style="margin-bottom: 15px;"><strong>Weight:</strong> ' + patient.weight_kg + ' kg</div>' : '') +
-                '<div style="margin-bottom: 15px;"><strong>Visit:</strong> ' + new Date().toLocaleDateString('en-GB') + ', ' + new Date().toLocaleTimeString('en-US', {hour12: true}) + '</div>' +
+            // Create print content - compact format
+            const genderWeight = patient.weight_kg ? patient.gender + ', ' + patient.weight_kg + ' kg' : patient.gender;
+            const visitTime = new Date().toLocaleDateString('en-GB') + ', ' + new Date().toLocaleTimeString('en-US', {hour12: true, timeStyle: 'short'});
+            
+            const printContent = '<div style="border: 2px solid #000; padding: 15px; font-family: Arial, sans-serif; max-width: 300px; margin: 10px auto; font-size: 12px;">' +
+                '<div style="margin-bottom: 10px;"><strong>Reg:</strong> ' + patient.registration_number + '</div>' +
+                '<div style="margin-bottom: 10px;"><strong>Name:</strong> ' + patient.full_name + '</div>' +
+                '<div style="margin-bottom: 10px;"><strong>DOB:</strong> ' + patient.date_of_birth + ' (' + patient.age + ')</div>' +
+                '<div style="margin-bottom: 10px;"><strong>Gender:</strong> ' + genderWeight + '</div>' +
+                '<div style="margin-bottom: 10px;"><strong>Visit:</strong> ' + visitTime + '</div>' +
                 '</div>';
             
             // Open print window
@@ -367,6 +372,37 @@ function showNotification(message, type) {
 // Reset patient display (clear patient information section)
 function resetPatientDisplay() {
     clearPatientSelection();
+    
+    // Clear consultant view
+    fetch('/clear_consultant_selection', {
+        method: 'POST'
+    }).catch(error => {
+        console.error('Error clearing consultant selection:', error);
+    });
+}
+
+// End shift function
+function endShift() {
+    if (confirm('⚠️ END SHIFT: This will clear all waiting patients and mark shift as ended. Continue?')) {
+        if (confirm('This action cannot be undone. All non-completed consultations will be cleared. Proceed?')) {
+            fetch('/end_shift', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Shift ended successfully!');
+                    window.location.reload();
+                } else {
+                    alert('❌ Error ending shift: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error ending shift:', error);
+                alert('❌ Error ending shift. Please try again.');
+            });
+        }
+    }
 }
 
 // Initialize feather icons when page loads

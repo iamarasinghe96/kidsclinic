@@ -504,6 +504,17 @@ def mark_complete():
         'message': f'Consultation completed for {patient.full_name}'
     })
 
+@app.route('/clear_consultant_selection', methods=['POST'])
+def clear_consultant_selection():
+    """Clear all consultant selections"""
+    # Clear all consultant selections from session
+    keys_to_remove = [key for key in session.keys() if key.startswith('selected_patient_')]
+    for key in keys_to_remove:
+        session.pop(key, None)
+    return jsonify({'success': True})
+
+
+
 @app.route('/complete_consultation', methods=['POST'])
 def complete_consultation():
     reg_number = request.form['registration_number']
@@ -558,7 +569,7 @@ def report():
         
         # Build query for completed visits within date range (excluding incomplete consultations)
         query = Visit.query.join(Patient).filter(
-            Visit.status.in_(['completed', 'completed_archived']),  # Include both active and archived completed visits
+            Visit.status.in_(['completed', 'completed_archived']),  # Only completed visits in summary count
             func.date(Visit.visit_date) >= start_date,
             func.date(Visit.visit_date) <= end_date
         )
@@ -1052,65 +1063,43 @@ def admin_search_patient_visits():
 
 @app.route('/end_shift', methods=['POST'])
 def end_shift():
-    consultant_id = request.form.get('consultant_id', type=int)
-    if not consultant_id:
-        return jsonify({'error': 'Consultant ID required'}), 400
-    
-    consultant = Consultant.query.get(consultant_id)
-    if not consultant:
-        return jsonify({'error': 'Consultant not found'}), 404
-    
-    # Get today's shift summary
-    today = date.today()
-    
-    total_completed = Visit.query.filter(
-        Visit.consultant_id == consultant_id,
-        Visit.status == 'completed',
-        func.date(Visit.visit_date) == today
-    ).count()
-    
-    remaining_patients = Visit.query.filter(
-        Visit.consultant_id == consultant_id,
-        Visit.status == 'waiting',
-        func.date(Visit.visit_date) == today
-    ).count()
-    
-    # Calculate earnings
-    consultation_fee = consultant.consultation_fee or 0
-    total_earnings = total_completed * consultation_fee
-    average_earnings = consultation_fee  # Average per session is the consultation fee
-    
-    # Mark remaining patients as incomplete consultations instead of deleting
-    remaining_visits = Visit.query.filter(
-        Visit.consultant_id == consultant_id,
-        Visit.status == 'waiting',
-        func.date(Visit.visit_date) == today
-    ).all()
-    
-    for visit in remaining_visits:
-        visit.status = 'incomplete'
-        visit.completed_at = datetime.now(SL_TZ).replace(tzinfo=None)
-    
-    # Keep completed visits in database for reporting, but mark them as archived
-    # Add a flag to distinguish them from active shift completed visits
-    completed_visits_to_archive = Visit.query.filter(
-        Visit.consultant_id == consultant_id,
-        Visit.status == 'completed',
-        func.date(Visit.visit_date) == today
-    ).all()
-    
-    for visit in completed_visits_to_archive:
-        # Add a shift_ended flag to distinguish archived completed visits
-        visit.status = 'completed_archived'
-    
-    db.session.commit()
-    
-    return jsonify({
-        'consultant_name': consultant.name,
-        'total_completed': total_completed,
-        'remaining_patients': remaining_patients,
-        'shift_date': today.strftime('%d/%m/%Y'),
-        'consultation_fee': consultation_fee,
-        'total_earnings': total_earnings,
-        'average_earnings': average_earnings
-    })
+    """End shift for all consultants - clear waiting queue and archive completed visits"""
+    try:
+        today = date.today()
+        
+        # Get all waiting visits for today (all consultants)
+        waiting_visits = Visit.query.filter(
+            Visit.status == 'waiting',
+            func.date(Visit.visit_date) == today
+        ).all()
+        
+        # Get all completed visits for today to archive
+        completed_visits = Visit.query.filter(
+            Visit.status == 'completed',
+            func.date(Visit.visit_date) == today
+        ).all()
+        
+        # Delete waiting visits (non-completed consultations)
+        for visit in waiting_visits:
+            db.session.delete(visit)
+        
+        # Archive completed visits
+        for visit in completed_visits:
+            visit.status = 'completed_archived'
+        
+        # Clear all consultant selections
+        keys_to_remove = [key for key in session.keys() if key.startswith('selected_patient_')]
+        for key in keys_to_remove:
+            session.pop(key, None)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Shift ended successfully. {len(waiting_visits)} waiting consultations cleared, {len(completed_visits)} completed consultations archived.'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error ending shift: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
