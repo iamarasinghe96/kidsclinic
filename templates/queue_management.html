@@ -79,17 +79,17 @@
                         <button type="button" class="btn btn-success" onclick="markComplete()">
                             <i data-feather="check-circle" class="me-2"></i>Mark Consultation Complete
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="printPatientSummary()">
-                            <i data-feather="printer" class="me-2"></i>Print Patient Summary
-                        </button>
                     </div>
                 </div>
                 
                 <!-- System Actions (always visible) -->
                 <div class="mt-3">
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-outline-danger" onclick="resetQueue()" title="Reset today's queue">
-                            <i data-feather="refresh-cw" class="me-2"></i>Reset Queue
+                        <button type="button" class="btn btn-outline-info" onclick="printPatientSummary()" title="Print patient summary">
+                            <i data-feather="printer" class="me-2"></i>Print
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetPatientDisplay()" title="Clear patient information">
+                            <i data-feather="x-circle" class="me-2"></i>Reset
                         </button>
                     </div>
                 </div>
@@ -298,8 +298,72 @@ function printPatientSummary() {
         return;
     }
     
-    // Open print window
-    window.open(`/print_patient/${currentPatientRegNumber}`, '_blank');
+    // Get patient details and print
+    fetch(`/get_patient_details/${currentPatientRegNumber}`)
+        .then(response => response.json())
+        .then(patient => {
+            if (patient.error) {
+                alert('Error loading patient details');
+                return;
+            }
+            
+            // Create print content similar to the image you showed
+            const printContent = `
+                <div style="border: 2px solid #000; padding: 20px; font-family: Arial, sans-serif; max-width: 400px; margin: 20px auto;">
+                    <div style="margin-bottom: 15px;">
+                        <strong>Reg:</strong> ${patient.registration_number}
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>Name:</strong> ${patient.full_name}
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>DOB:</strong> ${patient.date_of_birth} (${patient.age})
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>Gender:</strong> ${patient.gender}
+                    </div>
+                    ${patient.weight_kg ? `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Weight:</strong> ${patient.weight_kg} kg
+                    </div>
+                    ` : ''}
+                    <div style="margin-bottom: 15px;">
+                        <strong>Visit:</strong> ${new Date().toLocaleDateString('en-GB')}, ${new Date().toLocaleTimeString('en-US', {hour12: true})}
+                    </div>
+                </div>
+            `;
+            
+            // Open print window
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Patient Summary - ${patient.full_name}</title>
+                    <style>
+                        body { margin: 0; padding: 20px; }
+                        @media print {
+                            body { margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printContent}
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            window.close();
+                        }
+                    </script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        })
+        .catch(error => {
+            console.error('Error printing patient summary:', error);
+            alert('Error printing patient summary');
+        });
 }
 
 // Clear patient selection
@@ -349,32 +413,9 @@ function showNotification(message, type) {
     }, 3000);
 }
 
-// Reset today's queue
-function resetQueue() {
-    if (confirm('⚠️ RESET QUEUE: This will clear all consultations for today. Are you sure?')) {
-        if (confirm('This action cannot be undone. All waiting and completed patients will be removed from today\'s queue. Continue?')) {
-            fetch('/reset_daily_queue', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({})
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('✅ Queue reset successfully!');
-                    window.location.reload();
-                } else {
-                    alert('❌ Error resetting queue: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error resetting queue:', error);
-                alert('❌ Error resetting queue. Please try again.');
-            });
-        }
-    }
+// Reset patient display (clear patient information section)
+function resetPatientDisplay() {
+    clearPatientSelection();
 }
 
 
