@@ -54,13 +54,13 @@ sudo apt install python3 python3-pip
 #### Windows Command Prompt (Run as Administrator):
 ```cmd
 cd C:\ClinicApp
-pip install flask flask-sqlalchemy sqlalchemy werkzeug gunicorn
+pip install flask flask-sqlalchemy sqlalchemy werkzeug
 ```
 
 #### Mac/Linux Terminal:
 ```bash
 cd ~/ClinicApp
-pip3 install flask flask-sqlalchemy sqlalchemy werkzeug gunicorn
+pip3 install flask flask-sqlalchemy sqlalchemy werkzeug
 ```
 
 ### Step 4: Initialize Database
@@ -113,7 +113,7 @@ echo.
 echo Server is running... Do NOT close this window!
 echo To stop server: Press Ctrl+C
 echo.
-python -m gunicorn --bind 192.168.1.11:5000 --reuse-port --reload main:app
+python main.py
 pause
 ```
 
@@ -140,7 +140,7 @@ open "http://localhost:5000"
 echo ""
 echo "Server is running... Do NOT close this window!"
 echo ""
-python3 -m gunicorn --bind 192.168.1.11:5000 --reuse-port --reload main:app
+python3 main.py
 ```
 
 3. **Save**: Save as `start_receptionist.sh` on Desktop
@@ -410,7 +410,7 @@ system-config-printer
 - [ ] Install Python 3.11+
 - [ ] Create `C:\ClinicApp\` folder (Windows) or `~/ClinicApp/` (Mac/Linux)
 - [ ] Copy all project files to ClinicApp folder
-- [ ] Install required packages: `pip install flask flask-sqlalchemy sqlalchemy werkzeug gunicorn`
+- [ ] Install required packages: `pip install flask flask-sqlalchemy sqlalchemy werkzeug`
 - [ ] Initialize database: Run the Python command from Step 4
 - [ ] Configure Windows Firewall (Windows only)
 - [ ] Create `Start_Receptionist.bat` startup file
