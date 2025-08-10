@@ -6,10 +6,16 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="text-nowrap mb-0">
         <i data-feather="users" class="me-2"></i>Queue Management
+        <small class="text-muted ms-2" id="lastUpdate"></small>
     </h3>
-    <button type="button" class="btn btn-outline-warning" onclick="endShift()" title="End shift and clear queue">
-        <i data-feather="power" class="me-2"></i>End Shift
-    </button>
+    <div class="btn-group">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshNow()" title="Refresh queue now">
+            <i data-feather="refresh-cw" class="me-1"></i>Refresh
+        </button>
+        <button type="button" class="btn btn-outline-warning" onclick="endShift()" title="End shift and clear queue">
+            <i data-feather="power" class="me-2"></i>End Shift
+        </button>
+    </div>
 </div>
 
 <div class="row">
@@ -259,10 +265,8 @@ function markComplete() {
                 // Clear patient selection
                 clearPatientSelection();
                 
-                // Refresh page after short delay
-                setTimeout(function() {
-                    window.location.reload();
-                }, 1500);
+                // Refresh queue immediately
+                refreshQueue();
             } else {
                 showNotification(data.error, 'error');
             }
@@ -411,7 +415,36 @@ function endShift() {
 // Initialize feather icons when page loads
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
+    updateLastRefreshTime();
 });
+
+// Auto-refresh queue every 10 seconds to show new registrations
+let autoRefreshInterval = setInterval(function() {
+    // Only refresh if no patient is currently selected (to avoid interrupting workflow)
+    if (!currentPatientRegNumber) {
+        refreshNow();
+    }
+}, 10000);
+
+// Update last refresh time
+function updateLastRefreshTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {hour12: true, timeStyle: 'short'});
+    document.getElementById('lastUpdate').textContent = `(Updated: ${timeString})`;
+}
+
+// Manual refresh function
+function refreshNow() {
+    updateLastRefreshTime();
+    window.location.reload();
+}
+
+// Refresh queue immediately after patient actions
+function refreshQueue() {
+    setTimeout(function() {
+        refreshNow();
+    }, 1000);
+}
 </script>
 
 <style>

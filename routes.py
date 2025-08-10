@@ -302,12 +302,12 @@ def register_patient():
         db.session.commit()
         
         flash(f'Patient registered successfully! Registration Number: {registration_number}', 'success')
-        logging.info(f"New patient registered: {registration_number}")
+        app.logger.info(f"New patient registered: {registration_number}")
         
     except Exception as e:
         db.session.rollback()
         flash(f'Error registering patient: {str(e)}', 'error')
-        logging.error(f"Error registering patient: {str(e)}")
+        app.logger.error(f"Error registering patient: {str(e)}")
     
     return redirect(url_for('receptionist'))
 
