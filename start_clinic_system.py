@@ -1,73 +1,113 @@
-
 #!/usr/bin/env python3
 """
-Simple Clinic System Launcher
-Automatically finds and starts the clinic management system
+Clinic System Auto-Launcher
+Automatically starts server and opens appropriate interface based on laptop role
 """
+
 import os
 import sys
+import time
+import json
+import signal
 import subprocess
-import tkinter as tk
-from tkinter import messagebox
+import webbrowser
+import threading
+from pathlib import Path
 
-def find_clinic_directory():
-    """Find the directory containing the clinic management files"""
-    current_dir = os.getcwd()
+# Configuration
+SERVER_PORT = 5000
+CONFIG_FILE = "clinic_config.json"
+
+def load_config():
+    """Load laptop configuration"""
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    return {"role": "receptionist", "consultant_id": None}
+
+def start_server():
+    """Start the Flask server"""
+    try:
+        # Start gunicorn server
+        cmd = ["gunicorn", "--bind", f"0.0.0.0:{SERVER_PORT}", "--reuse-port", "--reload", "main:app"]
+        process = subprocess.Popen(cmd, 
+                                 stdout=subprocess.PIPE, 
+                                 stderr=subprocess.PIPE,
+                                 cwd=os.getcwd())
+        return process
+    except Exception as e:
+        print(f"Error starting server: {e}")
+        return None
+
+def wait_for_server(max_wait=30):
+    """Wait for server to be ready"""
+    import urllib.request
     
-    # Check current directory
-    if os.path.exists("main.py") and os.path.exists("app.py"):
-        return current_dir
+    for i in range(max_wait):
+        try:
+            urllib.request.urlopen(f"http://localhost:{SERVER_PORT}", timeout=1)
+            return True
+        except:
+            time.sleep(1)
+    return False
+
+def open_browser():
+    """Open the appropriate interface based on role"""
+    config = load_config()
+    role = config.get("role", "receptionist")
+    consultant_id = config.get("consultant_id")
     
-    # Check clinic_desktop_export subdirectory
-    clinic_export_dir = os.path.join(current_dir, "clinic_desktop_export")
-    if os.path.exists(os.path.join(clinic_export_dir, "main.py")):
-        return clinic_export_dir
+    if role == "consultant" and consultant_id:
+        url = f"http://localhost:{SERVER_PORT}/consultant/{consultant_id}"
+    else:
+        url = f"http://localhost:{SERVER_PORT}/receptionist"
     
-    # Check parent directory
-    parent_dir = os.path.dirname(current_dir)
-    if os.path.exists(os.path.join(parent_dir, "main.py")):
-        return parent_dir
-    
-    return None
+    # Wait a bit for server to be fully ready
+    time.sleep(2)
+    webbrowser.open(url)
+    print(f"Opening {role} interface: {url}")
 
 def main():
     """Main launcher function"""
-    print("🏥 Clinic Management System - Launcher")
-    print("=" * 40)
+    print("Starting The Kids Clinic Patient Management System...")
     
-    # Find the clinic directory
-    clinic_dir = find_clinic_directory()
+    config = load_config()
+    role = config.get("role", "receptionist")
     
-    if not clinic_dir:
-        root = tk.Tk()
-        root.withdraw()  # Hide the main window
-        messagebox.showerror(
-            "Clinic System Not Found",
-            "Could not find the clinic management system files.\n\n"
-            "Please ensure you have:\n"
-            "• main.py\n"
-            "• app.py\n"
-            "• clinic_server_launcher.py\n\n"
-            "in the same directory as this launcher."
-        )
+    print(f"Role: {role.upper()}")
+    
+    # Start the server
+    print("Starting server...")
+    server_process = start_server()
+    
+    if not server_process:
+        print("Failed to start server!")
         return
     
-    print(f"✅ Found clinic system in: {clinic_dir}")
+    # Wait for server to be ready
+    print("Waiting for server to start...")
+    if not wait_for_server():
+        print("Server failed to start properly!")
+        server_process.terminate()
+        return
     
-    # Change to the clinic directory
-    os.chdir(clinic_dir)
+    print("Server ready!")
     
-    # Start the server launcher
+    # Open browser
+    threading.Thread(target=open_browser, daemon=True).start()
+    
     try:
-        print("🚀 Starting server launcher...")
-        subprocess.run([sys.executable, "clinic_server_launcher.py"])
-    except Exception as e:
-        root = tk.Tk()
-        root.withdraw()
-        messagebox.showerror(
-            "Launch Error",
-            f"Failed to start the clinic server launcher:\n\n{str(e)}"
-        )
+        # Keep the script running
+        print("System running. Close the browser to stop the server.")
+        print("Press Ctrl+C to stop manually.")
+        server_process.wait()
+    except KeyboardInterrupt:
+        print("\nShutting down...")
+    finally:
+        if server_process:
+            server_process.terminate()
+            server_process.wait()
+        print("Server stopped.")
 
 if __name__ == "__main__":
     main()

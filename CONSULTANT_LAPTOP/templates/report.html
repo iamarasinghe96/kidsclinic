@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - The Kids Clinic / Allergy and Asthma Center{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i data-feather="bar-chart-2"></i>
+            Consultation Reports
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="calendar"></i> Generate Report</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" 
+                               value="{{ report_data.start_date if report_data else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" 
+                               value="{{ report_data.end_date if report_data else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="consultant_id" class="form-label">Consultant</label>
+                        <select class="form-select" id="consultant_id" name="consultant_id">
+                            <option value="all" {% if not report_data or not report_data.consultant_id or report_data.consultant_id == 'all' %}selected{% endif %}>
+                                All Consultants
+                            </option>
+                            {% for consultant in consultants %}
+                                <option value="{{ consultant.id }}" 
+                                        {% if report_data and report_data.consultant_id == consultant.id|string %}selected{% endif %}>
+                                    {{ consultant.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">
+                        <i data-feather="file-text"></i>
+                        Generate Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    {% if report_data %}
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4><i data-feather="info"></i> Report Summary</h4>
+                <div>
+                    <a href="{{ url_for('download_report_csv', start_date=report_data.start_date, end_date=report_data.end_date, consultant_id=report_data.consultant_id) }}" 
+                       class="btn btn-success btn-sm">
+                        <i data-feather="download"></i>
+                        Download CSV
+                    </a>
+                    <button class="btn btn-secondary btn-sm" onclick="window.print()">
+                        <i data-feather="printer"></i>
+                        Print Report
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-4">
+                        <h6>Date Range:</h6>
+                        <p>{{ report_data.start_date.strftime('%B %d, %Y') }} to<br>
+                           {{ report_data.end_date.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    <div class="col-4">
+                        <h6>Consultant:</h6>
+                        <p>{% if report_data.selected_consultant %}
+                               {{ report_data.selected_consultant.name }}
+                           {% else %}
+                               All Consultants
+                           {% endif %}</p>
+                    </div>
+                    <div class="col-4">
+                        <h6>Total Consultations:</h6>
+                        <h3 class="text-primary">{{ report_data.total_consultations }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if report_data %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="list"></i> Detailed Visit List</h4>
+            </div>
+            <div class="card-body">
+                {% if report_data.visits %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Registration #</th>
+                                    <th>Patient Name</th>
+                                    <th>Consultant</th>
+                                    <th>Visit Date</th>
+                                    <th>Visit Time</th>
+                                    <th>Completed Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for visit in report_data.visits %}
+                                    <tr>
+                                        <td>{{ visit.patient.registration_number }}</td>
+                                        <td>{{ visit.patient.full_name }}</td>
+                                        <td>{{ visit.consultant.name }}</td>
+                                        <td>{{ visit.visit_date.strftime('%Y-%m-%d') }}</td>
+                                        <td>{{ visit.visit_date.strftime('%H:%M') }}</td>
+                                        <td>
+                                            {% if visit.completed_at %}
+                                                {{ visit.completed_at.strftime('%H:%M') }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i data-feather="calendar"></i>
+                        <p>No consultations found in the selected date range.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Admin Panel Link (Bottom of Reports Page Only) -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="text-center">
+            <hr>
+            <a href="{{ url_for('admin_login') }}" class="btn btn-outline-secondary btn-sm">
+                <i data-feather="settings"></i>
+                Admin Panel
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

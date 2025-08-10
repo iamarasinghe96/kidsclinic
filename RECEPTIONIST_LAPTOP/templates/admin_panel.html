@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - The Kids Clinic / Allergy and Asthma Center{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i data-feather="settings"></i>
+            Admin Panel
+        </h2>
+        <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-secondary">
+            <i data-feather="log-out"></i>
+            Logout
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Consultant Management -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="users"></i> Consultant Management</h4>
+            </div>
+            <div class="card-body">
+                <!-- Add New Consultant -->
+                <div class="mb-4">
+                    <h5>Add New Consultant</h5>
+                    <form method="POST" action="{{ url_for('admin_add_consultant') }}">
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" name="name" placeholder="Consultant Name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">LKR</span>
+                                    <input type="number" class="form-control" name="consultation_fee" 
+                                           placeholder="0" step="0.01" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i data-feather="plus"></i>
+                            Add
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Current Consultants -->
+                <div>
+                    <h5>Current Consultants</h5>
+                    {% if consultants %}
+                        <div class="list-group">
+                            {% for consultant in consultants %}
+                                <div class="list-group-item">
+                                    <div class="d-flex align-items-center">
+                                        <form method="POST" action="{{ url_for('admin_edit_consultant') }}" class="d-flex align-items-center flex-grow-1 me-2">
+                                            <input type="hidden" name="consultant_id" value="{{ consultant.id }}">
+                                            <div class="row flex-grow-1 me-2">
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control" name="name" value="{{ consultant.name }}" placeholder="Consultant Name" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">LKR</span>
+                                                        <input type="number" class="form-control" name="consultation_fee" 
+                                                               value="{{ consultant.consultation_fee or 0 }}" 
+                                                               placeholder="0" step="0.01" min="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-outline-success btn-sm me-2">
+                                                <i data-feather="save"></i>
+                                                Update
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('admin_delete_consultant') }}" 
+                                              onsubmit="return confirm('Are you sure you want to delete consultant {{ consultant.name }}? This action cannot be undone!');"
+                                              style="display: inline;">
+                                            <input type="hidden" name="consultant_id" value="{{ consultant.id }}">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <i data-feather="trash-2"></i>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <p>No consultants found</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Data Cleanup -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="trash-2"></i> Data Cleanup</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning" role="alert">
+                    <i data-feather="alert-triangle"></i>
+                    <strong>Warning:</strong> This action will permanently delete data and cannot be undone.
+                </div>
+                
+                <!-- Cleanup Tabs -->
+                <ul class="nav nav-tabs mb-3" id="cleanupTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="date-range-tab" data-bs-toggle="tab" href="#date-range">Date Range</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="patient-record-tab" data-bs-toggle="tab" href="#patient-record">Patient Record</a>
+                    </li>
+                </ul>
+                
+                <div class="tab-content">
+                    <!-- Search Patient Visits -->
+                    
+                    <!-- Delete Date Range -->
+                    <div class="tab-pane fade show active" id="date-range">
+                        <form method="POST" action="{{ url_for('admin_cleanup_data') }}" 
+                              onsubmit="return confirm('Are you sure you want to delete all visits within this date range? This action cannot be undone!');">
+                            <input type="hidden" name="cleanup_type" value="date_range">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="start_date" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="end_date" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" required>
+                                </div>
+                            </div>
+                            <div class="form-text mb-3">
+                                All visits between these dates (inclusive) will be deleted. Patients with no remaining visits will also be removed.
+                            </div>
+                            <button type="submit" class="btn btn-danger">
+                                <i data-feather="trash-2"></i>
+                                Delete Date Range Data
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Delete Patient Record -->
+                    <div class="tab-pane fade" id="patient-record">
+                        <div class="mb-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchRegNumber" 
+                                       placeholder="Enter Registration Number (e.g., REG202508001)">
+                                <button type="button" class="btn btn-success" onclick="searchPatientVisits()">
+                                    <i data-feather="search"></i>
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="patientVisitsResult" style="display: none;">
+                            <!-- Patient visits will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i data-feather="info"></i> System Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Total Consultants:</h6>
+                        <p class="text-success h5">{{ consultants|length }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h6>Total Patients:</h6>
+                        <p class="text-success h5">{{ total_patients }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h6>Total Visits:</h6>
+                        <p class="text-success h5">{{ total_visits }}</p>
+                    </div>
+                    <div class="col-md-2">
+                        <h6>Admin Access:</h6>
+                        <p class="text-success">Active</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12 text-center">
+        <a href="{{ url_for('report') }}" class="btn btn-secondary">
+            <i data-feather="arrow-left"></i>
+            Back to Reports
+        </a>
+    </div>
+</div>
+
+<script>
+async function searchPatientVisits() {
+    const regNumber = document.getElementById('searchRegNumber').value.trim();
+    if (!regNumber) {
+        alert('Please enter a registration number');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/search_patient_visits?reg_number=${encodeURIComponent(regNumber)}`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            alert(data.error || 'Error searching for patient');
+            return;
+        }
+        
+        displayPatientVisits(data);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error searching for patient visits');
+    }
+}
+
+function displayPatientVisits(data) {
+    const resultDiv = document.getElementById('patientVisitsResult');
+    
+    let visitsHtml = `
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="user"></i> Patient: ${data.patient.full_name}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <strong>Registration:</strong><br>
+                        ${data.patient.registration_number}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Date of Birth:</strong><br>
+                        ${data.patient.date_of_birth}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Contact:</strong><br>
+                        ${data.patient.contact_number}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Total Visits:</strong><br>
+                        ${data.visits.length}
+                    </div>
+                </div>
+                
+                <form method="POST" action="/admin/cleanup_data" 
+                      onsubmit="return confirmVisitDeletion();">
+                    <input type="hidden" name="cleanup_type" value="selected_visits">
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllVisits" 
+                                   onchange="toggleAllVisits(this)">
+                            <label class="form-check-label" for="selectAllVisits">
+                                <strong>Select All Visits</strong>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Select</th>
+                                    <th>Visit Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Consultant</th>
+                                    <th>Completed</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                            
+    data.visits.forEach(visit => {
+        const statusBadge = visit.status === 'completed' ? 'badge bg-success' : 'badge bg-warning';
+        visitsHtml += `
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="visit_ids" value="${visit.id}" 
+                                               class="form-check-input visit-checkbox">
+                                    </td>
+                                    <td>${visit.visit_date}</td>
+                                    <td>${visit.visit_time}</td>
+                                    <td><span class="${statusBadge}">${visit.status}</span></td>
+                                    <td>${visit.consultant}</td>
+                                    <td>${visit.completed_at || '-'}</td>
+                                </tr>`;
+    });
+    
+    visitsHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="delete_patient" id="deletePatient">
+                            <label class="form-check-label" for="deletePatient">
+                                Also delete patient record if no visits remain
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger">
+                            <i data-feather="trash-2"></i>
+                            Delete Selected Visits
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="clearPatientSearch()">
+                            <i data-feather="x"></i>
+                            Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    resultDiv.innerHTML = visitsHtml;
+    resultDiv.style.display = 'block';
+    feather.replace();
+}
+
+function toggleAllVisits(selectAllCheckbox) {
+    const visitCheckboxes = document.querySelectorAll('.visit-checkbox');
+    visitCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+}
+
+function confirmVisitDeletion() {
+    const selectedVisits = document.querySelectorAll('.visit-checkbox:checked');
+    if (selectedVisits.length === 0) {
+        alert('Please select at least one visit to delete');
+        return false;
+    }
+    
+    const deletePatient = document.getElementById('deletePatient').checked;
+    let message = `Are you sure you want to delete ${selectedVisits.length} selected visit(s)?`;
+    if (deletePatient) {
+        message += ' This will also delete the patient record if no visits remain.';
+    }
+    message += ' This action cannot be undone!';
+    
+    return confirm(message);
+}
+
+function clearPatientSearch() {
+    document.getElementById('searchRegNumber').value = '';
+    document.getElementById('patientVisitsResult').style.display = 'none';
+}
+</script>
+
+{% endblock %}

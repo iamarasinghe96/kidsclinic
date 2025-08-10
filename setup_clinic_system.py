@@ -1,348 +1,377 @@
 #!/usr/bin/env python3
 """
-Complete setup script for Clinic Management System
-Handles both server (receptionist) and client (consultant) setup
+Clinic System Setup Script
+Creates role-based shortcuts for consultant and receptionist laptops
 """
+
 import os
 import sys
-import shutil
-import zipfile
-from datetime import datetime
-import tkinter as tk
-from tkinter import messagebox, filedialog
+import json
 import subprocess
+import platform
+from pathlib import Path
 
-def create_requirements_file():
-    """Create requirements.txt for easier installation"""
-    requirements_content = """flask>=3.1.1
-flask-sqlalchemy>=3.1.1
-sqlalchemy>=2.0.42
-werkzeug>=3.1.3
-email-validator>=2.2.0
-pytz>=2025.2
-requests>=2.31.0
-winshell>=0.7.0
+# Configuration file to store laptop role
+CONFIG_FILE = "clinic_config.json"
+
+def get_system_type():
+    """Detect the operating system"""
+    system = platform.system().lower()
+    return system
+
+def create_windows_shortcut(name, target, arguments="", icon_path=None):
+    """Create a Windows shortcut"""
+    try:
+        import winshell
+        from win32com.client import Dispatch
+        
+        desktop = winshell.desktop()
+        shortcut_path = os.path.join(desktop, f"{name}.lnk")
+        
+        shell = Dispatch('WScript.Shell')
+        shortcut = shell.CreateShortCut(shortcut_path)
+        shortcut.Targetpath = target
+        shortcut.Arguments = arguments
+        shortcut.WorkingDirectory = os.path.dirname(target)
+        if icon_path:
+            shortcut.IconLocation = icon_path
+        shortcut.save()
+        
+        return shortcut_path
+    except ImportError:
+        print("Windows shortcut creation requires winshell and pywin32 packages")
+        return None
+
+def create_linux_desktop_file(name, target, arguments="", icon_path=None):
+    """Create a Linux desktop file"""
+    desktop_dir = os.path.expanduser("~/Desktop")
+    if not os.path.exists(desktop_dir):
+        os.makedirs(desktop_dir)
+    
+    desktop_file_path = os.path.join(desktop_dir, f"{name}.desktop")
+    
+    content = f"""[Desktop Entry]
+Version=1.0
+Type=Application
+Name={name}
+Comment=The Kids Clinic Patient Management System - {name}
+Exec=python3 "{target}" {arguments}
+Icon={icon_path or "application-x-executable"}
+Terminal=false
+StartupNotify=true
+Categories=Office;Medical;
 """
-    return requirements_content
+    
+    with open(desktop_file_path, 'w') as f:
+        f.write(content)
+    
+    # Make executable
+    os.chmod(desktop_file_path, 0o755)
+    return desktop_file_path
 
-def create_installation_package():
-    """Create complete installation package"""
+def create_macos_app(name, target, arguments=""):
+    """Create a macOS app bundle"""
+    app_dir = os.path.expanduser(f"~/Desktop/{name}.app")
+    contents_dir = os.path.join(app_dir, "Contents")
+    macos_dir = os.path.join(contents_dir, "MacOS")
+    
+    os.makedirs(macos_dir, exist_ok=True)
+    
+    # Create Info.plist
+    plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>{name}</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.clinic.{name.lower().replace(' ', '')}</string>
+    <key>CFBundleName</key>
+    <string>{name}</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+</dict>
+</plist>"""
+    
+    with open(os.path.join(contents_dir, "Info.plist"), 'w') as f:
+        f.write(plist_content)
+    
+    # Create executable script
+    script_content = f"""#!/bin/bash
+cd "{os.getcwd()}"
+python3 "{target}" {arguments}
+"""
+    
+    script_path = os.path.join(macos_dir, name)
+    with open(script_path, 'w') as f:
+        f.write(script_content)
+    
+    os.chmod(script_path, 0o755)
+    return app_dir
 
-    # Create export directory
-    export_dir = "clinic_complete_system"
-    if os.path.exists(export_dir):
-        shutil.rmtree(export_dir)
-    os.makedirs(export_dir)
+def save_config(role, consultant_id=None):
+    """Save the laptop role configuration"""
+    config = {
+        "role": role,
+        "consultant_id": consultant_id,
+        "setup_date": str(os.path.getctime(__file__) if os.path.exists(__file__) else "unknown")
+    }
+    
+    with open(CONFIG_FILE, 'w') as f:
+        json.dump(config, f, indent=2)
+    
+    print(f"Configuration saved: {role} laptop")
 
-    # Files to include for complete system
-    files_to_copy = [
-        'app.py',
-        'main.py', 
-        'models.py',
-        'routes.py',
-        'clinic_server_launcher.py',
-        'create_clinic_shortcuts.py',
-        'clinic_auto_launcher.py',
-        'static/',
-        'templates/',
-        'instance/'  # Include the database
-    ]
+def load_config():
+    """Load the existing configuration"""
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    return None
 
-    # Copy application files
-    for item in files_to_copy:
-        if os.path.exists(item):
-            if os.path.isdir(item):
-                shutil.copytree(item, os.path.join(export_dir, item))
-            else:
-                shutil.copy2(item, export_dir)
+def get_consultants():
+    """Get list of consultants from database"""
+    try:
+        # Import here to avoid issues if not in right directory
+        sys.path.append(os.getcwd())
+        from app import app, db
+        from models import Consultant
+        
+        with app.app_context():
+            consultants = Consultant.query.all()
+            return [(c.id, c.name) for c in consultants]
+    except Exception as e:
+        print(f"Could not load consultants: {e}")
+        return [(1, "Dr. Default")]
 
-    # Create requirements.txt
-    with open(os.path.join(export_dir, 'requirements.txt'), 'w', encoding='utf-8') as f:
-        f.write(create_requirements_file())
+def setup_laptop():
+    """Main setup function"""
+    print("=" * 60)
+    print("  THE KIDS CLINIC / ALLERGY AND ASTHMA CENTER")
+    print("            Patient Management System Setup")
+    print("=" * 60)
+    print()
+    
+    # Check for existing configuration
+    existing_config = load_config()
+    if existing_config:
+        print(f"This laptop is already configured as: {existing_config['role'].upper()}")
+        print(f"Consultant ID: {existing_config.get('consultant_id', 'N/A')}")
+        print()
+        reconfigure = input("Do you want to reconfigure? (y/N): ").lower().strip()
+        if reconfigure != 'y':
+            print("Setup cancelled.")
+            return
+        print()
+    
+    print("Please select the laptop role:")
+    print("1. Consultant Laptop (View-only patient queues)")
+    print("2. Receptionist Laptop (Full patient management)")
+    print()
+    
+    while True:
+        choice = input("Enter your choice (1 or 2): ").strip()
+        if choice in ['1', '2']:
+            break
+        print("Please enter 1 or 2")
+    
+    if choice == '1':
+        # Consultant setup
+        print("\nSetting up CONSULTANT laptop...")
+        print("Available consultants:")
+        
+        consultants = get_consultants()
+        for idx, (c_id, c_name) in enumerate(consultants, 1):
+            print(f"{idx}. {c_name}")
+        
+        while True:
+            try:
+                consultant_choice = int(input(f"\nSelect consultant (1-{len(consultants)}): "))
+                if 1 <= consultant_choice <= len(consultants):
+                    consultant_id, consultant_name = consultants[consultant_choice - 1]
+                    break
+                print(f"Please enter a number between 1 and {len(consultants)}")
+            except ValueError:
+                print("Please enter a valid number")
+        
+        role = "consultant"
+        save_config(role, consultant_id)
+        
+        # Create launcher script
+        launcher_script = "start_clinic_system.py"
+        create_launcher_script(launcher_script, role, consultant_id)
+        
+        # Create desktop shortcuts
+        system_type = get_system_type()
+        shortcut_name = f"Clinic - Dr. {consultant_name}"
+        
+        if system_type == "windows":
+            create_windows_shortcut(shortcut_name, sys.executable, f'"{launcher_script}"')
+        elif system_type == "linux":
+            create_linux_desktop_file(shortcut_name, launcher_script)
+        elif system_type == "darwin":  # macOS
+            create_macos_app(shortcut_name, launcher_script)
+        
+        print(f"\n✓ Consultant laptop setup complete!")
+        print(f"✓ Desktop shortcut created: {shortcut_name}")
+        print(f"✓ Assigned to: Dr. {consultant_name}")
+        
+    else:
+        # Receptionist setup
+        print("\nSetting up RECEPTIONIST laptop...")
+        role = "receptionist"
+        save_config(role)
+        
+        # Create launcher script
+        launcher_script = "start_clinic_system.py"
+        create_launcher_script(launcher_script, role)
+        
+        # Create desktop shortcuts
+        system_type = get_system_type()
+        shortcut_name = "Clinic - Receptionist"
+        
+        if system_type == "windows":
+            create_windows_shortcut(shortcut_name, sys.executable, f'"{launcher_script}"')
+        elif system_type == "linux":
+            create_linux_desktop_file(shortcut_name, launcher_script)
+        elif system_type == "darwin":  # macOS
+            create_macos_app(shortcut_name, launcher_script)
+        
+        print(f"\n✓ Receptionist laptop setup complete!")
+        print(f"✓ Desktop shortcut created: {shortcut_name}")
+        print(f"✓ Full patient management access enabled")
+    
+    print("\nSetup Instructions:")
+    print("1. Double-click the desktop shortcut to start the clinic system")
+    print("2. The server will start automatically and open the appropriate interface")
+    print("3. Close the browser window to stop the server automatically")
+    print("\nThe system is ready to use!")
 
-    # Copy the launcher scripts we just created
-    for script in ['clinic_server_launcher.py', 'create_clinic_shortcuts.py']:
-        if os.path.exists(script):
-            shutil.copy2(script, export_dir)
-
-    # Create comprehensive README
-    readme_content = f"""# Clinic Management System - Complete Setup Guide
-
-## Overview
-This is a complete clinic management system designed for 2 laptops:
-- **Receptionist's Laptop**: Runs the database server
-- **Consultant's Laptop**: Connects to the server via network
-
-## System Requirements
-- Python 3.11 or higher
-- Both laptops on the same WiFi network
-- Windows, macOS, or Linux
-
-## Installation Steps
-
-### STEP 1: Install Python Dependencies (On Both Laptops)
-```
-pip install -r requirements.txt
-```
-
-### STEP 2: Setup Receptionist's Laptop (Database Server)
-
-1. **Start the Server**:
-   ```
-   python clinic_server_launcher.py
-   ```
-   - This opens a control panel
-   - Click "🚀 Start Server & Open Reception"
-   - Note down the IP address shown (e.g., 192.168.1.100)
-
-2. **Keep the server running** - don't close the control panel window
-
-### STEP 3: Setup Consultant's Laptop (Client)
-
-1. **Copy the system files** to the consultant's laptop
-
-2. **Install dependencies**:
-   ```
-   pip install -r requirements.txt
-   ```
-
-3. **Create desktop shortcuts**:
-   ```
-   python create_clinic_shortcuts.py
-   ```
-   - Enter the receptionist's IP address when prompted
-   - Desktop shortcuts will be created automatically
-
-4. **Use the shortcuts**:
-   - Double-click "Reception - Clinic Management" for patient registration
-   - Double-click "Consultant X - Clinic Management" for consultation queues
-   - Double-click "Reports - Clinic Management" for generating reports
-
-## Network Setup
-
-### Finding IP Address:
-- **Windows**: Open Command Prompt → type `ipconfig`
-- **Mac/Linux**: Open Terminal → type `ifconfig` or `ip addr`
-- Look for address starting with 192.168.x.x
-
-### Firewall Settings:
-- If connection fails, temporarily disable firewall to test
-- Add exception for port 5000 if needed
-
-## Usage Workflows
-
-### Reception Workflow:
-1. Start server using `python clinic_server_launcher.py`
-2. Use Reception interface for patient registration
-3. Search existing patients by name or phone
-4. Assign patients to consultants
-
-### Consultant Workflow:
-1. Use consultant desktop shortcuts
-2. Select consultant from dropdown
-3. View waiting patients queue
-4. Mark consultations as completed
-5. View shift summaries
-
-### Reports Workflow:
-1. Use Reports interface
-2. Select date ranges
-3. Filter by consultant
-4. Download CSV reports
-
-## Database Information
-- **Location**: `instance/clinic.db` (on receptionist's laptop only)
-- **Backup**: Copy this file regularly to prevent data loss
-- **Network**: All other laptops connect to this central database
-
-## Troubleshooting
-
-**"Port 5000 already in use"**:
-- Close other applications using port 5000
-- Or change port in main.py (line with app.run)
-
-**"Can't connect from other laptops"**:
-- Check both laptops are on same WiFi
-- Verify IP address is correct
-- Temporarily disable firewall
-- Ensure server laptop is running the clinic_server_launcher.py
-
-**"Desktop shortcuts don't work"**:
-- Right-click shortcut → Properties → check URL is correct
-- Manually open browser and go to http://[IP]:5000/reception
-
-**"Database errors"**:
-- Check instance/clinic.db exists on server laptop
-- Restart the server launcher
-- Check file permissions
-
-## System Architecture
-- **Server**: Receptionist's laptop runs Flask application + SQLite database
-- **Clients**: Other laptops access via web browser using desktop shortcuts
-- **Network**: All communication over local WiFi (no internet required)
-- **Data**: Centralized database on receptionist's laptop
-
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-## Support
-For issues, check that:
-1. Python dependencies are installed on both laptops
-2. Server is running on receptionist's laptop
-3. Both laptops are on same network
-4. Firewall allows port 5000
+def create_launcher_script(filename, role, consultant_id=None):
+    """Create the launcher script that starts the server and opens browser"""
+    script_content = f'''#!/usr/bin/env python3
+"""
+Clinic System Auto-Launcher
+Automatically starts server and opens appropriate interface based on laptop role
 """
 
-    with open(os.path.join(export_dir, 'SETUP_README.md'), 'w', encoding='utf-8') as f:
-        f.write(readme_content)
+import os
+import sys
+import time
+import json
+import signal
+import subprocess
+import webbrowser
+import threading
+from pathlib import Path
 
-    # Create quick start batch files
-    # Windows batch file for server
-    server_batch = """@echo off
-echo Starting Clinic Management Server...
-echo.
-echo This will open the server control panel.
-echo Keep this window open while the system is running.
-echo.
-python clinic_server_launcher.py
-pause
-"""
+# Configuration
+SERVER_PORT = 5000
+CONFIG_FILE = "clinic_config.json"
 
-    with open(os.path.join(export_dir, 'START_SERVER.bat'), 'w', encoding='utf-8') as f:
-        f.write(server_batch)
+def load_config():
+    """Load laptop configuration"""
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    return {{"role": "{role}", "consultant_id": {consultant_id}}}
 
-    # Windows batch file for client setup
-    client_batch = """@echo off
-echo Setting up Desktop Shortcuts for Clinic Management
-echo.
-echo This will create desktop shortcuts for Reception, Consultants, and Reports
-echo You will be asked for the server laptop's IP address
-echo.
-python create_clinic_shortcuts.py
-pause
-"""
+def start_server():
+    """Start the Flask server"""
+    try:
+        # Start gunicorn server
+        cmd = ["gunicorn", "--bind", f"0.0.0.0:{{SERVER_PORT}}", "--reuse-port", "--reload", "main:app"]
+        process = subprocess.Popen(cmd, 
+                                 stdout=subprocess.PIPE, 
+                                 stderr=subprocess.PIPE,
+                                 cwd=os.getcwd())
+        return process
+    except Exception as e:
+        print(f"Error starting server: {{e}}")
+        return None
 
-    with open(os.path.join(export_dir, 'SETUP_SHORTCUTS.bat'), 'w', encoding='utf-8') as f:
-        f.write(client_batch)
-
-    # Shell scripts for Mac/Linux
-    server_shell = """#!/bin/bash
-echo "Starting Clinic Management Server..."
-echo
-echo "This will open the server control panel."
-echo "Keep this window open while the system is running."
-echo
-python3 clinic_server_launcher.py
-"""
-
-    with open(os.path.join(export_dir, 'start_server.sh'), 'w', encoding='utf-8') as f:
-        f.write(server_shell)
-    os.chmod(os.path.join(export_dir, 'start_server.sh'), 0o755)
-
-    client_shell = """#!/bin/bash
-echo "Setting up Desktop Shortcuts for Clinic Management"
-echo
-echo "This will create desktop shortcuts for Reception, Consultants, and Reports"
-echo "You will be asked for the server laptop's IP address"
-echo
-python3 create_clinic_shortcuts.py
-"""
-
-    with open(os.path.join(export_dir, 'setup_shortcuts.sh'), 'w', encoding='utf-8') as f:
-        f.write(client_shell)
-    os.chmod(os.path.join(export_dir, 'setup_shortcuts.sh'), 0o755)
-
-    return export_dir
-
-def create_gui_installer():
-    """Create GUI for easy setup"""
-    root = tk.Tk()
-    root.title("Clinic Management System - Setup")
-    root.geometry("600x500")
-
-    # Header
-    header = tk.Label(root, text="🏥 Clinic Management System", 
-                     font=("Arial", 18, "bold"), fg="blue")
-    header.pack(pady=20)
-
-    subtitle = tk.Label(root, text="Complete Setup & Deployment Tool", 
-                       font=("Arial", 12))
-    subtitle.pack(pady=5)
-
-    # Instructions
-    instructions = tk.Text(root, height=15, width=70, wrap=tk.WORD)
-    instructions.pack(pady=20, padx=20)
-    instructions.insert(tk.END, """Welcome to the Clinic Management System Setup!
-
-This tool will create a complete package for deployment on your clinic laptops.
-
-WHAT THIS CREATES:
-✅ Complete application files
-✅ Desktop shortcut creator
-✅ Server launcher with GUI
-✅ Installation instructions
-✅ Batch files for Windows
-✅ Shell scripts for Mac/Linux
-
-DEPLOYMENT PROCESS:
-1. Click "Create Installation Package" below
-2. Copy the created folder to both laptops
-3. On RECEPTIONIST'S laptop: Run START_SERVER.bat (Windows) or start_server.sh (Mac/Linux)
-4. On CONSULTANT'S laptop: Run SETUP_SHORTCUTS.bat or setup_shortcuts.sh
-5. Use the desktop shortcuts to access different interfaces
-
-KEY FEATURES:
-📋 Reception interface for patient registration
-👩‍⚕️ Consultant interfaces with patient queues  
-📊 Reports with date filtering and CSV export
-💾 Centralized database on receptionist's laptop
-🌐 Network access via desktop shortcuts
-⚡ No internet required - works on local WiFi
-
-The system will create desktop shortcuts that automatically connect to the correct server IP address.""")
-    instructions.config(state=tk.DISABLED)
-
-    # Buttons
-    buttons_frame = tk.Frame(root)
-    buttons_frame.pack(pady=20)
-
-    def create_package():
+def wait_for_server(max_wait=30):
+    """Wait for server to be ready"""
+    import urllib.request
+    
+    for i in range(max_wait):
         try:
-            export_dir = create_installation_package()
+            urllib.request.urlopen(f"http://localhost:{{SERVER_PORT}}", timeout=1)
+            return True
+        except:
+            time.sleep(1)
+    return False
 
-            # Create zip file
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            zip_filename = f"clinic_management_complete_{timestamp}.zip"
+def open_browser():
+    """Open the appropriate interface based on role"""
+    config = load_config()
+    role = config.get("role", "receptionist")
+    consultant_id = config.get("consultant_id")
+    
+    if role == "consultant" and consultant_id:
+        url = f"http://localhost:{{SERVER_PORT}}/consultant/{{consultant_id}}"
+    else:
+        url = f"http://localhost:{{SERVER_PORT}}/receptionist"
+    
+    # Wait a bit for server to be fully ready
+    time.sleep(2)
+    webbrowser.open(url)
+    print(f"Opening {{role}} interface: {{url}}")
 
-            with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root_dir, dirs, files in os.walk(export_dir):
-                    for file in files:
-                        file_path = os.path.join(root_dir, file)
-                        arcname = os.path.relpath(file_path, export_dir)
-                        zipf.write(file_path, arcname)
-
-            messagebox.showinfo("Success!", 
-                              f"✅ Installation package created successfully!\n\n"
-                              f"📁 Folder: {export_dir}\n"
-                              f"📦 Zip file: {zip_filename}\n\n"
-                              f"📋 Next steps:\n"
-                              f"1. Copy the folder or zip file to both laptops\n"
-                              f"2. Follow the SETUP_README.md instructions\n"
-                              f"3. Start with receptionist's laptop first")
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to create package:\n{str(e)}")
-
-    create_btn = tk.Button(buttons_frame, text="🚀 Create Installation Package", 
-                          command=create_package, bg="green", fg="white", 
-                          font=("Arial", 12, "bold"), padx=30, pady=15)
-    create_btn.pack()
-
-    # Footer
-    footer = tk.Label(root, text="This will create everything needed for deployment", 
-                     font=("Arial", 9), fg="gray")
-    footer.pack(pady=10)
-
-    root.mainloop()
+def main():
+    """Main launcher function"""
+    print("Starting The Kids Clinic Patient Management System...")
+    
+    config = load_config()
+    role = config.get("role", "receptionist")
+    
+    print(f"Role: {{role.upper()}}")
+    
+    # Start the server
+    print("Starting server...")
+    server_process = start_server()
+    
+    if not server_process:
+        print("Failed to start server!")
+        return
+    
+    # Wait for server to be ready
+    print("Waiting for server to start...")
+    if not wait_for_server():
+        print("Server failed to start properly!")
+        server_process.terminate()
+        return
+    
+    print("Server ready!")
+    
+    # Open browser
+    threading.Thread(target=open_browser, daemon=True).start()
+    
+    try:
+        # Keep the script running
+        print("System running. Close the browser to stop the server.")
+        print("Press Ctrl+C to stop manually.")
+        server_process.wait()
+    except KeyboardInterrupt:
+        print("\\nShutting down...")
+    finally:
+        if server_process:
+            server_process.terminate()
+            server_process.wait()
+        print("Server stopped.")
 
 if __name__ == "__main__":
-    create_gui_installer()
+    main()
+'''
+    
+    with open(filename, 'w') as f:
+        f.write(script_content)
+    
+    # Make executable on Unix systems
+    if os.name != 'nt':
+        os.chmod(filename, 0o755)
+
+if __name__ == "__main__":
+    setup_laptop()

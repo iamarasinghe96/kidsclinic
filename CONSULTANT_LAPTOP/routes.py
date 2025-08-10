@@ -28,94 +28,7 @@ def generate_registration_number():
 
 @app.route('/')
 def index():
-    return redirect(url_for('receptionist'))
-
-@app.route('/receptionist')
-def receptionist():
-    consultants = Consultant.query.all()
-    
-    # Get all waiting and completed visits for all consultants (receptionist sees everything)
-    today = date.today()
-    waiting_visits = Visit.query.join(Patient).filter(
-        Visit.status == 'waiting',
-        func.date(Visit.visit_date) == today
-    ).order_by(Visit.visit_date.asc()).limit(20).all()
-    
-    completed_visits = Visit.query.join(Patient).filter(
-        Visit.status == 'completed',
-        func.date(Visit.visit_date) == today
-    ).order_by(Visit.completed_at.desc()).limit(10).all()
-    
-    total_waiting = Visit.query.filter(
-        Visit.status == 'waiting',
-        func.date(Visit.visit_date) == today
-    ).count()
-    
-    total_completed = Visit.query.filter(
-        Visit.status == 'completed',
-        func.date(Visit.visit_date) == today
-    ).count()
-    
-    return render_template('receptionist.html', 
-                         consultants=consultants,
-                         waiting_visits=waiting_visits,
-                         completed_visits=completed_visits,
-                         total_waiting=total_waiting,
-                         total_completed=total_completed)
-
-@app.route('/consultant/<int:consultant_id>')
-def consultant_view(consultant_id):
-    consultant = Consultant.query.get_or_404(consultant_id)
-    
-    # Get today's visits for this specific consultant only
-    today = date.today()
-    waiting_visits = Visit.query.join(Patient).filter(
-        Visit.consultant_id == consultant_id,
-        Visit.status == 'waiting',
-        func.date(Visit.visit_date) == today
-    ).order_by(Visit.visit_date.asc()).limit(10).all()
-    
-    completed_visits = Visit.query.join(Patient).filter(
-        Visit.consultant_id == consultant_id,
-        Visit.status == 'completed',
-        func.date(Visit.visit_date) == today
-    ).order_by(Visit.completed_at.desc()).limit(8).all()
-    
-    total_waiting = Visit.query.filter(
-        Visit.consultant_id == consultant_id,
-        Visit.status == 'waiting',
-        func.date(Visit.visit_date) == today
-    ).count()
-    
-    total_completed = Visit.query.filter(
-        Visit.consultant_id == consultant_id,
-        Visit.status == 'completed',
-        func.date(Visit.visit_date) == today
-    ).count()
-    
-    # Generate time-based greeting
-    from datetime import datetime
-    import pytz
-    
-    # Sri Lankan timezone
-    lk_tz = pytz.timezone('Asia/Colombo')
-    current_time = datetime.now(lk_tz)
-    hour = current_time.hour
-    
-    if 5 <= hour < 12:
-        greeting = "Good Morning"
-    elif 12 <= hour < 17:
-        greeting = "Good Afternoon"
-    else:
-        greeting = "Good Evening"
-    
-    return render_template('consultant_view.html', 
-                         waiting_visits=waiting_visits,
-                         completed_visits=completed_visits,
-                         selected_consultant=consultant,
-                         greeting=greeting,
-                         total_waiting=total_waiting,
-                         total_completed=total_completed)
+    return redirect(url_for('reception'))
 
 @app.route('/reception', methods=['GET', 'POST'])
 def reception():
@@ -132,11 +45,9 @@ def reception():
                 patient = Patient(
                     registration_number=registration_number,
                     full_name=request.form['full_name'],
-                    parent_name=request.form.get('parent_name', ''),
                     date_of_birth=datetime.strptime(request.form['date_of_birth'], '%Y-%m-%d').date(),
                     address=request.form['address'],
                     contact_number=request.form['contact_number'],
-                    email=request.form.get('email', ''),
                     gender=request.form['gender'],
                     consultant_id=int(request.form['consultant_id'])
                 )
@@ -144,12 +55,11 @@ def reception():
                 db.session.add(patient)
                 db.session.commit()
                 
-                # Create a visit record for today with weight
+                # Create a visit record for today
                 visit = Visit(
                     patient_id=patient.id,
                     consultant_id=patient.consultant_id,
-                    status='waiting',
-                    weight_kg=float(request.form['weight_kg']) if request.form.get('weight_kg') else None
+                    status='waiting'
                 )
                 db.session.add(visit)
                 db.session.commit()
@@ -173,12 +83,11 @@ def reception():
                     patient.consultant_id = int(request.form['consultant_id'])
                     db.session.commit()
                 
-                # Create a new visit record with weight
+                # Create a new visit record
                 visit = Visit(
                     patient_id=patient.id,
                     consultant_id=patient.consultant_id,
-                    status='waiting',
-                    weight_kg=float(request.form['weight_kg']) if request.form.get('weight_kg') else None
+                    status='waiting'
                 )
                 db.session.add(visit)
                 db.session.commit()
@@ -189,83 +98,6 @@ def reception():
                 flash('Patient not found with this registration number.', 'error')
     
     return render_template('reception.html', consultants=consultants)
-
-# New routes for enhanced patient management
-@app.route('/register_patient', methods=['POST'])
-def register_patient():
-    """Register a new patient with enhanced data"""
-    try:
-        registration_number = generate_registration_number()
-        
-        patient = Patient(
-            registration_number=registration_number,
-            full_name=request.form['full_name'],
-            parent_name=request.form.get('parent_name', ''),
-            date_of_birth=datetime.strptime(request.form['date_of_birth'], '%Y-%m-%d').date(),
-            address=request.form['address'],
-            contact_number=request.form['contact_number'],
-            email=request.form.get('email', ''),
-            gender=request.form['gender'],
-            consultant_id=int(request.form['consultant_id'])
-        )
-        
-        db.session.add(patient)
-        db.session.commit()
-        
-        # Create a visit record for today with weight
-        visit = Visit(
-            patient_id=patient.id,
-            consultant_id=patient.consultant_id,
-            status='waiting',
-            weight_kg=float(request.form['weight_kg']) if request.form.get('weight_kg') else None
-        )
-        db.session.add(visit)
-        db.session.commit()
-        
-        flash(f'Patient registered successfully! Registration Number: {registration_number}', 'success')
-        logging.info(f"New patient registered: {registration_number}")
-        
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error registering patient: {str(e)}', 'error')
-        logging.error(f"Error registering patient: {str(e)}")
-    
-    return redirect(url_for('receptionist'))
-
-@app.route('/register_returning_patient', methods=['POST'])
-def register_returning_patient():
-    """Register a returning patient visit with weight"""
-    try:
-        reg_number = request.form['registration_number']
-        patient = Patient.query.filter_by(registration_number=reg_number).first()
-        
-        if patient:
-            # Update consultant if provided
-            if request.form.get('consultant_id'):
-                patient.consultant_id = int(request.form['consultant_id'])
-                db.session.commit()
-            
-            # Create a new visit record with weight
-            visit = Visit(
-                patient_id=patient.id,
-                consultant_id=patient.consultant_id,
-                status='waiting',
-                weight_kg=float(request.form['weight_kg']) if request.form.get('weight_kg') else None
-            )
-            db.session.add(visit)
-            db.session.commit()
-            
-            flash(f'Welcome back, {patient.full_name}! Visit registered.', 'success')
-            logging.info(f"Returning patient visit: {reg_number}")
-        else:
-            flash('Patient not found with this registration number.', 'error')
-    
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error registering visit: {str(e)}', 'error')
-        logging.error(f"Error registering returning patient: {str(e)}")
-    
-    return redirect(url_for('receptionist'))
 
 @app.route('/search_patients')
 def search_patients():
@@ -299,11 +131,9 @@ def get_patient(reg_number):
     if patient:
         return jsonify({
             'full_name': patient.full_name,
-            'parent_name': patient.parent_name,
             'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d'),
             'address': patient.address,
             'contact_number': patient.contact_number,
-            'email': patient.email,
             'gender': patient.gender,
             'consultant_id': patient.consultant_id
         })
@@ -387,39 +217,16 @@ def consultant():
 def get_patient_details(reg_number):
     patient = Patient.query.filter_by(registration_number=reg_number).first()
     if patient:
-        # Get recent visits with weight data
-        recent_visits = Visit.query.filter_by(patient_id=patient.id)\
-                                  .filter(Visit.status.in_(['completed', 'completed_archived']))\
-                                  .order_by(Visit.visit_date.desc())\
-                                  .limit(5).all()
-        
-        visit_data = []
-        for visit in recent_visits:
-            visit_info = {
-                'date': visit.visit_date.strftime('%Y-%m-%d'),
-                'weight': f"{visit.weight_kg} kg" if visit.weight_kg else None
-            }
-            visit_data.append(visit_info)
-        
-        # Get current visit weight if any
-        current_visit = Visit.query.filter_by(patient_id=patient.id)\
-                                  .filter(Visit.status.in_(['waiting', 'completed']))\
-                                  .filter(func.date(Visit.visit_date) == date.today())\
-                                  .first()
-        
-        current_weight = current_visit.weight_kg if current_visit and current_visit.weight_kg else None
+        recent_visits = patient.get_recent_visits()
+        visit_dates = [visit.visit_date.strftime('%Y-%m-%d') for visit in recent_visits]
         
         return jsonify({
             'registration_number': patient.registration_number,
             'full_name': patient.full_name,
-            'parent_name': patient.parent_name,
-            'age': f"({patient.age})",  # Format as (YY) for age
+            'age': patient.age,
             'gender': patient.gender,
             'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d'),
-            'email': patient.email,
-            'weight_kg': current_weight,
-            'consultant_id': patient.consultant_id,
-            'recent_visits': visit_data
+            'recent_visits': visit_dates
         })
     return jsonify({'error': 'Patient not found'}), 404
 

@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Consultant View - The Kids Clinic / Allergy and Asthma Center{% endblock %}
+
+{% block content %}
+{% if selected_consultant %}
+<div class="d-flex justify-content-between align-items-center mb-3" style="padding-bottom: 0.75rem; border-bottom: 1px solid #dee2e6;">
+    <h4 class="text-nowrap mb-0 me-3" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        <i data-feather="stethoscope" class="me-2"></i>{{ greeting }} {{ selected_consultant.name }}!
+    </h4>
+</div>
+
+<div class="row">
+    <!-- Waiting Queue -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i data-feather="clock"></i> Waiting Queue</h5>
+                <span class="badge bg-warning fs-6">{{ total_waiting }}</span>
+            </div>
+            <div class="card-body">
+                {% if waiting_visits %}
+                    <div class="list-group">
+                        {% for visit in waiting_visits %}
+                            <a href="#" class="list-group-item list-group-item-action patient-item" 
+                               data-reg-number="{{ visit.patient.registration_number }}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
+                                    <small>{{ visit.visit_date|datetime }}</small>
+                                </div>
+                                <p class="mb-1">Reg: {{ visit.patient.registration_number }}</p>
+                                {% if visit.patient.weight_kg %}
+                                <small>Weight: {{ visit.patient.weight_kg }} kg</small>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i data-feather="users"></i>
+                        <p>No patients waiting</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Patient Information -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i data-feather="user"></i> Patient Information</h5>
+            </div>
+            <div class="card-body">
+                <div id="patientInfo">
+                    <div class="text-center text-muted">
+                        <i data-feather="info"></i>
+                        <p>Select a patient from the queue to view details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Completed Queue -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i data-feather="check-circle"></i> Completed Queue</h5>
+                <span class="badge bg-success fs-6">{{ total_completed }}</span>
+            </div>
+            <div class="card-body">
+                {% if completed_visits %}
+                    <div class="list-group">
+                        {% for visit in completed_visits %}
+                            <a href="#" class="list-group-item list-group-item-action patient-item" 
+                               data-reg-number="{{ visit.patient.registration_number }}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
+                                    <small class="text-success">{{ visit.completed_at|datetime }}</small>
+                                </div>
+                                <p class="mb-1">Reg: {{ visit.patient.registration_number }}</p>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i data-feather="check-circle"></i>
+                        <p>No completed consultations</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <i data-feather="info"></i>
+            This is the consultant view. Please ensure the correct consultant shortcut is used to access the appropriate patient queue.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Consultant view JavaScript - read-only interface
+let currentPatientRegNumber = null;
+
+// Initialize page when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize patient item click handlers
+    initializePatientHandlers();
+    
+    // Auto-refresh every 30 seconds to show new patients
+    setInterval(function() {
+        window.location.reload();
+    }, 30000);
+});
+
+// Initialize patient click handlers for view-only
+function initializePatientHandlers() {
+    document.querySelectorAll('.patient-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const regNumber = this.dataset.regNumber;
+            loadPatientInfo(regNumber);
+            
+            // Update active state
+            document.querySelectorAll('.patient-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+}
+
+// Load patient information for consultant view (read-only)
+function loadPatientInfo(regNumber) {
+    fetch(`/get_patient_details/${regNumber}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            displayPatientInfo(data);
+            currentPatientRegNumber = regNumber;
+        })
+        .catch(error => {
+            console.error('Error loading patient info:', error);
+            const patientInfo = document.getElementById('patientInfo');
+            patientInfo.innerHTML = `
+                <div class="alert alert-danger">
+                    <i data-feather="alert-circle"></i>
+                    Error loading patient information
+                </div>
+            `;
+            feather.replace();
+        });
+}
+
+// Display patient information - consultant view (compact, read-only)
+function displayPatientInfo(patient) {
+    const patientInfo = document.getElementById('patientInfo');
+    patientInfo.innerHTML = `
+        <div class="patient-details">
+            <div class="info-row">
+                <span class="info-label">Registration #:</span>
+                <span class="info-value">${patient.registration_number}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Name:</span>
+                <span class="info-value">${patient.full_name}</span>
+            </div>
+            ${patient.parent_name ? `
+            <div class="info-row">
+                <span class="info-label">Parent:</span>
+                <span class="info-value">${patient.parent_name}</span>
+            </div>
+            ` : ''}
+            <div class="info-row">
+                <span class="info-label">Birth Date:</span>
+                <span class="info-value">${patient.date_of_birth} (${patient.age})</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Gender:</span>
+                <span class="info-value">${patient.gender}</span>
+            </div>
+            ${patient.weight_kg ? `
+            <div class="info-row">
+                <span class="info-label">Weight:</span>
+                <span class="info-value">${patient.weight_kg} kg</span>
+            </div>
+            ` : ''}
+            ${patient.email ? `
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">${patient.email}</span>
+            </div>
+            ` : ''}
+            
+            <div class="mt-3">
+                <h6>Recent Visits:</h6>
+                ${patient.recent_visits.length > 0 ? 
+                    patient.recent_visits.map(visit => `<small class="d-block">${visit.date} ${visit.weight ? '(' + visit.weight + ' kg)' : ''}</small>`).join('') :
+                    '<small class="text-muted">No previous visits</small>'
+                }
+            </div>
+            
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i data-feather="info"></i>
+                    Consultant view - all actions handled by receptionist
+                </small>
+            </div>
+        </div>
+    `;
+    feather.replace();
+}
+</script>
+{% endblock %}

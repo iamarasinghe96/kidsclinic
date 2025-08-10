@@ -1,6 +1,6 @@
 # Overview
 
-This is a local-only clinic patient management system designed for use on two laptops connected via LAN. The application provides three main interfaces: Reception for patient registration and search, Consultant for managing patient queues and consultations, and Reports for generating consultation summaries within specified date ranges. The system operates entirely offline without any external services or internet connectivity requirements.
+This is a local-only clinic patient management system designed for use on two dedicated laptops: one for the consultant and one for the receptionist. The application provides specialized interfaces: Consultant view (read-only patient queue and information display), Receptionist view (full patient management, registration, queue management, and administrative functions), and Reports for generating consultation summaries. The system operates entirely offline with automated shortcuts that remember laptop roles and auto-start/close the server.
 
 # User Preferences
 
@@ -29,16 +29,18 @@ Preferred communication style: Simple, everyday language.
 - **Print-optimized CSS** for generating patient consultation summaries
 
 ## Application Structure
-- **Route-based organization** with separate modules for models, routes, and app configuration
-- **Three main interfaces**: Reception (patient management), Consultant (queue management), Report (data analytics)
-- **Real-time patient search** with partial matching on names and contact numbers
-- **Session management** for maintaining consultant selections and patient states
+- **Role-based interfaces**: Consultant (read-only view), Receptionist (full management), Reports (data analytics)
+- **Automated deployment**: Shortcuts remember laptop roles and auto-start appropriate interface
+- **Enhanced patient data**: Weight tracking per visit, email addresses, parent names
+- **Streamlined workflow**: Receptionist handles all patient actions, consultant only views information
+- **Compact print layouts**: Optimized patient information with age integrated into birth date
 
 ## Data Flow
-- Reception creates patients and assigns to consultants
-- Consultants view assigned patients in chronological queues
-- Visit status transitions from 'waiting' to 'completed' through consultant actions
-- Reports aggregate completed visits by date ranges
+- Receptionist creates patients with comprehensive data (weight, email, parent names)
+- Consultant views assigned patients in read-only chronological queues
+- Receptionist manages all visit status transitions and patient actions
+- Weight is recorded for each visit with historical tracking
+- Reports aggregate completed visits by date ranges with enhanced patient data
 
 # External Dependencies
 

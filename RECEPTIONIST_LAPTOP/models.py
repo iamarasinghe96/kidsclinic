@@ -10,11 +10,9 @@ class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     registration_number = db.Column(db.String(20), unique=True, nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
-    parent_name = db.Column(db.String(100), nullable=True)
     date_of_birth = db.Column(db.Date, nullable=False)
     address = db.Column(db.Text, nullable=False)
     contact_number = db.Column(db.String(20), nullable=False)
-    email = db.Column(db.String(120), nullable=True)
     gender = db.Column(db.String(10), nullable=False)
     consultant_id = db.Column(db.Integer, db.ForeignKey('consultant.id'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(SL_TZ).replace(tzinfo=None))
@@ -54,9 +52,8 @@ class Visit(db.Model):
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
     consultant_id = db.Column(db.Integer, db.ForeignKey('consultant.id'), nullable=False)
     visit_date = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(SL_TZ).replace(tzinfo=None))
-    status = db.Column(db.String(20), nullable=False, default='waiting')  # waiting, completed, incomplete, completed_archived
+    status = db.Column(db.String(20), nullable=False, default='waiting')  # waiting, completed, incomplete
     completed_at = db.Column(db.DateTime)
-    weight_kg = db.Column(db.Float, nullable=True)  # Patient weight in kg at time of visit
     
     # Relationships
     consultant = db.relationship('Consultant', backref='visits')
