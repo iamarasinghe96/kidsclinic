@@ -127,14 +127,24 @@ document.addEventListener('DOMContentLoaded', function() {
 function checkForSelectedPatient() {
     try {
         const selectedPatient = localStorage.getItem('currentSelectedPatient');
+        console.log('Checking localStorage:', selectedPatient);
+        
         if (selectedPatient) {
             const patientData = JSON.parse(selectedPatient);
             const currentConsultantId = {{ selected_consultant_id if selected_consultant_id else 'null' }};
             
+            console.log('Patient data:', patientData);
+            console.log('Current consultant ID:', currentConsultantId);
+            console.log('Current selected patient:', consultantCurrentPatientRegNumber);
+            
             // Only show patient if they belong to this consultant
             if (patientData.consultantId === currentConsultantId && patientData.regNumber !== consultantCurrentPatientRegNumber) {
+                console.log('Auto-selecting patient:', patientData.regNumber);
+                
                 // Auto-select this patient
                 const patientElement = document.querySelector(`[data-reg-number="${patientData.regNumber}"]`);
+                console.log('Found patient element:', patientElement);
+                
                 if (patientElement) {
                     // Remove active state from all items
                     document.querySelectorAll('.patient-item').forEach(i => i.classList.remove('active'));
@@ -142,8 +152,16 @@ function checkForSelectedPatient() {
                     
                     // Load patient info
                     loadPatientInfo(patientData.regNumber);
+                } else {
+                    console.log('Patient element not found in current queue');
                 }
+            } else if (patientData.consultantId !== currentConsultantId) {
+                console.log('Patient belongs to different consultant');
+            } else if (patientData.regNumber === consultantCurrentPatientRegNumber) {
+                console.log('Patient already selected');
             }
+        } else {
+            console.log('No selected patient in localStorage');
         }
     } catch (error) {
         console.error('Error checking selected patient:', error);

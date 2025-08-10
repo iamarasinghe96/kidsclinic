@@ -345,11 +345,13 @@ function loadPatientInfo(regNumber) {
             currentPatientRegNumber = regNumber;
             
             // Store selected patient for consultant synchronization
-            localStorage.setItem('currentSelectedPatient', JSON.stringify({
+            const syncData = {
                 regNumber: regNumber,
                 timestamp: Date.now(),
                 consultantId: data.consultant_id
-            }));
+            };
+            localStorage.setItem('currentSelectedPatient', JSON.stringify(syncData));
+            console.log('Stored patient selection for sync:', syncData);
             
             // Show patient actions buttons
             document.getElementById('patientActions').style.display = 'block';
