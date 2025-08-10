@@ -1,6 +1,8 @@
 # Overview
 
-This is a local-only clinic patient management system designed for use on two dedicated laptops: one for the consultant and one for the receptionist. The application provides specialized interfaces: Consultant view (read-only patient queue and information display), Receptionist view (full patient management, registration, queue management, and administrative functions), and Reports for generating consultation summaries. The system operates entirely offline with automated shortcuts that remember laptop roles and auto-start/close the server.
+This is a local-only clinic patient management system for "The Kids Clinic / Allergy and Asthma Center" designed for use on two dedicated laptops: one for the consultant and one for the receptionist. The application provides specialized interfaces: Consultant view (completely read-only display showing what receptionist does), Receptionist view (full patient management, registration, queue management, and administrative functions), and Reports for generating consultation summaries. The system operates entirely offline with automated shortcuts that remember laptop roles and auto-start/close the server.
+
+**Current Status**: Ready for complete rebuild with simplified architecture and improved synchronization.
 
 # User Preferences
 
@@ -37,10 +39,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Data Flow
 - Receptionist creates patients with comprehensive data (weight, email, parent names)
-- Consultant views assigned patients in read-only chronological queues
+- Consultant views assigned patients in completely read-only display (no interactions)
+- Patient information automatically appears in consultant view when receptionist selects patients
 - Receptionist manages all visit status transitions and patient actions
 - Weight is recorded for each visit with historical tracking
 - Reports aggregate completed visits by date ranges with enhanced patient data
+- Real-time synchronization between receptionist actions and consultant display
 
 # External Dependencies
 
