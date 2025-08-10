@@ -119,53 +119,76 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.reload();
     }, 30000);
     
-    // Check for patient selection from receptionist every 2 seconds
-    setInterval(checkForSelectedPatient, 2000);
+    // Check for patient selection from receptionist every 3 seconds
+    setInterval(checkForSelectedPatient, 3000);
+    
+    // Initial check
+    setTimeout(checkForSelectedPatient, 1000);
 });
 
 // Check if receptionist has selected a patient for this consultant
 function checkForSelectedPatient() {
     try {
         const selectedPatient = localStorage.getItem('currentSelectedPatient');
-        console.log('Checking localStorage:', selectedPatient);
+        console.log('[CONSULTANT] Checking localStorage:', selectedPatient);
         
         if (selectedPatient) {
             const patientData = JSON.parse(selectedPatient);
             const currentConsultantId = {{ selected_consultant_id if selected_consultant_id else 'null' }};
             
-            console.log('Patient data:', patientData);
-            console.log('Current consultant ID:', currentConsultantId);
-            console.log('Current selected patient:', consultantCurrentPatientRegNumber);
+            console.log('[CONSULTANT] Patient data:', patientData);
+            console.log('[CONSULTANT] Current consultant ID:', currentConsultantId);
+            console.log('[CONSULTANT] Current selected patient:', consultantCurrentPatientRegNumber);
+            
+            // Check age of the sync data (prevent stale data)
+            const dataAge = Date.now() - patientData.timestamp;
+            console.log('[CONSULTANT] Data age (ms):', dataAge);
+            
+            // Only process if data is fresh (less than 30 seconds old)
+            if (dataAge > 30000) {
+                console.log('[CONSULTANT] Data too old, ignoring');
+                return;
+            }
             
             // Only show patient if they belong to this consultant
             if (patientData.consultantId === currentConsultantId && patientData.regNumber !== consultantCurrentPatientRegNumber) {
-                console.log('Auto-selecting patient:', patientData.regNumber);
+                console.log('[CONSULTANT] Auto-selecting patient:', patientData.regNumber);
                 
                 // Auto-select this patient
                 const patientElement = document.querySelector(`[data-reg-number="${patientData.regNumber}"]`);
-                console.log('Found patient element:', patientElement);
+                console.log('[CONSULTANT] Found patient element:', patientElement);
                 
                 if (patientElement) {
                     // Remove active state from all items
                     document.querySelectorAll('.patient-item').forEach(i => i.classList.remove('active'));
                     patientElement.classList.add('active');
                     
-                    // Load patient info
-                    loadPatientInfo(patientData.regNumber);
+                    // Load patient info using the global function from script.js
+                    if (typeof loadPatientInfo === 'function') {
+                        loadPatientInfo(patientData.regNumber);
+                    } else {
+                        console.error('[CONSULTANT] loadPatientInfo function not found');
+                    }
                     consultantCurrentPatientRegNumber = patientData.regNumber;
                 } else {
-                    console.log('Patient element not found in current queue');
+                    console.log('[CONSULTANT] Patient element not found in current queue');
+                    // Try to find in both waiting and completed queues
+                    const allPatientElements = document.querySelectorAll('.patient-item');
+                    console.log('[CONSULTANT] Total patient elements found:', allPatientElements.length);
+                    allPatientElements.forEach((el, idx) => {
+                        console.log(`[CONSULTANT] Element ${idx}:`, el.dataset.regNumber);
+                    });
                 }
             } else if (patientData.consultantId !== currentConsultantId) {
-                console.log('Patient belongs to different consultant');
+                console.log('[CONSULTANT] Patient belongs to different consultant');
             } else if (patientData.regNumber === consultantCurrentPatientRegNumber) {
-                console.log('Patient already selected');
+                console.log('[CONSULTANT] Patient already selected');
             }
         } else {
-            console.log('No selected patient in localStorage');
+            console.log('[CONSULTANT] No selected patient in localStorage');
         }
     } catch (error) {
-        console.error('Error checking selected patient:', error);
+        console.error('[CONSULTANT] Error checking selected patient:', error);
     }
 }
 });

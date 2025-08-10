@@ -350,7 +350,14 @@ function loadPatientInfo(regNumber) {
                 consultantId: data.consultant_id
             };
             localStorage.setItem('currentSelectedPatient', JSON.stringify(syncData));
-            console.log('Stored patient selection for sync:', syncData);
+            console.log('[RECEPTIONIST] Stored patient selection for sync:', syncData);
+            
+            // Also broadcast storage event for same-origin synchronization
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'currentSelectedPatient',
+                newValue: JSON.stringify(syncData),
+                url: window.location.href
+            }));
             
             // Show patient actions buttons
             document.getElementById('patientActions').style.display = 'block';
