@@ -439,8 +439,9 @@ function searchPatients() {
                         <small>Contact: ${patient.contact_number}</small>
                     `;
                     item.addEventListener('click', () => {
-                        document.querySelector('input[name="registration_number"]').value = patient.registration_number;
-                        document.getElementById('returning-patient-tab').click();
+                        document.getElementById('returning_reg_number').value = patient.registration_number;
+                        document.getElementById('returning_consultant_id').value = patient.consultant_id;
+                        document.getElementById('patient_search').value = patient.full_name;
                         resultsDiv.style.display = 'none';
                     });
                     resultsList.appendChild(item);
@@ -459,6 +460,7 @@ function searchPatients() {
 // Select returning patient from search results
 function selectReturningPatient(patient) {
     document.getElementById('returning_reg_number').value = patient.registration_number;
+    document.getElementById('returning_consultant_id').value = patient.consultant_id;
     document.getElementById('searchResults').style.display = 'none';
     document.getElementById('patient_search').value = patient.full_name;
 }

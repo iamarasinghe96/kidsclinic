@@ -107,7 +107,7 @@
 
 <script>
 // Consultant view JavaScript - read-only interface
-let currentPatientRegNumber = null;
+let consultantCurrentPatientRegNumber = null;
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -145,7 +145,7 @@ function loadPatientInfo(regNumber) {
             }
             
             displayPatientInfo(data);
-            currentPatientRegNumber = regNumber;
+            consultantCurrentPatientRegNumber = regNumber;
         })
         .catch(error => {
             console.error('Error loading patient info:', error);

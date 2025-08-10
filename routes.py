@@ -285,7 +285,8 @@ def search_patients():
             'registration_number': patient.registration_number,
             'full_name': patient.full_name,
             'contact_number': patient.contact_number,
-            'consultant': patient.consultant.name
+            'consultant': patient.consultant.name,
+            'consultant_id': patient.consultant_id
         })
     
     return jsonify(results)
