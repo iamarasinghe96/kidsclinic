@@ -290,16 +290,16 @@ function printPatientSummary() {
                 return;
             }
             
-            // Create print content - compact format
+            // Create print content - compact format in top-right corner
             const genderWeight = patient.weight_kg ? patient.gender + ', ' + patient.weight_kg + ' kg' : patient.gender;
             const visitTime = new Date().toLocaleDateString('en-GB') + ', ' + new Date().toLocaleTimeString('en-US', {hour12: true, timeStyle: 'short'});
             
-            const printContent = '<div style="border: 2px solid #000; padding: 15px; font-family: Arial, sans-serif; max-width: 300px; margin: 10px auto; font-size: 12px;">' +
-                '<div style="margin-bottom: 10px;"><strong>Reg:</strong> ' + patient.registration_number + '</div>' +
-                '<div style="margin-bottom: 10px;"><strong>Name:</strong> ' + patient.full_name + '</div>' +
-                '<div style="margin-bottom: 10px;"><strong>DOB:</strong> ' + patient.date_of_birth + ' (' + patient.age + ')</div>' +
-                '<div style="margin-bottom: 10px;"><strong>Gender:</strong> ' + genderWeight + '</div>' +
-                '<div style="margin-bottom: 10px;"><strong>Visit:</strong> ' + visitTime + '</div>' +
+            const printContent = '<div style="position: absolute; top: 20px; right: 20px; border: 2px solid #000; padding: 10px; font-family: Arial, sans-serif; width: 250px; font-size: 11px; background: white;">' +
+                '<div style="margin-bottom: 8px;"><strong>Reg:</strong> ' + patient.registration_number + '</div>' +
+                '<div style="margin-bottom: 8px;"><strong>Name:</strong> ' + patient.full_name + '</div>' +
+                '<div style="margin-bottom: 8px;"><strong>DOB:</strong> ' + patient.date_of_birth + ' (' + patient.age + ')</div>' +
+                '<div style="margin-bottom: 8px;"><strong>Gender:</strong> ' + genderWeight + '</div>' +
+                '<div style="margin-bottom: 0;"><strong>Visit:</strong> ' + visitTime + '</div>' +
                 '</div>';
             
             // Open print window
@@ -308,7 +308,10 @@ function printPatientSummary() {
                 '<html>' +
                 '<head>' +
                 '<title>Patient Summary - ' + patient.full_name + '</title>' +
-                '<style>body { margin: 0; padding: 20px; } @media print { body { margin: 0; } }</style>' +
+                '<style>' +
+                'body { margin: 0; padding: 0; position: relative; height: 100vh; }' +
+                '@media print { body { margin: 0; padding: 0; } }' +
+                '</style>' +
                 '</head>' +
                 '<body>' +
                 printContent +

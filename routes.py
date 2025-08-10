@@ -249,15 +249,7 @@ def register_returning_patient():
         
         patient = Patient.query.get_or_404(patient_id)
         
-        # Check if patient already has a visit today
-        today = date.today()
-        existing_visit = Visit.query.filter(
-            Visit.patient_id == patient.id,
-            func.date(Visit.visit_date) == today
-        ).first()
-        
-        if existing_visit:
-            return redirect(url_for('receptionist', error='Patient already registered for today'))
+        # Allow multiple visits per day - removed restriction
         
         # Create new visit
         visit = Visit(
@@ -453,10 +445,10 @@ def get_patient_details(reg_number):
             }
             visit_data.append(visit_info)
         
-        # Get current visit weight if any
+        # Get most recent visit weight if any
         current_visit = Visit.query.filter_by(patient_id=patient.id)\
                                   .filter(Visit.status.in_(['waiting', 'completed']))\
-                                  .filter(func.date(Visit.visit_date) == date.today())\
+                                  .order_by(Visit.visit_date.desc())\
                                   .first()
         
         current_weight = current_visit.weight_kg if current_visit and current_visit.weight_kg else None
@@ -484,13 +476,11 @@ def mark_complete():
     if not patient:
         return jsonify({'success': False, 'error': 'Patient not found'}), 404
     
-    # Find today's waiting visit for this patient
-    today = date.today()
+    # Find the most recent waiting visit for this patient (allow multiple visits per day)
     visit = Visit.query.filter(
         Visit.patient_id == patient.id,
-        Visit.status == 'waiting',
-        func.date(Visit.visit_date) == today
-    ).first()
+        Visit.status == 'waiting'
+    ).order_by(Visit.visit_date.desc()).first()
     
     if not visit:
         return jsonify({'success': False, 'error': 'No active visit found for this patient'}), 400
@@ -521,13 +511,11 @@ def complete_consultation():
     patient = Patient.query.filter_by(registration_number=reg_number).first()
     
     if patient:
-        # Find today's waiting visit for this patient
-        today = date.today()
+        # Find the most recent waiting visit for this patient
         visit = Visit.query.filter(
             Visit.patient_id == patient.id,
-            Visit.status == 'waiting',
-            func.date(Visit.visit_date) == today
-        ).first()
+            Visit.status == 'waiting'
+        ).order_by(Visit.visit_date.desc()).first()
         
         if visit:
             consultant_id = visit.consultant_id

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-nowrap mb-0">
+        <i data-feather="settings" class="me-2"></i>Admin Panel
+    </h3>
+    <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-secondary">
+        <i data-feather="log-out" class="me-2"></i>Logout
+    </a>
+</div>
+
+<div class="row">
+    <!-- System Statistics -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header" style="background-color: #8EC641; color: white;">
+                <h5 class="mb-0">
+                    <i data-feather="bar-chart-2"></i>
+                    System Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Total Patients:</strong> {{ total_patients }}
+                </div>
+                <div class="mb-3">
+                    <strong>Total Visits:</strong> {{ total_visits }}
+                </div>
+                <div class="mb-3">
+                    <strong>Active Consultants:</strong> {{ consultants|length }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Consultant -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header" style="background-color: #8EC641; color: white;">
+                <h5 class="mb-0">
+                    <i data-feather="user-plus"></i>
+                    Add New Consultant
+                </h5>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('admin_add_consultant') }}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Consultant Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="consultation_fee" class="form-label">Consultation Fee</label>
+                                <input type="number" class="form-control" id="consultation_fee" name="consultation_fee" step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i data-feather="plus" class="me-2"></i>Add Consultant
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Consultants -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header" style="background-color: #8EC641; color: white;">
+                <h5 class="mb-0">
+                    <i data-feather="users"></i>
+                    Current Consultants
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if consultants %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Consultation Fee</th>
+                                    <th>Color</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for consultant in consultants %}
+                                    <tr>
+                                        <td>{{ consultant.name }}</td>
+                                        <td>${{ "%.2f"|format(consultant.consultation_fee or 0) }}</td>
+                                        <td>
+                                            <span class="badge" style="background-color: {{ consultant.color or '#6c757d' }};">
+                                                {{ consultant.color or 'Default' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ consultant.created_at.strftime('%Y-%m-%d') if consultant.created_at else 'N/A' }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editConsultant({{ consultant.id }})">
+                                                <i data-feather="edit-2"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i data-feather="users"></i>
+                        <p>No consultants added yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+});
+
+function editConsultant(consultantId) {
+    // Placeholder for edit functionality
+    alert('Edit consultant functionality - to be implemented');
+}
+</script>
+{% endblock %}
