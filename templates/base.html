@@ -108,14 +108,21 @@
                         <a class="nav-link text-white {% if request.endpoint == 'receptionist' %}fw-bold{% endif %}" 
                            href="{{ url_for('receptionist') }}">
                             <i data-feather="user-plus"></i>
-                            Receptionist
+                            Patient Registration
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white {% if request.endpoint == 'queue_management' %}fw-bold{% endif %}" 
+                           href="{{ url_for('queue_management') }}">
+                            <i data-feather="users"></i>
+                            Queue Management
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white {% if request.endpoint == 'consultant' %}fw-bold{% endif %}" 
                            href="{{ url_for('consultant') }}">
-                            <i data-feather="activity"></i>
-                            Consultant
+                            <i data-feather="eye"></i>
+                            Consultant View
                         </a>
                     </li>
                     <li class="nav-item">
