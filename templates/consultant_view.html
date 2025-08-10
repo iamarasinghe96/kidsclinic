@@ -118,6 +118,37 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(function() {
         window.location.reload();
     }, 30000);
+    
+    // Check for patient selection from receptionist every 2 seconds
+    setInterval(checkForSelectedPatient, 2000);
+});
+
+// Check if receptionist has selected a patient for this consultant
+function checkForSelectedPatient() {
+    try {
+        const selectedPatient = localStorage.getItem('currentSelectedPatient');
+        if (selectedPatient) {
+            const patientData = JSON.parse(selectedPatient);
+            const currentConsultantId = {{ selected_consultant_id if selected_consultant_id else 'null' }};
+            
+            // Only show patient if they belong to this consultant
+            if (patientData.consultantId === currentConsultantId && patientData.regNumber !== consultantCurrentPatientRegNumber) {
+                // Auto-select this patient
+                const patientElement = document.querySelector(`[data-reg-number="${patientData.regNumber}"]`);
+                if (patientElement) {
+                    // Remove active state from all items
+                    document.querySelectorAll('.patient-item').forEach(i => i.classList.remove('active'));
+                    patientElement.classList.add('active');
+                    
+                    // Load patient info
+                    loadPatientInfo(patientData.regNumber);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking selected patient:', error);
+    }
+}
 });
 
 // Initialize patient click handlers for view-only

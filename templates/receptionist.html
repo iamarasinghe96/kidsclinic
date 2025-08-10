@@ -344,6 +344,13 @@ function loadPatientInfo(regNumber) {
             displayPatientInfo(data);
             currentPatientRegNumber = regNumber;
             
+            // Store selected patient for consultant synchronization
+            localStorage.setItem('currentSelectedPatient', JSON.stringify({
+                regNumber: regNumber,
+                timestamp: Date.now(),
+                consultantId: data.consultant_id
+            }));
+            
             // Show patient actions buttons
             document.getElementById('patientActions').style.display = 'block';
         })
@@ -514,6 +521,9 @@ function resetPatientInfo() {
     `;
     document.getElementById('patientActions').style.display = 'none';
     currentPatientRegNumber = null;
+    
+    // Clear synchronized patient selection
+    localStorage.removeItem('currentSelectedPatient');
     
     // Remove active state from all items
     document.querySelectorAll('.patient-item').forEach(item => {
