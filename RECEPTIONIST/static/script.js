@@ -26,15 +26,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
-    
+
     // Auto-refresh functionality for queue management
     if (window.location.pathname.includes('/receptionist') || 
         window.location.pathname.includes('/consultant')) {
         startAutoRefresh();
     }
-    
+
     // Load initial data
     refreshPatientList();
+
+    // Initialize patient click handlers
+    initializePatientHandlers();
 });
 
 // Auto-refresh functionality
@@ -160,16 +163,16 @@ function calculateAge(dateOfBirth) {
 // Handle patient registration form submission
 function handlePatientRegistration(e) {
     e.preventDefault();
-    
+
     const formData = new FormData(e.target);
     const patientData = Object.fromEntries(formData.entries());
-    
+
     // Validate required fields
     if (!patientData.name || !patientData.consultant_id) {
         showAlert('Please fill in all required fields', 'danger');
         return;
     }
-    
+
     fetch('/api/register_patient', {
         method: 'POST',
         headers: {
@@ -200,14 +203,14 @@ function clearForm() {
     if (form) {
         form.reset();
     }
-    
+
     // Hide returning patient section
     const returningSection = document.getElementById('returningPatientSection');
     if (returningSection) {
         returningSection.style.display = 'none';
         isReturningPatientMode = false;
     }
-    
+
     // Clear search results
     const searchResults = document.getElementById('searchResults');
     if (searchResults) {
@@ -215,96 +218,26 @@ function clearForm() {
     }
 }
 
-// Toggle returning patient search
-function toggleReturningPatient() {
-    const returningSection = document.getElementById('returningPatientSection');
-    isReturningPatientMode = !isReturningPatientMode;
-    
-    if (isReturningPatientMode) {
-        returningSection.style.display = 'block';
-        document.getElementById('patient_search').focus();
-    } else {
-        returningSection.style.display = 'none';
-        clearSearch();
-    }
-}
+// Initialize patient click handlers
+function initializePatientHandlers() {
+    document.querySelectorAll('.patient-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const regNumber = this.dataset.regNumber;
+            loadPatientInfo(regNumber);
 
-// Search for existing patients
-function searchPatients() {
-    const searchTerm = document.getElementById('patient_search').value.trim();
-    const searchResults = document.getElementById('searchResults');
-    
-    if (searchTerm.length < 2) {
-        searchResults.innerHTML = '';
-        return;
-    }
-    
-    fetch(`/api/search_patients?q=${encodeURIComponent(searchTerm)}`)
-        .then(response => response.json())
-        .then(patients => {
-            if (patients.length === 0) {
-                searchResults.innerHTML = '<p class="text-muted small">No patients found</p>';
-                return;
-            }
-            
-            searchResults.innerHTML = patients.map(patient => `
-                <div class="search-result-item" onclick="selectReturningPatient('${patient.registration_number}')">
-                    <strong>${patient.name}</strong> - ${patient.registration_number}
-                    <br><small class="text-muted">${patient.consultant_name} | Age: ${patient.age || 'N/A'}</small>
-                </div>
-            `).join('');
-        })
-        .catch(error => {
-            console.error('Search error:', error);
-            searchResults.innerHTML = '<p class="text-danger small">Search failed</p>';
+            // Update active state
+            document.querySelectorAll('.patient-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
         });
+    });
 }
 
-// Select a returning patient
-function selectReturningPatient(regNumber) {
-    fetch(`/api/patient_details/${regNumber}`)
-        .then(response => response.json())
-        .then(patient => {
-            if (patient.error) {
-                showAlert(patient.error, 'danger');
-                return;
-            }
-            
-            // Fill the form with patient data
-            document.getElementById('patient_name').value = patient.name;
-            document.getElementById('patient_age').value = patient.age || '';
-            document.getElementById('parent_name').value = patient.parent_name || '';
-            document.getElementById('patient_phone').value = patient.phone || '';
-            document.getElementById('patient_email').value = patient.email || '';
-            document.getElementById('consultant').value = patient.consultant_id || '';
-            
-            // Hide returning patient section
-            toggleReturningPatient();
-            
-            showAlert(`Patient ${patient.name} loaded. Update weight and register for today's visit.`, 'info');
-        })
-        .catch(error => {
-            console.error('Error loading patient:', error);
-            showAlert('Error loading patient data', 'danger');
-        });
-}
-
-// Clear search
-function clearSearch() {
-    document.getElementById('patient_search').value = '';
-    document.getElementById('searchResults').innerHTML = '';
-}
-
-// Filter patients by consultant
-function filterByConsultant() {
-    refreshPatientList();
-}
-
-// Load patient information for display
+// Load patient information
 function loadPatientInfo(regNumber) {
     currentPatientRegNumber = regNumber;
     lastSelectedPatient = regNumber;
-    
+
     fetch(`/api/patient_details/${regNumber}`)
         .then(response => response.json())
         .then(patient => {
@@ -312,7 +245,7 @@ function loadPatientInfo(regNumber) {
                 showAlert(patient.error, 'danger');
                 return;
             }
-            
+
             displayPatientInfo(patient);
         })
         .catch(error => {
@@ -326,8 +259,7 @@ function loadPatientInfo(regNumber) {
 function displayPatientInfo(patient) {
     const patientInfo = document.getElementById('patientInfo');
     const currentVisit = patient.current_visit;
-    
-    // Correctly use 'created_at' for visit date as per the intention
+
     const visitDateTime = currentVisit.created_at ? new Date(currentVisit.created_at).toLocaleString('en-LK', {
         year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     }) : 'N/A';
@@ -337,71 +269,71 @@ function displayPatientInfo(patient) {
         currentVisit.status === 'completed' ?
         '<span class="badge bg-success">Completed</span>' :
         '<span class="badge bg-secondary">No Visit</span>';
-    
+
     patientInfo.innerHTML = `
         <div class="patient-details">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <h6 class="mb-0">${patient.name}</h6>
                 ${statusBadge}
             </div>
-            
+
             <div class="patient-info-grid">
                 <div class="info-item">
                     <small class="text-muted">Registration #</small>
                     <div>${patient.registration_number}</div>
                 </div>
-                
+
                 <div class="info-item">
                     <small class="text-muted">Age</small>
                     <div>${patient.age || 'Not specified'}</div>
                 </div>
-                
+
                 <div class="info-item">
                     <small class="text-muted">Parent/Guardian</small>
                     <div>${patient.parent_name || 'Not specified'}</div>
                 </div>
-                
+
                 <div class="info-item">
                     <small class="text-muted">Phone</small>
                     <div>${patient.phone || 'Not specified'}</div>
                 </div>
-                
+
                 <div class="info-item">
                     <small class="text-muted">Email</small>
                     <div>${patient.email || 'Not specified'}</div>
                 </div>
-                
+
                 <div class="info-item">
                     <small class="text-muted">Consultant</small>
                     <div>${patient.consultant_name}</div>
                 </div>
-                
+
                 ${currentVisit.weight ? `
                 <div class="info-item">
                     <small class="text-muted">Weight</small>
                     <div>${currentVisit.weight} kg</div>
                 </div>
                 ` : ''}
-                
+
                 <div class="info-item">
                     <small class="text-muted">Visit Time</small>
                     <div>${visitDateTime}</div>
                 </div>
             </div>
-            
+
             <div class="patient-actions mt-3">
                 <button class="btn btn-sm btn-outline-primary me-2" onclick="editPatient('${patient.registration_number}')">
                     <i data-feather="edit" style="width: 14px; height: 14px;"></i>
                     Edit
                 </button>
-                
+
                 ${currentVisit.status === 'waiting' ? `
                 <button class="btn btn-sm btn-outline-success me-2" onclick="completeConsultation(${currentVisit.id})">
                     <i data-feather="check" style="width: 14px; height: 14px;"></i>
                     Complete
                 </button>
                 ` : ''}
-                
+
                 <button class="btn btn-sm btn-outline-info" onclick="printPatient('${patient.registration_number}')">
                     <i data-feather="printer" style="width: 14px; height: 14px;"></i>
                     Print
@@ -409,8 +341,161 @@ function displayPatientInfo(patient) {
             </div>
         </div>
     `;
-    
+
     feather.replace();
+}
+
+// Load and refresh patient list
+function refreshPatientList() {
+    const consultantId = document.getElementById('consultantFilter')?.value || '';
+    const url = consultantId ? `/api/patients?consultant_id=${consultantId}` : '/api/patients';
+
+    fetch(url)
+        .then(response => response.json())
+        .then(patients => {
+            const patientsList = document.getElementById('patientsList');
+
+            if (!patientsList) return;
+
+            if (patients.length === 0) {
+                patientsList.innerHTML = '<p class="text-muted text-center">No patients registered today</p>';
+                return;
+            }
+
+            patientsList.innerHTML = patients.map(patient => {
+                const statusColor = patient.current_visit.status === 'waiting' ? 'warning' : 
+                                   patient.current_visit.status === 'completed' ? 'success' : 'secondary';
+                const statusText = patient.current_visit.status === 'waiting' ? 'Waiting' : 
+                                  patient.current_visit.status === 'completed' ? 'Completed' : 'No Visit';
+
+                return `
+                    <div class="patient-item" data-reg-number="${patient.registration_number}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${patient.name} 
+                                    <span class="badge bg-${statusColor} ms-2">${statusText}</span>
+                                </h6>
+                                <small class="text-muted">
+                                    <i data-feather="hash" style="width: 12px; height: 12px;"></i>
+                                    ${patient.registration_number}
+                                    <span class="ms-2">
+                                        <i data-feather="user-check" style="width: 12px; height: 12px;"></i>
+                                        ${patient.consultant_name}
+                                    </span>
+                                    ${patient.age ? `<span class="ms-2"><i data-feather="calendar" style="width: 12px; height: 12px;"></i> ${patient.age}y</span>` : ''}
+                                    ${patient.current_visit.weight ? `<span class="ms-2"><i data-feather="activity" style="width: 12px; height: 12px;"></i> ${patient.current_visit.weight}kg</span>` : ''}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Re-initialize handlers for new elements
+            initializePatientHandlers();
+            feather.replace();
+        })
+        .catch(error => {
+            console.error('Error refreshing patient list:', error);
+            const patientsList = document.getElementById('patientsList');
+            if (patientsList) {
+                patientsList.innerHTML = '<p class="text-danger">Error loading patients</p>';
+            }
+        });
+}
+
+// Complete consultation
+function completeConsultation(visitId) {
+    if (!confirm('Mark this consultation as completed?')) {
+        return;
+    }
+
+    fetch('/api/complete_consultation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ visit_id: visitId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Consultation completed successfully', 'success');
+            refreshPatientList();
+            if (currentPatientRegNumber) {
+                loadPatientInfo(currentPatientRegNumber);
+            }
+        } else {
+            showAlert(data.error || 'Failed to complete consultation', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error completing consultation:', error);
+        showAlert('Error completing consultation', 'danger');
+    });
+}
+
+// Show success modal
+function showSuccessModal(message) {
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+        <div class="modal fade" id="successModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Success</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${message}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const bootstrapModal = new bootstrap.Modal(document.getElementById('successModal'));
+    bootstrapModal.show();
+
+    // Remove modal from DOM after hiding
+    document.getElementById('successModal').addEventListener('hidden.bs.modal', function() {
+        modal.remove();
+    });
+}
+
+// Show alert message
+function showAlert(message, type = 'info') {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
+
+    // Create new alert
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Insert at top of main content
+    const container = document.querySelector('.container-fluid');
+    if (container) {
+        container.insertBefore(alert, container.firstChild);
+    } else {
+        // Fallback if container is not found
+        document.body.insertBefore(alert, document.body.firstChild);
+    }
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
 }
 
 // Edit patient information
@@ -422,7 +507,7 @@ function editPatient(regNumber) {
                 showAlert(patient.error, 'danger');
                 return;
             }
-            
+
             // Fill edit modal with patient data
             document.getElementById('edit_patient_id').value = patient.id;
             document.getElementById('edit_patient_name').value = patient.name;
@@ -432,7 +517,7 @@ function editPatient(regNumber) {
             document.getElementById('edit_patient_email').value = patient.email || '';
             document.getElementById('edit_consultant').value = patient.consultant_id;
             document.getElementById('edit_patient_weight').value = patient.current_visit.weight || '';
-            
+
             // Show modal
             new bootstrap.Modal(document.getElementById('editPatientModal')).show();
         })
@@ -455,7 +540,7 @@ function savePatientChanges() {
         consultant_id: document.getElementById('edit_consultant').value,
         weight: document.getElementById('edit_patient_weight').value || null
     };
-    
+
     fetch('/api/update_patient', {
         method: 'POST',
         headers: {
@@ -482,146 +567,94 @@ function savePatientChanges() {
     });
 }
 
-// Complete consultation
-function completeConsultation(visitId) {
-    if (!confirm('Mark this consultation as completed?')) {
-        return;
-    }
-    
-    fetch('/api/complete_consultation', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ visit_id: visitId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('Consultation completed successfully', 'success');
-            refreshPatientList();
-            if (currentPatientRegNumber) {
-                loadPatientInfo(currentPatientRegNumber);
-            }
-        } else {
-            showAlert(data.error || 'Failed to complete consultation', 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error completing consultation:', error);
-        showAlert('Error completing consultation', 'danger');
-    });
-}
-
 // Print patient information
 function printPatient(regNumber) {
     window.open(`/print_patient/${regNumber}`, '_blank');
 }
 
-// Show success modal
-function showSuccessModal(message) {
-    document.getElementById('successMessage').innerHTML = message;
-    new bootstrap.Modal(document.getElementById('successModal')).show();
-}
+// Toggle returning patient search
+function toggleReturningPatient() {
+    const returningSection = document.getElementById('returningPatientSection');
+    isReturningPatientMode = !isReturningPatientMode;
 
-// Show alert message
-function showAlert(message, type = 'info') {
-    // Remove existing alerts
-    const existingAlerts = document.querySelectorAll('.alert');
-    existingAlerts.forEach(alert => alert.remove());
-    
-    // Create new alert
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type} alert-dismissible fade show`;
-    alert.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    // Insert at top of main content
-    const container = document.querySelector('.container-fluid');
-    if (container) {
-        container.insertBefore(alert, container.firstChild);
+    if (isReturningPatientMode) {
+        returningSection.style.display = 'block';
+        document.getElementById('patient_search').focus();
     } else {
-        // Fallback if container is not found
-        document.body.insertBefore(alert, document.body.firstChild);
+        returningSection.style.display = 'none';
+        clearSearch();
     }
-    
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-        if (alert.parentNode) {
-            alert.remove();
-        }
-    }, 5000);
 }
 
-// Initialize patient click handlers
-function initializePatientHandlers() {
-    document.querySelectorAll('.patient-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            const regNumber = this.dataset.regNumber;
-            loadPatientInfo(regNumber);
-            
-            // Update active state
-            document.querySelectorAll('.patient-item').forEach(i => i.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-}
+// Search for existing patients
+function searchPatients() {
+    const searchTerm = document.getElementById('patient_search').value.trim();
+    const searchResults = document.getElementById('searchResults');
 
-// Load and refresh patient list
-function refreshPatientList() {
-    const consultantId = document.getElementById('consultantFilter')?.value || '';
-    const url = consultantId ? `/api/patients?consultant_id=${consultantId}` : '/api/patients';
-    
-    fetch(url)
+    if (searchTerm.length < 2) {
+        searchResults.innerHTML = '';
+        return;
+    }
+
+    fetch(`/api/search_patients?q=${encodeURIComponent(searchTerm)}`)
         .then(response => response.json())
         .then(patients => {
-            const patientsList = document.getElementById('patientsList');
-            
             if (patients.length === 0) {
-                patientsList.innerHTML = '<p class="text-muted text-center">No patients registered today</p>';
+                searchResults.innerHTML = '<p class="text-muted small">No patients found</p>';
                 return;
             }
-            
-            patientsList.innerHTML = patients.map(patient => {
-                const statusColor = patient.current_visit.status === 'waiting' ? 'warning' : 
-                                   patient.current_visit.status === 'completed' ? 'success' : 'secondary';
-                const statusText = patient.current_visit.status === 'waiting' ? 'Waiting' : 
-                                  patient.current_visit.status === 'completed' ? 'Completed' : 'No Visit';
-                                  
-                return `
-                    <div class="patient-item" data-reg-number="${patient.registration_number}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1">${patient.name} 
-                                    <span class="badge bg-${statusColor} ms-2">${statusText}</span>
-                                </h6>
-                                <small class="text-muted">
-                                    <i data-feather="hash" style="width: 12px; height: 12px;"></i>
-                                    ${patient.registration_number}
-                                    <span class="ms-2">
-                                        <i data-feather="user-check" style="width: 12px; height: 12px;"></i>
-                                        ${patient.consultant_name}
-                                    </span>
-                                    ${patient.age ? `<span class="ms-2"><i data-feather="calendar" style="width: 12px; height: 12px;"></i> ${patient.age}y</span>` : ''}
-                                    ${patient.current_visit.weight ? `<span class="ms-2"><i data-feather="activity" style="width: 12px; height: 12px;"></i> ${patient.current_visit.weight}kg</span>` : ''}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            // Re-initialize handlers for new elements
-            initializePatientHandlers();
-            feather.replace();
+
+            searchResults.innerHTML = patients.map(patient => `
+                <div class="search-result-item" onclick="selectReturningPatient('${patient.registration_number}')">
+                    <strong>${patient.name}</strong> - ${patient.registration_number}
+                    <br><small class="text-muted">${patient.consultant_name} | Age: ${patient.age || 'N/A'}</small>
+                </div>
+            `).join('');
         })
         .catch(error => {
-            console.error('Error refreshing patient list:', error);
-            document.getElementById('patientsList').innerHTML = '<p class="text-danger">Error loading patients</p>';
+            console.error('Search error:', error);
+            searchResults.innerHTML = '<p class="text-danger small">Search failed</p>';
         });
+}
+
+// Select a returning patient
+function selectReturningPatient(regNumber) {
+    fetch(`/api/patient_details/${regNumber}`)
+        .then(response => response.json())
+        .then(patient => {
+            if (patient.error) {
+                showAlert(patient.error, 'danger');
+                return;
+            }
+
+            // Fill the form with patient data
+            document.getElementById('patient_name').value = patient.name;
+            document.getElementById('patient_age').value = patient.age || '';
+            document.getElementById('parent_name').value = patient.parent_name || '';
+            document.getElementById('patient_phone').value = patient.phone || '';
+            document.getElementById('patient_email').value = patient.email || '';
+            document.getElementById('consultant').value = patient.consultant_id || '';
+
+            // Hide returning patient section
+            toggleReturningPatient();
+
+            showAlert(`Patient ${patient.name} loaded. Update weight and register for today's visit.`, 'info');
+        })
+        .catch(error => {
+            console.error('Error loading patient:', error);
+            showAlert('Error loading patient data', 'danger');
+        });
+}
+
+// Clear search
+function clearSearch() {
+    document.getElementById('patient_search').value = '';
+    document.getElementById('searchResults').innerHTML = '';
+}
+
+// Filter patients by consultant
+function filterByConsultant() {
+    refreshPatientList();
 }
 
 // Add CSS for search results

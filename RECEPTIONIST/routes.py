@@ -11,7 +11,29 @@ def index():
 
 @app.route('/queue_management')
 def queue_management():
-    return render_template('queue_management.html')
+    consultants = Consultant.query.all()
+    today = date.today()
+    
+    # Get today's visits grouped by status
+    waiting_visits = db.session.query(Visit).join(Patient).filter(
+        db.func.date(Visit.created_at) == today,
+        Visit.status == 'waiting'
+    ).order_by(Visit.created_at.asc()).all()
+    
+    completed_visits = db.session.query(Visit).join(Patient).filter(
+        db.func.date(Visit.created_at) == today,
+        Visit.status == 'completed'
+    ).order_by(Visit.completed_at.desc()).all()
+    
+    total_waiting = len(waiting_visits)
+    total_completed = len(completed_visits)
+    
+    return render_template('queue_management.html', 
+                         consultants=consultants,
+                         waiting_visits=waiting_visits,
+                         completed_visits=completed_visits,
+                         total_waiting=total_waiting,
+                         total_completed=total_completed)
 
 @app.route('/reception')
 def reception():
@@ -46,7 +68,28 @@ def receptionist():
 @app.route('/consultant')
 def consultant():
     consultants = Consultant.query.all()
-    return render_template('consultant_simple.html', consultants=consultants)
+    today = date.today()
+    
+    # Get today's visits grouped by status
+    waiting_visits = db.session.query(Visit).join(Patient).filter(
+        db.func.date(Visit.created_at) == today,
+        Visit.status == 'waiting'
+    ).order_by(Visit.created_at.asc()).all()
+    
+    completed_visits = db.session.query(Visit).join(Patient).filter(
+        db.func.date(Visit.created_at) == today,
+        Visit.status == 'completed'
+    ).order_by(Visit.completed_at.desc()).all()
+    
+    total_waiting = len(waiting_visits)
+    total_completed = len(completed_visits)
+    
+    return render_template('consultant_simple.html', 
+                         consultants=consultants,
+                         waiting_visits=waiting_visits,
+                         completed_visits=completed_visits,
+                         total_waiting=total_waiting,
+                         total_completed=total_completed)
 
 @app.route('/api/patients')
 def get_patients():
