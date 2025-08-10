@@ -30,38 +30,42 @@ def generate_registration_number():
 def index():
     return redirect(url_for('receptionist'))
 
+@app.route('/queue_management')
+def queue_management():
+    today = date.today()
+    
+    # Get all consultants
+    consultants = Consultant.query.all()
+    
+    # Get today's waiting visits
+    waiting_visits = Visit.query.join(Patient).join(Consultant).filter(
+        Visit.status == 'waiting',
+        func.date(Visit.visit_date) == today
+    ).order_by(Visit.visit_date.asc()).all()
+    
+    # Get today's completed visits
+    completed_visits = Visit.query.join(Patient).join(Consultant).filter(
+        Visit.status == 'completed',
+        func.date(Visit.visit_date) == today
+    ).order_by(Visit.completed_at.desc()).all()
+    
+    # Calculate totals
+    total_waiting = len(waiting_visits)
+    total_completed = len(completed_visits)
+    total_patients_today = total_waiting + total_completed
+    
+    return render_template('queue_management.html',
+                         waiting_visits=waiting_visits,
+                         completed_visits=completed_visits,
+                         consultants=consultants,
+                         total_waiting=total_waiting,
+                         total_completed=total_completed,
+                         total_patients_today=total_patients_today)
+
 @app.route('/receptionist')
 def receptionist():
     consultants = Consultant.query.all()
-    
-    # Get all waiting and completed visits for all consultants (receptionist sees everything)
-    today = date.today()
-    waiting_visits = Visit.query.join(Patient).filter(
-        Visit.status == 'waiting',
-        func.date(Visit.visit_date) == today
-    ).order_by(Visit.visit_date.asc()).limit(20).all()
-    
-    completed_visits = Visit.query.join(Patient).filter(
-        Visit.status == 'completed',
-        func.date(Visit.visit_date) == today
-    ).order_by(Visit.completed_at.desc()).limit(10).all()
-    
-    total_waiting = Visit.query.filter(
-        Visit.status == 'waiting',
-        func.date(Visit.visit_date) == today
-    ).count()
-    
-    total_completed = Visit.query.filter(
-        Visit.status == 'completed',
-        func.date(Visit.visit_date) == today
-    ).count()
-    
-    return render_template('receptionist.html', 
-                         consultants=consultants,
-                         waiting_visits=waiting_visits,
-                         completed_visits=completed_visits,
-                         total_waiting=total_waiting,
-                         total_completed=total_completed)
+    return render_template('receptionist_simple.html', consultants=consultants)
 
 # Consultant route moved to avoid conflict
 
@@ -374,7 +378,7 @@ def consultant():
             func.date(Visit.visit_date) == today
         ).count()
     
-    return render_template('consultant.html', 
+    return render_template('consultant_simple.html', 
                          consultants=consultants,
                          waiting_visits=waiting_visits,
                          completed_visits=completed_visits,

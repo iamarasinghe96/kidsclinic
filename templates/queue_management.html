@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+
+{% block title %}Queue Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-nowrap mb-0">
+        <i data-feather="users" class="me-2"></i>Queue Management
+    </h3>
+    <div class="d-flex gap-2">
+        <a href="/receptionist" class="btn btn-outline-light">
+            <i data-feather="user-plus" class="me-1"></i>Patient Registration
+        </a>
+        <a href="/report" class="btn btn-outline-light">
+            <i data-feather="file-text" class="me-1"></i>Reports
+        </a>
+    </div>
+</div>
+
+<!-- Queue Overview Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center" style="border-color: #8EC641;">
+            <div class="card-body">
+                <h2 class="text-success mb-1">{{ total_waiting }}</h2>
+                <p class="card-text mb-0">Waiting</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center" style="border-color: #28a745;">
+            <div class="card-body">
+                <h2 class="text-success mb-1">{{ total_completed }}</h2>
+                <p class="card-text mb-0">Completed Today</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center" style="border-color: #17a2b8;">
+            <div class="card-body">
+                <h2 class="text-info mb-1">{{ consultants|length }}</h2>
+                <p class="card-text mb-0">Active Consultants</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center" style="border-color: #ffc107;">
+            <div class="card-body">
+                <h2 class="text-warning mb-1">{{ total_patients_today }}</h2>
+                <p class="card-text mb-0">Total Today</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Waiting Queue -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #8EC641; color: white;">
+                <h5 class="mb-0">
+                    <i data-feather="clock"></i>
+                    Waiting Queue
+                </h5>
+                <span class="badge bg-light text-dark fs-6">{{ total_waiting }}</span>
+            </div>
+            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                {% if waiting_visits %}
+                    <div class="list-group">
+                        {% for visit in waiting_visits %}
+                            <div class="list-group-item list-group-item-action patient-item" 
+                                 data-reg-number="{{ visit.patient.registration_number }}"
+                                 onclick="showPatientDetails('{{ visit.patient.registration_number }}')">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
+                                    <small>{{ visit.visit_date.strftime('%H:%M') }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    <span class="badge" style="background-color: {{ visit.consultant.color if visit.consultant.color else '#6c757d' }};">
+                                        {{ visit.consultant.name }}
+                                    </span>
+                                    <span class="ms-2">{{ visit.patient.registration_number }}</span>
+                                </p>
+                                {% if visit.weight_kg %}
+                                    <small class="text-muted">Weight: {{ visit.weight_kg }} kg</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i data-feather="users"></i>
+                        <p>No patients waiting</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Information -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header" style="background-color: #8EC641; color: white;">
+                <h5 class="mb-0">
+                    <i data-feather="info"></i>
+                    Patient Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="patientInfo">
+                    <div class="text-center text-muted">
+                        <i data-feather="user"></i>
+                        <p>Select a patient to view details</p>
+                    </div>
+                </div>
+                
+                <!-- Patient Actions -->
+                <div id="patientActions" style="display: none;" class="mt-3">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success" onclick="markComplete()">
+                            <i data-feather="check-circle" class="me-2"></i>Mark Consultation Complete
+                        </button>
+                        <button type="button" class="btn btn-outline-light" onclick="printPatientSummary()">
+                            <i data-feather="printer" class="me-2"></i>Print Patient Summary
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Completed Today -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #28a745; color: white;">
+                <h5 class="mb-0">
+                    <i data-feather="check-circle"></i>
+                    Completed Today
+                </h5>
+                <span class="badge bg-light text-success fs-6">{{ total_completed }}</span>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                {% if completed_visits %}
+                    <div class="row">
+                        {% for visit in completed_visits %}
+                            <div class="col-md-3 mb-2">
+                                <div class="card border-success">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title mb-1">{{ visit.patient.full_name }}</h6>
+                                        <p class="card-text mb-1">
+                                            <small>{{ visit.patient.registration_number }}</small>
+                                        </p>
+                                        <p class="card-text mb-1">
+                                            <span class="badge bg-success">{{ visit.consultant.name }}</span>
+                                        </p>
+                                        <small class="text-success">{{ visit.completed_at.strftime('%H:%M') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i data-feather="check-circle"></i>
+                        <p>No completed consultations today</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPatientRegNumber = null;
+
+// Show patient details
+function showPatientDetails(regNumber) {
+    // Remove active state from all items
+    document.querySelectorAll('.patient-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active state to clicked item
+    document.querySelector(`[data-reg-number="${regNumber}"]`).classList.add('active');
+    
+    // Load patient information
+    fetch(`/get_patient_details/${regNumber}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            displayPatientInfo(data);
+            currentPatientRegNumber = regNumber;
+            
+            // Notify consultant view about selected patient
+            const formData = new FormData();
+            formData.append('registration_number', regNumber);
+            formData.append('consultant_id', data.consultant_id);
+            
+            fetch('/set_selected_patient', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(result => {
+                  console.log('[QUEUE] Notified consultant about patient selection:', regNumber);
+              }).catch(error => {
+                  console.error('[QUEUE] Error notifying consultant:', error);
+              });
+            
+            // Show patient actions buttons
+            document.getElementById('patientActions').style.display = 'block';
+            feather.replace();
+        })
+        .catch(error => {
+            console.error('Error loading patient info:', error);
+            document.getElementById('patientInfo').innerHTML = `
+                <div class="alert alert-danger">
+                    <i data-feather="alert-circle"></i>
+                    Error loading patient information
+                </div>
+            `;
+            feather.replace();
+        });
+}
+
+// Display patient information
+function displayPatientInfo(patient) {
+    const genderWeight = patient.weight_kg ? 
+        `${patient.gender}, ${patient.weight_kg} kg` : 
+        patient.gender;
+    
+    const patientInfo = document.getElementById('patientInfo');
+    patientInfo.innerHTML = `
+        <div class="patient-details">
+            <div class="info-row mb-2">
+                <span class="fw-bold">Registration #:</span>
+                <span class="ms-2">${patient.registration_number}</span>
+            </div>
+            <div class="info-row mb-2">
+                <span class="fw-bold">Name:</span>
+                <span class="ms-2">${patient.full_name}</span>
+            </div>
+            ${patient.parent_name ? `
+            <div class="info-row mb-2">
+                <span class="fw-bold">Parent:</span>
+                <span class="ms-2">${patient.parent_name}</span>
+            </div>
+            ` : ''}
+            <div class="info-row mb-2">
+                <span class="fw-bold">Date of Birth:</span>
+                <span class="ms-2">${patient.date_of_birth} (${patient.age} years)</span>
+            </div>
+            <div class="info-row mb-2">
+                <span class="fw-bold">Gender/Weight:</span>
+                <span class="ms-2">${genderWeight}</span>
+            </div>
+            <div class="info-row mb-2">
+                <span class="fw-bold">Consultant:</span>
+                <span class="ms-2">${patient.consultant_name}</span>
+            </div>
+            ${patient.email ? `
+            <div class="info-row mb-2">
+                <span class="fw-bold">Email:</span>
+                <span class="ms-2">${patient.email}</span>
+            </div>
+            ` : ''}
+            
+            <div class="mt-3">
+                <h6>Recent Visits:</h6>
+                <div class="small">
+                    ${patient.recent_visits && patient.recent_visits.length > 0 ? 
+                        patient.recent_visits.map(visit => `
+                            <div class="mb-1">${visit.date} ${visit.weight ? '(' + visit.weight + ')' : ''}</div>
+                        `).join('') :
+                        '<span class="text-muted">No previous visits</span>'
+                    }
+                </div>
+            </div>
+        </div>
+    `;
+    feather.replace();
+}
+
+// Mark consultation complete
+function markComplete() {
+    if (!currentPatientRegNumber) {
+        alert('Please select a patient first');
+        return;
+    }
+    
+    if (confirm('Mark consultation as complete?')) {
+        const formData = new FormData();
+        formData.append('registration_number', currentPatientRegNumber);
+        
+        fetch('/mark_complete', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                
+                // Clear patient selection
+                clearPatientSelection();
+                
+                // Refresh page after short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification(data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error marking complete:', error);
+            showNotification('Error completing consultation', 'error');
+        });
+    }
+}
+
+// Print patient summary
+function printPatientSummary() {
+    if (!currentPatientRegNumber) {
+        alert('Please select a patient first');
+        return;
+    }
+    
+    // Open print window
+    window.open(`/print_patient/${currentPatientRegNumber}`, '_blank');
+}
+
+// Clear patient selection
+function clearPatientSelection() {
+    const patientInfo = document.getElementById('patientInfo');
+    patientInfo.innerHTML = `
+        <div class="text-center text-muted">
+            <i data-feather="user"></i>
+            <p>Select a patient to view details</p>
+        </div>
+    `;
+    document.getElementById('patientActions').style.display = 'none';
+    currentPatientRegNumber = null;
+    
+    // Clear consultant synchronization
+    fetch('/set_selected_patient', {
+        method: 'POST',
+        body: new FormData() // Empty form to clear selection
+    }).catch(error => {
+        console.error('[QUEUE] Error clearing patient selection:', error);
+    });
+    
+    // Remove active state from all items
+    document.querySelectorAll('.patient-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    feather.replace();
+}
+
+// Show notifications
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// Initialize feather icons when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+});
+</script>
+
+<style>
+.patient-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.patient-item:hover {
+    background-color: #f8f9fa;
+    border-color: #8EC641;
+}
+
+.patient-item.active {
+    background-color: #e8f5e8;
+    border-color: #8EC641;
+    border-left: 4px solid #8EC641;
+}
+
+.info-row {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.card-header {
+    font-weight: 600;
+}
+</style>
+
+{% endblock %}
