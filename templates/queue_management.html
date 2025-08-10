@@ -8,10 +8,16 @@
         <i data-feather="users" class="me-2"></i>Queue Management
     </h3>
     <div class="d-flex gap-2">
-        <a href="/receptionist" class="btn btn-outline-light">
+        <button type="button" class="btn btn-outline-danger" onclick="resetQueue()" title="Reset today's queue">
+            <i data-feather="refresh-cw" class="me-1"></i>Reset Queue
+        </button>
+        <button type="button" class="btn btn-outline-info" onclick="printDailySummary()" title="Print today's summary">
+            <i data-feather="printer" class="me-1"></i>Print Daily Summary
+        </button>
+        <a href="/receptionist" class="btn btn-outline-secondary">
             <i data-feather="user-plus" class="me-1"></i>Patient Registration
         </a>
-        <a href="/report" class="btn btn-outline-light">
+        <a href="/report" class="btn btn-outline-secondary">
             <i data-feather="file-text" class="me-1"></i>Reports
         </a>
     </div>
@@ -379,6 +385,41 @@ function showNotification(message, type) {
             notification.remove();
         }
     }, 3000);
+}
+
+// Reset today's queue
+function resetQueue() {
+    if (confirm('⚠️ RESET QUEUE: This will clear all consultations for today. Are you sure?')) {
+        if (confirm('This action cannot be undone. All waiting and completed patients will be removed from today\'s queue. Continue?')) {
+            fetch('/reset_daily_queue', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ Queue reset successfully!');
+                    window.location.reload();
+                } else {
+                    alert('❌ Error resetting queue: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error resetting queue:', error);
+                alert('❌ Error resetting queue. Please try again.');
+            });
+        }
+    }
+}
+
+// Print daily summary
+function printDailySummary() {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    window.open(`/print_daily_summary?date=${dateStr}`, '_blank');
 }
 
 // Initialize feather icons when page loads

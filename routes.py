@@ -622,6 +622,79 @@ def download_report_csv():
     
     return response
 
+@app.route('/reset_daily_queue', methods=['POST'])
+def reset_daily_queue():
+    """Reset all visits for today (dangerous operation)"""
+    try:
+        today = date.today()
+        
+        # Delete all visits for today
+        visits_deleted = Visit.query.filter(
+            func.date(Visit.visit_date) == today
+        ).delete()
+        
+        db.session.commit()
+        
+        app.logger.warning(f'Daily queue reset: {visits_deleted} visits deleted for {today}')
+        
+        return jsonify({
+            'success': True,
+            'message': f'Queue reset successfully. {visits_deleted} visits removed.',
+            'visits_deleted': visits_deleted
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error resetting daily queue: {e}')
+        return jsonify({
+            'success': False,
+            'error': f'Error resetting queue: {str(e)}'
+        }), 500
+
+@app.route('/print_daily_summary')
+def print_daily_summary():
+    """Print summary of all consultations for a specific date"""
+    date_str = request.args.get('date', date.today().strftime('%Y-%m-%d'))
+    
+    try:
+        report_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        # Get all visits for the date
+        visits = Visit.query.join(Patient).join(Consultant).filter(
+            func.date(Visit.visit_date) == report_date
+        ).order_by(Visit.visit_date.asc()).all()
+        
+        # Count statistics
+        total_visits = len(visits)
+        waiting_count = len([v for v in visits if v.status == 'waiting'])
+        completed_count = len([v for v in visits if v.status == 'completed'])
+        
+        # Group by consultant
+        consultant_stats = {}
+        for visit in visits:
+            consultant_name = visit.consultant.name
+            if consultant_name not in consultant_stats:
+                consultant_stats[consultant_name] = {
+                    'waiting': 0,
+                    'completed': 0,
+                    'total': 0
+                }
+            consultant_stats[consultant_name][visit.status] += 1
+            consultant_stats[consultant_name]['total'] += 1
+        
+        return render_template('print_daily_summary.html',
+                             visits=visits,
+                             report_date=report_date,
+                             total_visits=total_visits,
+                             waiting_count=waiting_count,
+                             completed_count=completed_count,
+                             consultant_stats=consultant_stats)
+        
+    except Exception as e:
+        app.logger.error(f'Error generating daily summary: {e}')
+        flash(f'Error generating report: {str(e)}', 'error')
+        return redirect(url_for('queue_management'))
+
 # Admin Panel Routes
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
