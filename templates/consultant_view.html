@@ -29,8 +29,8 @@
                                     <small>{{ visit.visit_date|datetime }}</small>
                                 </div>
                                 <p class="mb-1">Reg: {{ visit.patient.registration_number }}</p>
-                                {% if visit.patient.weight_kg %}
-                                <small>Weight: {{ visit.patient.weight_kg }} kg</small>
+                                {% if visit.weight_kg %}
+                                <small>Weight: {{ visit.weight_kg }} kg</small>
                                 {% endif %}
                             </a>
                         {% endfor %}
@@ -137,9 +137,14 @@ function initializePatientHandlers() {
 
 // Load patient information for consultant view (read-only)
 function loadPatientInfo(regNumber) {
+    console.log('Loading patient info for:', regNumber);
     fetch(`/get_patient_details/${regNumber}`)
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Patient data received:', data);
             if (data.error) {
                 throw new Error(data.error);
             }
@@ -150,13 +155,17 @@ function loadPatientInfo(regNumber) {
         .catch(error => {
             console.error('Error loading patient info:', error);
             const patientInfo = document.getElementById('patientInfo');
-            patientInfo.innerHTML = `
-                <div class="alert alert-danger">
-                    <i data-feather="alert-circle"></i>
-                    Error loading patient information
-                </div>
-            `;
-            feather.replace();
+            if (patientInfo) {
+                patientInfo.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i data-feather="alert-circle"></i>
+                        Error loading patient information: ${error.message}
+                    </div>
+                `;
+                feather.replace();
+            } else {
+                console.error('patientInfo element not found');
+            }
         });
 }
 
