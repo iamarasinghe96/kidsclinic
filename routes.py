@@ -475,6 +475,35 @@ def get_patient_details(reg_number):
         })
     return jsonify({'error': 'Patient not found'}), 404
 
+@app.route('/mark_complete', methods=['POST'])
+def mark_complete():
+    """Mark consultation as complete"""
+    reg_number = request.form['registration_number']
+    patient = Patient.query.filter_by(registration_number=reg_number).first()
+    
+    if not patient:
+        return jsonify({'success': False, 'error': 'Patient not found'}), 404
+    
+    # Find today's waiting visit for this patient
+    today = date.today()
+    visit = Visit.query.filter(
+        Visit.patient_id == patient.id,
+        Visit.status == 'waiting',
+        func.date(Visit.visit_date) == today
+    ).first()
+    
+    if not visit:
+        return jsonify({'success': False, 'error': 'No active visit found for this patient'}), 400
+    
+    # Mark consultation as complete
+    visit.mark_completed()
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Consultation completed for {patient.full_name}'
+    })
+
 @app.route('/complete_consultation', methods=['POST'])
 def complete_consultation():
     reg_number = request.form['registration_number']
