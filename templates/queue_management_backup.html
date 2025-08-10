@@ -7,7 +7,10 @@
     <h3 class="text-nowrap mb-0">
         <i data-feather="users" class="me-2"></i>Queue Management
     </h3>
+
 </div>
+
+
 
 <div class="row">
     <!-- Waiting Queue -->
@@ -98,7 +101,7 @@
                     <i data-feather="check-circle"></i>
                     Completed Today
                 </h5>
-                <span class="badge bg-light text-dark fs-6">{{ total_completed }}</span>
+                <span class="badge bg-light text-success fs-6">{{ total_completed }}</span>
             </div>
             <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                 {% if completed_visits %}
@@ -142,10 +145,10 @@ function showPatientDetails(regNumber) {
     });
     
     // Add active state to clicked item
-    document.querySelector('[data-reg-number="' + regNumber + '"]').classList.add('active');
+    document.querySelector(`[data-reg-number="${regNumber}"]`).classList.add('active');
     
     // Load patient information
-    fetch('/get_patient_details/' + regNumber)
+    fetch(`/get_patient_details/${regNumber}`)
         .then(response => response.json())
         .then(data => {
             if (data.error) {
@@ -176,7 +179,12 @@ function showPatientDetails(regNumber) {
         })
         .catch(error => {
             console.error('Error loading patient info:', error);
-            document.getElementById('patientInfo').innerHTML = '<div class="alert alert-danger"><i data-feather="alert-circle"></i>Error loading patient information</div>';
+            document.getElementById('patientInfo').innerHTML = `
+                <div class="alert alert-danger">
+                    <i data-feather="alert-circle"></i>
+                    Error loading patient information
+                </div>
+            `;
             feather.replace();
         });
 }
@@ -184,52 +192,58 @@ function showPatientDetails(regNumber) {
 // Display patient information
 function displayPatientInfo(patient) {
     const genderWeight = patient.weight_kg ? 
-        patient.gender + ', ' + patient.weight_kg + ' kg' : 
+        `${patient.gender}, ${patient.weight_kg} kg` : 
         patient.gender;
     
-    document.getElementById('patientInfo').innerHTML = 
-        '<div class="patient-details">' +
-            '<div class="info-row mb-2">' +
-                '<span class="fw-bold">Registration:</span>' +
-                '<span class="ms-2">' + patient.registration_number + '</span>' +
-            '</div>' +
-            '<div class="info-row mb-2">' +
-                '<span class="fw-bold">Full Name:</span>' +
-                '<span class="ms-2">' + patient.full_name + '</span>' +
-            '</div>' +
-            (patient.parent_name ? 
-                '<div class="info-row mb-2">' +
-                    '<span class="fw-bold">Parent/Guardian:</span>' +
-                    '<span class="ms-2">' + patient.parent_name + '</span>' +
-                '</div>' : '') +
-            '<div class="info-row mb-2">' +
-                '<span class="fw-bold">Date of Birth:</span>' +
-                '<span class="ms-2">' + patient.date_of_birth + ' (' + patient.age + ' years)</span>' +
-            '</div>' +
-            '<div class="info-row mb-2">' +
-                '<span class="fw-bold">Gender/Weight:</span>' +
-                '<span class="ms-2">' + genderWeight + '</span>' +
-            '</div>' +
-            '<div class="info-row mb-2">' +
-                '<span class="fw-bold">Consultant:</span>' +
-                '<span class="ms-2">' + patient.consultant_name + '</span>' +
-            '</div>' +
-            (patient.email ? 
-                '<div class="info-row mb-2">' +
-                    '<span class="fw-bold">Email:</span>' +
-                    '<span class="ms-2">' + patient.email + '</span>' +
-                '</div>' : '') +
-            '<div class="mt-3">' +
-                '<h6>Recent Visits:</h6>' +
-                '<div class="small">' +
-                    (patient.recent_visits && patient.recent_visits.length > 0 ? 
-                        patient.recent_visits.map(function(visit) {
-                            return '<div class="mb-1">' + visit.date + (visit.weight ? ' (' + visit.weight + ')' : '') + '</div>';
-                        }).join('') :
-                        '<span class="text-muted">No previous visits</span>') +
-                '</div>' +
-            '</div>' +
-        '</div>';
+    const patientInfo = document.getElementById('patientInfo');
+    patientInfo.innerHTML = `
+        <div class="patient-details">
+            <div class="info-row mb-2">
+                <span class="fw-bold">Registration #:</span>
+                <span class="ms-2">${patient.registration_number}</span>
+            </div>
+            <div class="info-row mb-2">
+                <span class="fw-bold">Name:</span>
+                <span class="ms-2">${patient.full_name}</span>
+            </div>
+            ${patient.parent_name ? `
+            <div class="info-row mb-2">
+                <span class="fw-bold">Parent:</span>
+                <span class="ms-2">${patient.parent_name}</span>
+            </div>
+            ` : ''}
+            <div class="info-row mb-2">
+                <span class="fw-bold">Date of Birth:</span>
+                <span class="ms-2">${patient.date_of_birth} (${patient.age} years)</span>
+            </div>
+            <div class="info-row mb-2">
+                <span class="fw-bold">Gender/Weight:</span>
+                <span class="ms-2">${genderWeight}</span>
+            </div>
+            <div class="info-row mb-2">
+                <span class="fw-bold">Consultant:</span>
+                <span class="ms-2">${patient.consultant_name}</span>
+            </div>
+            ${patient.email ? `
+            <div class="info-row mb-2">
+                <span class="fw-bold">Email:</span>
+                <span class="ms-2">${patient.email}</span>
+            </div>
+            ` : ''}
+            
+            <div class="mt-3">
+                <h6>Recent Visits:</h6>
+                <div class="small">
+                    ${patient.recent_visits && patient.recent_visits.length > 0 ? 
+                        patient.recent_visits.map(visit => `
+                            <div class="mb-1">${visit.date} ${visit.weight ? '(' + visit.weight + ')' : ''}</div>
+                        `).join('') :
+                        '<span class="text-muted">No previous visits</span>'
+                    }
+                </div>
+            </div>
+        </div>
+    `;
     feather.replace();
 }
 
@@ -257,7 +271,7 @@ function markComplete() {
                 clearPatientSelection();
                 
                 // Refresh page after short delay
-                setTimeout(function() {
+                setTimeout(() => {
                     window.location.reload();
                 }, 1500);
             } else {
@@ -279,7 +293,7 @@ function printPatientSummary() {
     }
     
     // Get patient details and print
-    fetch('/get_patient_details/' + currentPatientRegNumber)
+    fetch(`/get_patient_details/${currentPatientRegNumber}`)
         .then(response => response.json())
         .then(patient => {
             if (patient.error) {
@@ -307,7 +321,7 @@ function printPatientSummary() {
                 '</head>' +
                 '<body>' +
                 printContent +
-                '<script>window.onload = function() { window.print(); window.close(); }<\/script>' +
+                '<script>window.onload = function() { window.print(); window.close(); }</script>' +
                 '</body>' +
                 '</html>';
             printWindow.document.write(printHtml);
@@ -322,11 +336,12 @@ function printPatientSummary() {
 // Clear patient selection
 function clearPatientSelection() {
     const patientInfo = document.getElementById('patientInfo');
-    patientInfo.innerHTML = 
-        '<div class="text-center text-muted">' +
-            '<i data-feather="user"></i>' +
-            '<p>Select a patient to view details</p>' +
-        '</div>';
+    patientInfo.innerHTML = `
+        <div class="text-center text-muted">
+            <i data-feather="user"></i>
+            <p>Select a patient to view details</p>
+        </div>
+    `;
     document.getElementById('patientActions').style.display = 'none';
     currentPatientRegNumber = null;
     
@@ -349,15 +364,16 @@ function clearPatientSelection() {
 function showNotification(message, type) {
     const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
     const notification = document.createElement('div');
-    notification.className = 'alert ' + alertClass + ' alert-dismissible fade show position-fixed';
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
     notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
-    notification.innerHTML = 
-        message +
-        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
     document.body.appendChild(notification);
     
     // Auto-dismiss after 3 seconds
-    setTimeout(function() {
+    setTimeout(() => {
         if (notification.parentNode) {
             notification.remove();
         }
@@ -368,6 +384,8 @@ function showNotification(message, type) {
 function resetPatientDisplay() {
     clearPatientSelection();
 }
+
+
 
 // Initialize feather icons when page loads
 document.addEventListener('DOMContentLoaded', function() {
