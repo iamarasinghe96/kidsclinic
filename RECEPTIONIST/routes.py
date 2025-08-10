@@ -24,12 +24,12 @@ def receptionist():
     
     # Get today's visits grouped by status
     waiting_visits = db.session.query(Visit).join(Patient).filter(
-        db.func.date(Visit.visit_date) == today,
+        db.func.date(Visit.created_at) == today,
         Visit.status == 'waiting'
-    ).order_by(Visit.visit_date.asc()).all()
+    ).order_by(Visit.created_at.asc()).all()
     
     completed_visits = db.session.query(Visit).join(Patient).filter(
-        db.func.date(Visit.visit_date) == today,
+        db.func.date(Visit.created_at) == today,
         Visit.status == 'completed'
     ).order_by(Visit.completed_at.desc()).all()
     

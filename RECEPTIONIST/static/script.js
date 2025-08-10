@@ -1,11 +1,12 @@
-
 // Global variables for patient management
 let currentPatientRegNumber = null;
 let lastSelectedPatient = null;
 let isReturningPatientMode = false;
 
-// Initialize the application
+// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Clinic system initialized');
+
     // Initialize form submission
     const patientForm = document.getElementById('patientForm');
     if (patientForm) {
@@ -21,12 +22,140 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialize feather icons
-    feather.replace();
+    // Initialize Feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+    
+    // Auto-refresh functionality for queue management
+    if (window.location.pathname.includes('/receptionist') || 
+        window.location.pathname.includes('/consultant')) {
+        startAutoRefresh();
+    }
     
     // Load initial data
     refreshPatientList();
 });
+
+// Auto-refresh functionality
+function startAutoRefresh() {
+    // Check for updates every 10 seconds
+    setInterval(function() {
+        if (!document.hidden) { // Only refresh if page is visible
+            checkForUpdates();
+        }
+    }, 10000);
+}
+
+function checkForUpdates() {
+    // Simple implementation - could be enhanced with AJAX polling
+    const lastRefresh = localStorage.getItem('lastRefresh');
+    const now = Date.now();
+
+    if (!lastRefresh || (now - parseInt(lastRefresh)) > 30000) {
+        localStorage.setItem('lastRefresh', now.toString());
+        // Optionally reload page or update specific sections
+    }
+}
+
+// Utility function to show loading state
+function showLoading(element) {
+    if (element) {
+        element.innerHTML = '<div class="text-center"><i data-feather="loader" class="spinning"></i> Loading...</div>';
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+}
+
+// Utility function to handle errors
+function handleError(error, message = 'An error occurred') {
+    console.error('Error:', error);
+    alert(message);
+}
+
+// Print functionality
+function printElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+        alert('Print content not found');
+        return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Print - The Kids Clinic</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .no-print { display: none; }
+                @media print {
+                    body { margin: 0; }
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            ${element.innerHTML}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+    printWindow.close();
+}
+
+// Form validation utilities
+function validateForm(formElement) {
+    const requiredFields = formElement.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+
+    return isValid;
+}
+
+// Date formatting utility
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-LK', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Registration number validation
+function isValidRegistrationNumber(regNumber) {
+    // Format: DDMMYYXXX (e.g., 100124001)
+    const regex = /^\d{9}$/;
+    return regex.test(regNumber);
+}
+
+// Age calculation from date of birth
+function calculateAge(dateOfBirth) {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+
+    return age;
+}
 
 // Handle patient registration form submission
 function handlePatientRegistration(e) {
@@ -198,6 +327,11 @@ function displayPatientInfo(patient) {
     const patientInfo = document.getElementById('patientInfo');
     const currentVisit = patient.current_visit;
     
+    // Correctly use 'created_at' for visit date as per the intention
+    const visitDateTime = currentVisit.created_at ? new Date(currentVisit.created_at).toLocaleString('en-LK', {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    }) : 'N/A';
+
     const statusBadge = currentVisit.status === 'waiting' ? 
         '<span class="badge bg-warning text-dark">Waiting</span>' :
         currentVisit.status === 'completed' ?
@@ -251,7 +385,7 @@ function displayPatientInfo(patient) {
                 
                 <div class="info-item">
                     <small class="text-muted">Visit Time</small>
-                    <div>${currentVisit.created_at ? new Date(currentVisit.created_at).toLocaleTimeString() : 'N/A'}</div>
+                    <div>${visitDateTime}</div>
                 </div>
             </div>
             
@@ -406,7 +540,12 @@ function showAlert(message, type = 'info') {
     
     // Insert at top of main content
     const container = document.querySelector('.container-fluid');
-    container.insertBefore(alert, container.firstChild);
+    if (container) {
+        container.insertBefore(alert, container.firstChild);
+    } else {
+        // Fallback if container is not found
+        document.body.insertBefore(alert, document.body.firstChild);
+    }
     
     // Auto-dismiss after 5 seconds
     setTimeout(() => {

@@ -156,11 +156,11 @@
                                         <a href="#" class="list-group-item list-group-item-action patient-item" 
                                            data-reg-number="{{ visit.patient.registration_number }}">
                                             <div class="d-flex w-100 justify-content-between">
-                                                <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
-                                                <small>{{ visit.visit_date|datetime }}</small>
+                                                <h6 class="mb-1">{{ visit.patient.name }}</h6>
+                                                <small>{{ visit.created_at.strftime('%H:%M') }}</small>
                                             </div>
                                             <p class="mb-1">Reg: {{ visit.patient.registration_number }}</p>
-                                            <small>{{ visit.consultant.name }}</small>
+                                            <small>{{ visit.patient.consultant.name if visit.patient.consultant else 'Unassigned' }}</small>
                                         </a>
                                     {% endfor %}
                                 </div>
@@ -188,8 +188,8 @@
                                         <a href="#" class="list-group-item list-group-item-action patient-item" 
                                            data-reg-number="{{ visit.patient.registration_number }}">
                                             <div class="d-flex w-100 justify-content-between">
-                                                <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
-                                                <small class="text-success">{{ visit.completed_at|datetime }}</small>
+                                                <h6 class="mb-1">{{ visit.patient.name }}</h6>
+                                                <small class="text-success">{{ visit.completed_at.strftime('%H:%M') if visit.completed_at else 'Completed' }}</small>
                                             </div>
                                             <p class="mb-1">Reg: {{ visit.patient.registration_number }}</p>
                                         </a>
@@ -287,7 +287,7 @@
 
 <script>
 // Enhanced JavaScript for receptionist interface
-// currentPatientRegNumber and lastSelectedPatient are declared globally in script.js
+// Global variables are declared in script.js
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
