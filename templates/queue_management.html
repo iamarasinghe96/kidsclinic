@@ -302,56 +302,29 @@ function printPatientSummary() {
             }
             
             // Create print content similar to the image you showed
-            const printContent = `
-                <div style="border: 2px solid #000; padding: 20px; font-family: Arial, sans-serif; max-width: 400px; margin: 20px auto;">
-                    <div style="margin-bottom: 15px;">
-                        <strong>Reg:</strong> ${patient.registration_number}
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <strong>Name:</strong> ${patient.full_name}
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <strong>DOB:</strong> ${patient.date_of_birth} (${patient.age})
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <strong>Gender:</strong> ${patient.gender}
-                    </div>
-                    ${patient.weight_kg ? `
-                    <div style="margin-bottom: 15px;">
-                        <strong>Weight:</strong> ${patient.weight_kg} kg
-                    </div>
-                    ` : ''}
-                    <div style="margin-bottom: 15px;">
-                        <strong>Visit:</strong> ${new Date().toLocaleDateString('en-GB')}, ${new Date().toLocaleTimeString('en-US', {hour12: true})}
-                    </div>
-                </div>
-            `;
+            const printContent = '<div style="border: 2px solid #000; padding: 20px; font-family: Arial, sans-serif; max-width: 400px; margin: 20px auto;">' +
+                '<div style="margin-bottom: 15px;"><strong>Reg:</strong> ' + patient.registration_number + '</div>' +
+                '<div style="margin-bottom: 15px;"><strong>Name:</strong> ' + patient.full_name + '</div>' +
+                '<div style="margin-bottom: 15px;"><strong>DOB:</strong> ' + patient.date_of_birth + ' (' + patient.age + ')</div>' +
+                '<div style="margin-bottom: 15px;"><strong>Gender:</strong> ' + patient.gender + '</div>' +
+                (patient.weight_kg ? '<div style="margin-bottom: 15px;"><strong>Weight:</strong> ' + patient.weight_kg + ' kg</div>' : '') +
+                '<div style="margin-bottom: 15px;"><strong>Visit:</strong> ' + new Date().toLocaleDateString('en-GB') + ', ' + new Date().toLocaleTimeString('en-US', {hour12: true}) + '</div>' +
+                '</div>';
             
             // Open print window
             const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Patient Summary - ${patient.full_name}</title>
-                    <style>
-                        body { margin: 0; padding: 20px; }
-                        @media print {
-                            body { margin: 0; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${printContent}
-                    <script>
-                        window.onload = function() {
-                            window.print();
-                            window.close();
-                        }
-                    </script>
-                </body>
-                </html>
-            `);
+            const printHtml = '<!DOCTYPE html>' +
+                '<html>' +
+                '<head>' +
+                '<title>Patient Summary - ' + patient.full_name + '</title>' +
+                '<style>body { margin: 0; padding: 20px; } @media print { body { margin: 0; } }</style>' +
+                '</head>' +
+                '<body>' +
+                printContent +
+                '<script>window.onload = function() { window.print(); window.close(); }</script>' +
+                '</body>' +
+                '</html>';
+            printWindow.document.write(printHtml);
             printWindow.document.close();
         })
         .catch(error => {
