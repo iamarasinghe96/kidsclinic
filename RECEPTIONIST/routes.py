@@ -15,8 +15,33 @@ def queue_management():
 
 @app.route('/reception')
 def reception():
+    return redirect(url_for('receptionist'))
+
+@app.route('/receptionist')
+def receptionist():
     consultants = Consultant.query.all()
-    return render_template('receptionist.html', consultants=consultants)
+    today = date.today()
+    
+    # Get today's visits grouped by status
+    waiting_visits = db.session.query(Visit).join(Patient).filter(
+        db.func.date(Visit.visit_date) == today,
+        Visit.status == 'waiting'
+    ).order_by(Visit.visit_date.asc()).all()
+    
+    completed_visits = db.session.query(Visit).join(Patient).filter(
+        db.func.date(Visit.visit_date) == today,
+        Visit.status == 'completed'
+    ).order_by(Visit.completed_at.desc()).all()
+    
+    total_waiting = len(waiting_visits)
+    total_completed = len(completed_visits)
+    
+    return render_template('receptionist.html', 
+                         consultants=consultants,
+                         waiting_visits=waiting_visits,
+                         completed_visits=completed_visits,
+                         total_waiting=total_waiting,
+                         total_completed=total_completed)
 
 @app.route('/consultant')
 def consultant():

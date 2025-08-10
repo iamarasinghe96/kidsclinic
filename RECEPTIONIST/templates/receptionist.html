@@ -1,253 +1,291 @@
 
-<!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Kids Clinic - Receptionist</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/feather-icons"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('reception') }}">
-                <i data-feather="heart"></i>
-                The Kids Clinic - Receptionist
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('queue_management') }}">
-                    <i data-feather="users"></i>
-                    Queue Management
-                </a>
-                <a class="nav-link" href="{{ url_for('report') }}">
-                    <i data-feather="bar-chart"></i>
-                    Reports
-                </a>
-                <a class="nav-link" href="{{ url_for('admin_login') }}">
-                    <i data-feather="settings"></i>
-                    Admin
-                </a>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="container-fluid mt-3">
-        <div class="row">
-            <!-- Left Panel - Patient Registration and List -->
-            <div class="col-md-8">
-                <!-- Patient Registration Form -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i data-feather="user-plus"></i>
-                            Patient Registration
-                        </h5>
-                        <button class="btn btn-sm btn-outline-light" onclick="clearForm()">
-                            <i data-feather="refresh-cw"></i>
-                            Clear Form
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <form id="patientForm">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="patient_name" class="form-label">Patient Name *</label>
-                                    <input type="text" class="form-control" id="patient_name" name="name" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="patient_age" class="form-label">Age</label>
-                                    <input type="number" class="form-control" id="patient_age" name="age" min="0" max="18">
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="patient_weight" class="form-label">Weight (kg)</label>
-                                    <input type="number" class="form-control" id="patient_weight" name="weight" step="0.1" min="0">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="parent_name" class="form-label">Parent/Guardian Name</label>
-                                    <input type="text" class="form-control" id="parent_name" name="parent_name">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="consultant" class="form-label">Consultant *</label>
-                                    <select class="form-select" id="consultant" name="consultant_id" required>
-                                        <option value="">Select Consultant</option>
-                                        {% for consultant in consultants %}
-                                        <option value="{{ consultant.id }}">{{ consultant.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="patient_phone" class="form-label">Phone Number</label>
-                                    <input type="tel" class="form-control" id="patient_phone" name="phone">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="patient_email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="patient_email" name="email">
-                                </div>
-                            </div>
-                            <div class="mt-3">
-                                <button type="submit" class="btn btn-primary">
-                                    <i data-feather="plus"></i>
-                                    Register Patient
-                                </button>
-                                <button type="button" class="btn btn-secondary ms-2" onclick="toggleReturningPatient()">
-                                    <i data-feather="search"></i>
-                                    Returning Patient
-                                </button>
-                            </div>
-                        </form>
+{% block title %}Receptionist - The Kids Clinic / Allergy and Asthma Center{% endblock %}
 
-                        <!-- Returning Patient Search -->
-                        <div id="returningPatientSection" class="mt-3" style="display: none;">
-                            <hr>
-                            <h6>Search Existing Patients</h6>
-                            <div class="input-group">
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Patient Registration -->
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i data-feather="user-plus"></i> Patient Registration</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="registrationTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="new-patient-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#new-patient" type="button" role="tab">
+                                <i data-feather="user-plus"></i> New Patient
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="returning-patient-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#returning-patient" type="button" role="tab">
+                                <i data-feather="repeat"></i> Returning Patient
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-3" id="registrationTabContent">
+                        <!-- New Patient Registration -->
+                        <div class="tab-pane fade show active" id="new-patient" role="tabpanel">
+                            <form method="POST" action="{{ url_for('register_patient') }}">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="full_name" class="form-label">Patient Name</label>
+                                            <input type="text" class="form-control" name="full_name" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="parent_name" class="form-label">Parent/Guardian Name</label>
+                                            <input type="text" class="form-control" name="parent_name">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                            <input type="date" class="form-control" name="date_of_birth" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="gender" class="form-label">Gender</label>
+                                            <select class="form-select" name="gender" required>
+                                                <option value="">Select Gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="weight_kg" class="form-label">Weight (kg)</label>
+                                            <input type="number" step="0.1" class="form-control" name="weight_kg" placeholder="e.g., 25.5">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="address" class="form-label">Address</label>
+                                            <textarea class="form-control" name="address" rows="2" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="contact_number" class="form-label">Contact Number</label>
+                                            <input type="text" class="form-control" name="contact_number" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">Email Address</label>
+                                            <input type="email" class="form-control" name="email" placeholder="optional">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="consultant_id" class="form-label">Consultant</label>
+                                            <select class="form-select" name="consultant_id" required>
+                                                <option value="">Select Consultant</option>
+                                                {% for consultant in consultants %}
+                                                    <option value="{{ consultant.id }}">{{ consultant.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i data-feather="user-plus"></i> Register Patient
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Returning Patient -->
+                        <div class="tab-pane fade" id="returning-patient" role="tabpanel">
+                            <!-- Patient Search for Returning Patients -->
+                            <div class="mb-4">
+                                <label for="patient_search" class="form-label">Search Patient</label>
                                 <input type="text" class="form-control" id="patient_search" 
-                                       placeholder="Search by name or registration number...">
-                                <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
-                                    <i data-feather="x"></i>
-                                </button>
+                                       placeholder="Search by patient name only...">
+                                <div id="searchResults" class="mt-2" style="display: none;">
+                                    <div id="searchResultsList" class="list-group"></div>
+                                </div>
                             </div>
-                            <div id="searchResults" class="mt-2"></div>
+                            
+                            <form method="POST" action="{{ url_for('register_returning_patient') }}">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="returning_reg_number" class="form-label">Registration Number</label>
+                                            <input type="text" class="form-control" name="registration_number" id="returning_reg_number"
+                                                   placeholder="e.g., REG2024010001" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="returning_weight_kg" class="form-label">Current Weight (kg) <small class="text-muted">(optional)</small></label>
+                                            <input type="number" step="0.1" class="form-control" name="weight_kg" 
+                                                   placeholder="e.g., 26.2">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="returning_consultant_id" class="form-label">Consultant</label>
+                                            <select class="form-select" name="consultant_id" id="returning_consultant_id" required>
+                                                <option value="">Select Consultant</option>
+                                                {% for consultant in consultants %}
+                                                    <option value="{{ consultant.id }}">{{ consultant.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i data-feather="repeat"></i> Register Visit
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
+            </div>
+            
 
-                <!-- Today's Patients List -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i data-feather="users"></i>
-                            Today's Patients
-                        </h5>
-                        <div>
-                            <select class="form-select form-select-sm d-inline-block w-auto" id="consultantFilter" onchange="filterByConsultant()">
-                                <option value="">All Consultants</option>
-                                {% for consultant in consultants %}
-                                <option value="{{ consultant.id }}">{{ consultant.name }}</option>
-                                {% endfor %}
-                            </select>
-                            <button class="btn btn-sm btn-outline-light ms-2" onclick="refreshPatientList()">
-                                <i data-feather="refresh-cw"></i>
+        </div>
+        
+        <!-- Queue Management -->
+        <div class="col-xl-6">
+            <div class="row">
+                <!-- Waiting Queue -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i data-feather="clock"></i> Waiting Queue</h5>
+                            <span class="badge bg-warning fs-6">{{ total_waiting }}</span>
+                        </div>
+                        <div class="card-body">
+                            {% if waiting_visits %}
+                                <div class="list-group">
+                                    {% for visit in waiting_visits %}
+                                        <a href="#" class="list-group-item list-group-item-action patient-item" 
+                                           data-reg-number="{{ visit.patient.registration_number }}">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
+                                                <small>{{ visit.visit_date|datetime }}</small>
+                                            </div>
+                                            <p class="mb-1">Reg: {{ visit.patient.registration_number }}</p>
+                                            <small>{{ visit.consultant.name }}</small>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted">
+                                    <i data-feather="users"></i>
+                                    <p>No patients waiting</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Completed Queue -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i data-feather="check-circle"></i> Completed Queue</h5>
+                            <span class="badge bg-success fs-6">{{ total_completed }}</span>
+                        </div>
+                        <div class="card-body">
+                            {% if completed_visits %}
+                                <div class="list-group">
+                                    {% for visit in completed_visits %}
+                                        <a href="#" class="list-group-item list-group-item-action patient-item" 
+                                           data-reg-number="{{ visit.patient.registration_number }}">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
+                                                <small class="text-success">{{ visit.completed_at|datetime }}</small>
+                                            </div>
+                                            <p class="mb-1">Reg: {{ visit.patient.registration_number }}</p>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted">
+                                    <i data-feather="check-circle"></i>
+                                    <p>No completed consultations</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Patient Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i data-feather="user"></i> Patient Information</h5>
+                </div>
+                <div class="card-body">
+                    <div id="patientInfo">
+                        <div class="text-center text-muted">
+                            <i data-feather="info"></i>
+                            <p>Select a patient from the queue to view details</p>
+                        </div>
+                    </div>
+                    <div id="patientActions" class="mt-3" style="display: none;">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-sm btn-success" onclick="completeConsultation()">
+                                <i data-feather="check"></i> Complete
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="resetPatientInfo()">
+                                <i data-feather="refresh-cw"></i> Reset
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="printPatientInfo()" id="printBtn">
+                                <i data-feather="printer"></i> Print
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="endShift()" id="endShiftBtn">
+                                <i data-feather="log-out"></i> End Shift
                             </button>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div id="patientsList" class="patient-list">
-                            <!-- Patients will be loaded here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel - Patient Information -->
-            <div class="col-md-4">
-                <div class="card sticky-top">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i data-feather="info"></i>
-                            Patient Information
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="patientInfo">
-                            <div class="text-center text-muted">
-                                <i data-feather="user" style="width: 48px; height: 48px;"></i>
-                                <p class="mt-2">Select a patient to view details</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Success Modal -->
-    <div class="modal fade" id="successModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">
-                        <i data-feather="check-circle"></i>
-                        Success
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+
+
+<!-- Shift Summary Modal -->
+<div class="modal fade" id="shiftSummaryModal" tabindex="-1" aria-labelledby="shiftSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="shiftSummaryModalLabel">
+                    <i data-feather="check-circle"></i>
+                    Shift Summary
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="summaryContent">
+                    <!-- Content will be populated by JavaScript -->
                 </div>
-                <div class="modal-body">
-                    <div id="successMessage"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="window.location.href='/receptionist'">
+                    <i data-feather="check"></i>
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Patient Details Modal -->
+<div class="modal fade" id="patientDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Patient Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="patientDetailsContent">
+                    <!-- Patient details will be loaded here -->
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Edit Patient Modal -->
-    <div class="modal fade" id="editPatientModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i data-feather="edit"></i>
-                        Edit Patient Information
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editPatientForm">
-                        <input type="hidden" id="edit_patient_id">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="edit_patient_name" class="form-label">Patient Name *</label>
-                                <input type="text" class="form-control" id="edit_patient_name" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="edit_patient_age" class="form-label">Age</label>
-                                <input type="number" class="form-control" id="edit_patient_age" min="0" max="18">
-                            </div>
-                            <div class="col-12">
-                                <label for="edit_parent_name" class="form-label">Parent/Guardian Name</label>
-                                <input type="text" class="form-control" id="edit_parent_name">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="edit_patient_phone" class="form-label">Phone</label>
-                                <input type="tel" class="form-control" id="edit_patient_phone">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="edit_patient_email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="edit_patient_email">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="edit_consultant" class="form-label">Consultant</label>
-                                <select class="form-select" id="edit_consultant">
-                                    {% for consultant in consultants %}
-                                    <option value="{{ consultant.id }}">{{ consultant.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="edit_patient_weight" class="form-label">Weight (kg)</label>
-                                <input type="number" class="form-control" id="edit_patient_weight" step="0.1" min="0">
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="savePatientChanges()">
-                        <i data-feather="save"></i>
-                        Save Changes
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script>
+<script>
 // Enhanced JavaScript for receptionist interface
 // currentPatientRegNumber and lastSelectedPatient are declared globally in script.js
 
@@ -287,71 +325,458 @@ function initializePatientHandlers() {
             // Update active state
             document.querySelectorAll('.patient-item').forEach(i => i.classList.remove('active'));
             this.classList.add('active');
+            
+            // Store as last selected
+            lastSelectedPatient = regNumber;
         });
     });
 }
 
-// Load and refresh patient list
-function refreshPatientList() {
-    const consultantId = document.getElementById('consultantFilter').value;
-    const url = consultantId ? `/api/patients?consultant_id=${consultantId}` : '/api/patients';
-    
-    fetch(url)
+// Load patient information for receptionist page
+function loadPatientInfo(regNumber) {
+    fetch(`/get_patient_details/${regNumber}`)
         .then(response => response.json())
-        .then(patients => {
-            const patientsList = document.getElementById('patientsList');
-            
-            if (patients.length === 0) {
-                patientsList.innerHTML = '<p class="text-muted text-center">No patients registered today</p>';
-                return;
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
             }
             
-            patientsList.innerHTML = patients.map(patient => {
-                const statusColor = patient.current_visit.status === 'waiting' ? 'warning' : 
-                                   patient.current_visit.status === 'completed' ? 'success' : 'secondary';
-                const statusText = patient.current_visit.status === 'waiting' ? 'Waiting' : 
-                                  patient.current_visit.status === 'completed' ? 'Completed' : 'No Visit';
-                                  
-                return `
-                    <div class="patient-item" data-reg-number="${patient.registration_number}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1">${patient.name} 
-                                    <span class="badge bg-${statusColor} ms-2">${statusText}</span>
-                                </h6>
-                                <small class="text-muted">
-                                    <i data-feather="hash" style="width: 12px; height: 12px;"></i>
-                                    ${patient.registration_number}
-                                    <span class="ms-2">
-                                        <i data-feather="user-check" style="width: 12px; height: 12px;"></i>
-                                        ${patient.consultant_name}
-                                    </span>
-                                    ${patient.age ? `<span class="ms-2"><i data-feather="calendar" style="width: 12px; height: 12px;"></i> ${patient.age}y</span>` : ''}
-                                    ${patient.current_visit.weight ? `<span class="ms-2"><i data-feather="activity" style="width: 12px; height: 12px;"></i> ${patient.current_visit.weight}kg</span>` : ''}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            displayPatientInfo(data);
+            currentPatientRegNumber = regNumber;
             
-            // Re-initialize handlers for new elements
-            initializePatientHandlers();
-            feather.replace();
+            // Notify consultant view about selected patient
+            const formData = new FormData();
+            formData.append('registration_number', regNumber);
+            formData.append('consultant_id', data.consultant_id);
+            
+            fetch('/set_selected_patient', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(result => {
+                  console.log('[RECEPTIONIST] Notified consultant about patient selection:', regNumber);
+              }).catch(error => {
+                  console.error('[RECEPTIONIST] Error notifying consultant:', error);
+              });
+            
+            // Show patient actions buttons
+            document.getElementById('patientActions').style.display = 'block';
         })
         .catch(error => {
-            console.error('Error refreshing patient list:', error);
-            document.getElementById('patientsList').innerHTML = '<p class="text-danger">Error loading patients</p>';
+            console.error('Error loading patient info:', error);
+            const patientInfo = document.getElementById('patientInfo');
+            patientInfo.innerHTML = `
+                <div class="alert alert-danger">
+                    <i data-feather="alert-circle"></i>
+                    Error loading patient information
+                </div>
+            `;
+            feather.replace();
         });
 }
 
-// Initialize feather icons and load initial data
-feather.replace();
-refreshPatientList();
+// Display patient information with compact layout and age in birth date
+function displayPatientInfo(patient) {
+    const patientInfo = document.getElementById('patientInfo');
+    patientInfo.innerHTML = `
+        <div class="patient-details">
+            <div class="info-row">
+                <span class="info-label">Registration #:</span>
+                <span class="info-value">${patient.registration_number}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Name:</span>
+                <span class="info-value">${patient.full_name}</span>
+            </div>
+            ${patient.parent_name ? `
+            <div class="info-row">
+                <span class="info-label">Parent:</span>
+                <span class="info-value">${patient.parent_name}</span>
+            </div>
+            ` : ''}
+            <div class="info-row">
+                <span class="info-label">Birth Date:</span>
+                <span class="info-value">${patient.date_of_birth} (${patient.age})</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Gender:</span>
+                <span class="info-value">${patient.gender}</span>
+            </div>
+            ${patient.weight_kg ? `
+            <div class="info-row">
+                <span class="info-label">Weight:</span>
+                <span class="info-value">${patient.weight_kg} kg</span>
+            </div>
+            ` : ''}
+            
+            <div class="mt-3">
+                <h6>Recent Visits:</h6>
+                ${patient.recent_visits.length > 0 ? 
+                    patient.recent_visits.map(date => `<small class="d-block">${date}</small>`).join('') :
+                    '<small class="text-muted">No previous visits</small>'
+                }
+            </div>
+        </div>
+    `;
+    feather.replace();
+}
 
-// Set up auto-refresh
-setInterval(refreshPatientList, 10000); // Refresh every 10 seconds
+// Search patients for returning patient form
+function searchPatients() {
+    const query = document.getElementById('patient_search').value.trim();
+    const resultsDiv = document.getElementById('searchResults');
+    const resultsList = document.getElementById('searchResultsList');
+    
+    if (query.length < 2) {
+        resultsDiv.style.display = 'none';
+        return;
+    }
+    
+    fetch(`/search_patients?query=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            resultsList.innerHTML = '';
+            
+            if (data.length > 0) {
+                data.forEach(patient => {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item list-group-item-action';
+                    item.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${patient.full_name}</h6>
+                            <small>${patient.consultant}</small>
+                        </div>
+                        <p class="mb-1">Reg: ${patient.registration_number}</p>
+                        <small>Contact: ${patient.contact_number}</small>
+                    `;
+                    item.addEventListener('click', () => {
+                        document.getElementById('returning_reg_number').value = patient.registration_number;
+                        document.getElementById('returning_consultant_id').value = patient.consultant_id;
+                        document.getElementById('patient_search').value = patient.full_name;
+                        resultsDiv.style.display = 'none';
+                    });
+                    resultsList.appendChild(item);
+                });
+                resultsDiv.style.display = 'block';
+            } else {
+                resultsList.innerHTML = '<div class="list-group-item">No patients found</div>';
+                resultsDiv.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+        });
+}
 
-    </script>
-</body>
-</html>
+// Select returning patient from search results
+function selectReturningPatient(patient) {
+    document.getElementById('returning_reg_number').value = patient.registration_number;
+    document.getElementById('returning_consultant_id').value = patient.consultant_id;
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('patient_search').value = patient.full_name;
+}
+
+// Complete consultation
+async function completeConsultation() {
+    if (!currentPatientRegNumber) {
+        alert('No patient selected');
+        return;
+    }
+    
+    if (confirm('Mark this consultation as completed?')) {
+        try {
+            const formData = new FormData();
+            formData.append('registration_number', currentPatientRegNumber);
+            
+            const response = await fetch('/complete_consultation', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Reload the page to update queues
+                window.location.reload();
+                
+                // If there's a next patient, auto-select them after reload
+                if (data.next_patient) {
+                    setTimeout(() => {
+                        const nextPatientElement = document.querySelector(`[data-reg-number="${data.next_patient.registration_number}"]`);
+                        if (nextPatientElement) {
+                            nextPatientElement.click();
+                        }
+                    }, 500);
+                }
+            } else {
+                alert('Error completing consultation: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error completing consultation');
+        }
+    }
+}
+
+// Reset patient information
+function resetPatientInfo() {
+    const patientInfo = document.getElementById('patientInfo');
+    patientInfo.innerHTML = `
+        <div class="text-center text-muted">
+            <i data-feather="info"></i>
+            <p>Select a patient from the queue to view details</p>
+        </div>
+    `;
+    document.getElementById('patientActions').style.display = 'none';
+    currentPatientRegNumber = null;
+    
+    // Clear consultant synchronization
+    fetch('/set_selected_patient', {
+        method: 'POST',
+        body: new FormData() // Empty form to clear selection
+    }).catch(error => {
+        console.error('[RECEPTIONIST] Error clearing patient selection:', error);
+    });
+    
+    // Remove active state from all items
+    document.querySelectorAll('.patient-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    feather.replace();
+}
+
+// Print patient information - compact format
+function printPatientInfo() {
+    if (!currentPatientRegNumber) {
+        alert('No patient selected');
+        return;
+    }
+    
+    fetch(`/get_patient_details/${currentPatientRegNumber}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            const printWindow = window.open('', '_blank');
+            const currentDateTime = new Date().toLocaleString('en-LK', {
+                timeZone: 'Asia/Colombo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Patient Consultation - ${data.full_name}</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                        body {
+                            font-family: Arial, sans-serif;
+                            font-size: 11px;
+                            line-height: 1.3;
+                            background: white;
+                            color: black;
+                            padding: 15px;
+                        }
+                        
+                        .patient-info {
+                            position: absolute;
+                            top: 15px;
+                            right: 15px;
+                            border: 2px solid #000;
+                            padding: 8px;
+                            width: 180px;
+                            background: white;
+                        }
+                        
+                        .patient-info p {
+                            margin: 6px 0;
+                        }
+                        
+                        .patient-info strong {
+                            font-weight: bold;
+                        }
+                        
+
+                        
+                        @media print {
+                            body { margin: 0; padding: 15px; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="patient-info">
+                        <p><strong>Reg:</strong> ${data.registration_number}</p>
+                        <p><strong>Name:</strong> ${data.full_name}</p>
+
+                        <p><strong>DOB:</strong> ${data.date_of_birth} (${data.age})</p>
+                        <p><strong>Gender:</strong> ${data.gender}${data.weight_kg ? `, ${data.weight_kg} kg` : ''}</p>
+                        <p><strong>Visit:</strong> ${currentDateTime}</p>
+                    </div>
+                    
+
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.open();
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // Wait for content to load, then print and close
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 500);
+            };
+        })
+        .catch(error => {
+            alert('Error loading patient information for printing');
+        });
+}
+
+// Enhanced end shift functionality for receptionist
+async function endShift() {
+    if (!currentPatientRegNumber) {
+        alert('Please select a patient first to identify the consultant');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to end this shift? This will clear completed consultations and generate a shift summary.')) {
+        return;
+    }
+    
+    // Find consultant ID from selected patient
+    try {
+        const response = await fetch(`/get_patient_details/${currentPatientRegNumber}`);
+        const patientData = await response.json();
+        
+        if (patientData.error) {
+            alert('Error identifying consultant. Please select a patient first.');
+            return;
+        }
+        
+        const consultantId = patientData.consultant_id;
+        
+        // Disable the button to prevent multiple clicks
+        const endShiftBtn = document.getElementById('endShiftBtn');
+        const originalHtml = endShiftBtn.innerHTML;
+        endShiftBtn.disabled = true;
+        endShiftBtn.innerHTML = '<i data-feather="loader"></i> Ending Shift...';
+        feather.replace();
+        
+        const formData = new FormData();
+        formData.append('consultant_id', consultantId);
+        
+        const shiftResponse = await fetch('/end_shift', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await shiftResponse.json();
+        
+        if (shiftResponse.ok) {
+            showShiftSummary(data);
+        } else {
+            alert('Error ending shift: ' + (data.error || 'Unknown error'));
+            endShiftBtn.disabled = false;
+            endShiftBtn.innerHTML = originalHtml;
+            feather.replace();
+        }
+    } catch (error) {
+        console.error('Error ending shift:', error);
+        alert('Error ending shift. Please try again.');
+        document.getElementById('endShiftBtn').disabled = false;
+        document.getElementById('endShiftBtn').innerHTML = '<i data-feather="log-out"></i> End Shift';
+        feather.replace();
+    }
+}
+
+function showShiftSummary(data) {
+    const summaryContent = document.getElementById('summaryContent');
+    
+    // Create animated summary content with earnings
+    summaryContent.innerHTML = `
+        <div class="shift-summary-animation">
+            <div class="mb-4">
+                <div class="display-4 text-success mb-3 animate-number" data-target="${data.total_completed}">0</div>
+                <h5>Consultations Completed</h5>
+            </div>
+            
+            <div class="row text-center mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-light h-100">
+                        <div class="card-body d-flex flex-column justify-content-center" style="min-height: 100px;">
+                            <div class="h3 text-warning animate-number mb-2" data-target="${data.remaining_patients}">0</div>
+                            <small>Remaining Patients</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light h-100">
+                        <div class="card-body d-flex flex-column justify-content-center" style="min-height: 100px;">
+                            <div class="h3 text-success mb-2">LKR ${data.total_earnings.toFixed(2)}</div>
+                            <small>Total Earnings</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light h-100">
+                        <div class="card-body d-flex flex-column justify-content-center" style="min-height: 100px;">
+                            <div class="h3 text-muted mb-2">${data.shift_date}</div>
+                            <small>Shift Date</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('shiftSummaryModal'));
+    modal.show();
+    
+    feather.replace();
+}
+
+// Load patient details for returning patient
+function loadPatientDetails() {
+    const regNumber = document.querySelector('input[name="registration_number"]').value.trim();
+    
+    if (!regNumber) {
+        alert('Please enter a registration number first');
+        return;
+    }
+    
+    fetch(`/get_patient/${regNumber}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Patient not found');
+                return;
+            }
+            
+            // Auto-fill the consultant selection
+            const consultantSelect = document.querySelector('#returning-patient select[name="consultant_id"]');
+            consultantSelect.value = data.consultant_id;
+        })
+        .catch(error => {
+            console.error('Error loading patient details:', error);
+            alert('Error loading patient details');
+        });
+}
+</script>
+{% endblock %}
