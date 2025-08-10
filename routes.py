@@ -111,10 +111,11 @@ def consultant_view(consultant_id):
     else:
         greeting = "Good Evening"
     
-    return render_template('consultant_view.html', 
+    return render_template('consultant_simple.html', 
                          waiting_visits=waiting_visits,
                          completed_visits=completed_visits,
                          selected_consultant=consultant,
+                         selected_consultant_id=consultant_id,
                          greeting=greeting,
                          total_waiting=total_waiting,
                          total_completed=total_completed)
@@ -382,6 +383,29 @@ def consultant():
                          greeting=greeting,
                          total_waiting=total_waiting,
                          total_completed=total_completed)
+
+@app.route('/set_selected_patient', methods=['POST'])
+def set_selected_patient():
+    """Set the currently selected patient for consultant synchronization"""
+    reg_number = request.form.get('registration_number')
+    consultant_id = request.form.get('consultant_id')
+    
+    if reg_number and consultant_id:
+        # Store in session for this consultant
+        session[f'selected_patient_{consultant_id}'] = {
+            'registration_number': reg_number,
+            'timestamp': datetime.now().isoformat()
+        }
+        return jsonify({'success': True})
+    return jsonify({'success': False}), 400
+
+@app.route('/get_selected_patient/<int:consultant_id>')
+def get_selected_patient(consultant_id):
+    """Get the currently selected patient for a consultant"""
+    selected = session.get(f'selected_patient_{consultant_id}')
+    if selected:
+        return jsonify(selected)
+    return jsonify({'registration_number': None})
 
 @app.route('/get_patient_details/<reg_number>')
 def get_patient_details(reg_number):

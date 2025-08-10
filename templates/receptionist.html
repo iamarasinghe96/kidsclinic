@@ -343,21 +343,20 @@ function loadPatientInfo(regNumber) {
             displayPatientInfo(data);
             currentPatientRegNumber = regNumber;
             
-            // Store selected patient for consultant synchronization
-            const syncData = {
-                regNumber: regNumber,
-                timestamp: Date.now(),
-                consultantId: data.consultant_id
-            };
-            localStorage.setItem('currentSelectedPatient', JSON.stringify(syncData));
-            console.log('[RECEPTIONIST] Stored patient selection for sync:', syncData);
+            // Notify consultant view about selected patient
+            const formData = new FormData();
+            formData.append('registration_number', regNumber);
+            formData.append('consultant_id', data.consultant_id);
             
-            // Also broadcast storage event for same-origin synchronization
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'currentSelectedPatient',
-                newValue: JSON.stringify(syncData),
-                url: window.location.href
-            }));
+            fetch('/set_selected_patient', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(result => {
+                  console.log('[RECEPTIONIST] Notified consultant about patient selection:', regNumber);
+              }).catch(error => {
+                  console.error('[RECEPTIONIST] Error notifying consultant:', error);
+              });
             
             // Show patient actions buttons
             document.getElementById('patientActions').style.display = 'block';
