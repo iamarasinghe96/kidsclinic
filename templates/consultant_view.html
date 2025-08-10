@@ -6,7 +6,7 @@
 {% if selected_consultant %}
 <div class="d-flex justify-content-between align-items-center mb-3" style="padding-bottom: 0.75rem; border-bottom: 1px solid #dee2e6;">
     <h4 class="text-nowrap mb-0 me-3" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-        <i data-feather="stethoscope" class="me-2"></i>{{ greeting }} {{ selected_consultant.name }}!
+        <i data-feather="user-check" class="me-2"></i>{{ greeting }} {{ selected_consultant.name }}!
     </h4>
 </div>
 
@@ -191,7 +191,6 @@ function checkForSelectedPatient() {
         console.error('[CONSULTANT] Error checking selected patient:', error);
     }
 }
-});
 
 // Initialize patient click handlers for view-only
 function initializePatientHandlers() {
