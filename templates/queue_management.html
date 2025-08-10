@@ -8,12 +8,6 @@
         <i data-feather="users" class="me-2"></i>Queue Management
     </h3>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-danger" onclick="resetQueue()" title="Reset today's queue">
-            <i data-feather="refresh-cw" class="me-1"></i>Reset Queue
-        </button>
-        <button type="button" class="btn btn-outline-info" onclick="printDailySummary()" title="Print today's summary">
-            <i data-feather="printer" class="me-1"></i>Print Daily Summary
-        </button>
         <a href="/receptionist" class="btn btn-outline-secondary">
             <i data-feather="user-plus" class="me-1"></i>Patient Registration
         </a>
@@ -23,41 +17,7 @@
     </div>
 </div>
 
-<!-- Queue Overview Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card text-center" style="border-color: #8EC641;">
-            <div class="card-body">
-                <h2 class="text-success mb-1">{{ total_waiting }}</h2>
-                <p class="card-text mb-0">Waiting</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center" style="border-color: #28a745;">
-            <div class="card-body">
-                <h2 class="text-success mb-1">{{ total_completed }}</h2>
-                <p class="card-text mb-0">Completed Today</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center" style="border-color: #17a2b8;">
-            <div class="card-body">
-                <h2 class="text-info mb-1">{{ consultants|length }}</h2>
-                <p class="card-text mb-0">Active Consultants</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center" style="border-color: #ffc107;">
-            <div class="card-body">
-                <h2 class="text-warning mb-1">{{ total_patients_today }}</h2>
-                <p class="card-text mb-0">Total Today</p>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <div class="row">
     <!-- Waiting Queue -->
@@ -126,8 +86,20 @@
                         <button type="button" class="btn btn-success" onclick="markComplete()">
                             <i data-feather="check-circle" class="me-2"></i>Mark Consultation Complete
                         </button>
-                        <button type="button" class="btn btn-outline-light" onclick="printPatientSummary()">
+                        <button type="button" class="btn btn-outline-secondary" onclick="printPatientSummary()">
                             <i data-feather="printer" class="me-2"></i>Print Patient Summary
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- System Actions (always visible) -->
+                <div class="mt-3">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-info" onclick="printDailySummary()" title="Print today's summary">
+                            <i data-feather="printer" class="me-2"></i>Print Daily Summary
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="resetQueue()" title="Reset today's queue">
+                            <i data-feather="refresh-cw" class="me-2"></i>Reset Queue
                         </button>
                     </div>
                 </div>
