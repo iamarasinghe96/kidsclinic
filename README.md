@@ -32,20 +32,11 @@ A local-only clinic patient management system designed for two dedicated laptops
    - Extract the project folder to: `C:\ClinicApp\` (Windows) or `~/ClinicApp/` (Mac/Linux)
 
 3. **Environment Setup**
-   - Open Command Prompt (Windows) or Terminal (Mac/Linux)
-   - Navigate to project folder:
-     ```bash
-     # Windows
-     cd C:\ClinicApp
-     
-     # Mac/Linux  
-     cd ~/ClinicApp
-     ```
-   - Run the setup script:
-     ```bash
-     python setup.py
-     ```
-   - This will create the database and add default consultants
+   - Navigate to project folder in terminal/command prompt
+   - Run initial setup:
+   ```bash
+   python -c "from app import app, db; app.app_context().push(); db.create_all(); print('Database initialized')"
+   ```
 
 4. **Find Your IP Address**
    - **Windows**: Open Command Prompt, type `ipconfig`, look for "IPv4 Address"
@@ -55,41 +46,33 @@ A local-only clinic patient management system designed for two dedicated laptops
 ### Create Receptionist Startup Shortcut
 
 #### For Windows:
-1. Create a new file: `Start_Receptionist.bat` in the project folder
-2. Add this content:
+1. Create a new file: `Start_Receptionist.bat`
+2. Add this content (replace `YOUR_PROJECT_PATH`):
 ```batch
 @echo off
 cd /d "C:\ClinicApp"
-set DATABASE_URL=sqlite:///clinic.db
-set SESSION_SECRET=clinic-secret-key-2025
 echo Starting The Kids Clinic - Receptionist System...
 echo.
 echo Server starting on: http://0.0.0.0:5000
 echo Local access: http://localhost:5000
 echo.
-echo Opening browser in 3 seconds...
-timeout /t 3 /nobreak >nul
 start "" "http://localhost:5000"
 python -m gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
 pause
 ```
 
 #### For Mac/Linux:
-1. Create a new file: `start_receptionist.sh` in the project folder
-2. Add this content:
+1. Create a new file: `start_receptionist.sh`
+2. Add this content (replace `YOUR_PROJECT_PATH`):
 ```bash
 #!/bin/bash
 cd ~/ClinicApp
-export DATABASE_URL="sqlite:///clinic.db"
-export SESSION_SECRET="clinic-secret-key-2025"
 echo "Starting The Kids Clinic - Receptionist System..."
 echo ""
 echo "Server starting on: http://0.0.0.0:5000"
 echo "Local access: http://localhost:5000"
 echo ""
-echo "Opening browser in 3 seconds..."
-sleep 3
-open "http://localhost:5000" 2>/dev/null || xdg-open "http://localhost:5000" 2>/dev/null
+open "http://localhost:5000"
 python3 -m gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
 ```
 3. Make executable: `chmod +x start_receptionist.sh`
@@ -219,40 +202,25 @@ open "http://RECEPTIONIST_IP:5000/consultant"
 
 ## TROUBLESHOOTING
 
-### Setup Issues
-- **"No module named 'app'"**: Make sure you're in the correct project directory with all files present
-- **Database errors**: Delete `clinic.db` file and run `python setup.py` again
-- **Permission errors**: Run Command Prompt/Terminal as administrator
-
 ### Connection Issues
 - Verify both laptops on same network
 - Check firewall settings (allow port 5000)
 - Test connection: `ping RECEPTIONIST_IP` from consultant laptop
-- Windows: Add firewall exception for Python/port 5000
 
 ### Printer Issues
 - Restart printer sharing service
 - Verify printer drivers installed on both laptops
 - Test print from consultant laptop first
-- Check network discovery is enabled
 
 ### Application Issues
 - Restart receptionist server (close and reopen shortcut)
 - Clear browser cache and reload
 - Check terminal/command prompt for error messages
-- Verify environment variables are set in startup script
 
 ### Emergency Reset
 - Close all browser windows
 - Stop server (Ctrl+C in terminal)
-- Delete `clinic.db` file if corrupted
-- Run `python setup.py` to recreate database
 - Restart using shortcut
-
-### Common Error Solutions
-- **Port 5000 in use**: Stop other applications using port 5000, or restart computer
-- **Database locked**: Close all application instances and restart
-- **Module import errors**: Reinstall dependencies: `pip install flask flask-sqlalchemy gunicorn`
 
 ---
 
