@@ -25,9 +25,8 @@
                 {% if waiting_visits %}
                     <div class="list-group">
                         {% for visit in waiting_visits %}
-                            <div class="list-group-item list-group-item-action patient-item" 
-                                 data-reg-number="{{ visit.patient.registration_number }}"
-                                 onclick="showPatientDetails('{{ visit.patient.registration_number }}')">
+                            <div class="list-group-item patient-item" 
+                                 data-reg-number="{{ visit.patient.registration_number }}">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
                                     <small>{{ visit.visit_date.strftime('%H:%M') }}</small>
@@ -62,7 +61,7 @@
                 <div id="patientInfo">
                     <div class="text-center text-muted">
                         <i data-feather="user"></i>
-                        <p>Click on a patient to view details</p>
+                        <p>Patient information will appear when receptionist selects a patient</p>
                     </div>
                 </div>
             </div>
@@ -143,15 +142,18 @@ setInterval(function() {
     window.location.reload();
 }, 30000);
 
-// Show patient details
+// Show patient details (automatically triggered by receptionist selection)
 function showPatientDetails(regNumber) {
     // Remove active state from all items
     document.querySelectorAll('.patient-item').forEach(item => {
         item.classList.remove('active');
     });
     
-    // Add active state to clicked item
-    document.querySelector(`[data-reg-number="${regNumber}"]`).classList.add('active');
+    // Add active state to selected item
+    const selectedItem = document.querySelector(`[data-reg-number="${regNumber}"]`);
+    if (selectedItem) {
+        selectedItem.classList.add('active');
+    }
     
     // Load patient information
     fetch(`/get_patient_details/${regNumber}`)
@@ -165,11 +167,11 @@ function showPatientDetails(regNumber) {
             currentSelectedPatient = regNumber;
         })
         .catch(error => {
-            console.error('Error loading patient info:', error);
+            console.error('[CONSULTANT] Error loading patient info:', error);
             document.getElementById('patientInfo').innerHTML = `
-                <div class="alert alert-danger">
-                    <i data-feather="alert-circle"></i>
-                    Error loading patient information
+                <div class="alert alert-warning">
+                    <i data-feather="info"></i>
+                    Patient information will appear when receptionist selects a patient
                 </div>
             `;
             feather.replace();
@@ -238,13 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style>
 .patient-item {
-    cursor: pointer;
     transition: all 0.2s ease;
-}
-
-.patient-item:hover {
-    background-color: #f8f9fa;
-    border-color: #8EC641;
 }
 
 .patient-item.active {

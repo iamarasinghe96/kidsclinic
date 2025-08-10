@@ -529,8 +529,13 @@ function resetPatientInfo() {
     document.getElementById('patientActions').style.display = 'none';
     currentPatientRegNumber = null;
     
-    // Clear synchronized patient selection
-    localStorage.removeItem('currentSelectedPatient');
+    // Clear consultant synchronization
+    fetch('/set_selected_patient', {
+        method: 'POST',
+        body: new FormData() // Empty form to clear selection
+    }).catch(error => {
+        console.error('[RECEPTIONIST] Error clearing patient selection:', error);
+    });
     
     // Remove active state from all items
     document.querySelectorAll('.patient-item').forEach(item => {
