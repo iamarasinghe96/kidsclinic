@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Registration - The Kids Clinic{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-nowrap mb-0">
+        <i data-feather="user-plus" class="me-2"></i>Patient Registration
+    </h3>
+    <div class="d-flex gap-2">
+        <a href="/queue_management" class="btn btn-outline-light">
+            <i data-feather="users" class="me-1"></i>Queue Management
+        </a>
+        <a href="/consultant" class="btn btn-outline-light">
+            <i data-feather="eye" class="me-1"></i>Consultant View
+        </a>
+        <a href="/report" class="btn btn-outline-light">
+            <i data-feather="file-text" class="me-1"></i>Reports
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header" style="background-color: #8EC641; color: white;">
+                <h5 class="mb-0">
+                    <i data-feather="user-plus"></i>
+                    Patient Registration
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="registrationTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="new-patient-tab" data-bs-toggle="tab" 
+                                data-bs-target="#new-patient" type="button" role="tab">
+                            <i data-feather="user-plus"></i> New Patient
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="returning-patient-tab" data-bs-toggle="tab" 
+                                data-bs-target="#returning-patient" type="button" role="tab">
+                            <i data-feather="repeat"></i> Returning Patient
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content mt-3" id="registrationTabContent">
+                    <!-- New Patient Registration -->
+                    <div class="tab-pane fade show active" id="new-patient" role="tabpanel">
+                        <form method="POST" action="{{ url_for('register_patient') }}">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="full_name" class="form-label">Patient Name *</label>
+                                        <input type="text" class="form-control" name="full_name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="parent_name" class="form-label">Parent/Guardian Name</label>
+                                        <input type="text" class="form-control" name="parent_name">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="date_of_birth" class="form-label">Date of Birth *</label>
+                                        <input type="date" class="form-control" name="date_of_birth" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="gender" class="form-label">Gender *</label>
+                                        <select class="form-select" name="gender" required>
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="weight_kg" class="form-label">Weight (kg)</label>
+                                        <input type="number" step="0.1" class="form-control" name="weight_kg" placeholder="e.g., 25.5">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="address" class="form-label">Address *</label>
+                                        <textarea class="form-control" name="address" rows="2" required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="contact_number" class="form-label">Contact Number *</label>
+                                        <input type="text" class="form-control" name="contact_number" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" name="email" placeholder="Optional">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="consultant_id" class="form-label">Consultant *</label>
+                                        <select class="form-select" name="consultant_id" required>
+                                            <option value="">Select Consultant</option>
+                                            {% for consultant in consultants %}
+                                                <option value="{{ consultant.id }}">{{ consultant.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" style="background-color: #8EC641; border-color: #8EC641;">
+                                    <i data-feather="user-plus" class="me-2"></i>Register New Patient
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Returning Patient -->
+                    <div class="tab-pane fade" id="returning-patient" role="tabpanel">
+                        <div class="mb-3">
+                            <label for="patientSearch" class="form-label">Search Patient</label>
+                            <input type="text" class="form-control" id="patientSearch" 
+                                   placeholder="Enter patient name, registration number, or contact number">
+                        </div>
+                        
+                        <div id="searchResults" class="mb-3"></div>
+                        
+                        <div id="returningPatientForm" style="display: none;">
+                            <form method="POST" action="{{ url_for('register_returning_patient') }}">
+                                <input type="hidden" id="returning_patient_id" name="patient_id">
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Patient Name</label>
+                                            <input type="text" class="form-control" id="returning_full_name" readonly>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Registration Number</label>
+                                            <input type="text" class="form-control" id="returning_reg_number" readonly>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Date of Birth</label>
+                                            <input type="text" class="form-control" id="returning_dob" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="returning_weight" class="form-label">Today's Weight (kg)</label>
+                                            <input type="number" step="0.1" class="form-control" name="weight_kg" 
+                                                   id="returning_weight" placeholder="Optional">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Assigned Consultant</label>
+                                            <input type="text" class="form-control" id="returning_consultant" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i data-feather="plus-circle" class="me-2"></i>Add to Today's Queue
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Patient search functionality
+let searchTimeout;
+document.getElementById('patientSearch').addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    clearTimeout(searchTimeout);
+    
+    if (query.length < 2) {
+        document.getElementById('searchResults').innerHTML = '';
+        document.getElementById('returningPatientForm').style.display = 'none';
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        fetch(`/search_patients?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                displaySearchResults(data);
+            })
+            .catch(error => {
+                console.error('Error searching patients:', error);
+                document.getElementById('searchResults').innerHTML = `
+                    <div class="alert alert-danger">Error searching patients</div>
+                `;
+            });
+    }, 300);
+});
+
+// Display search results
+function displaySearchResults(patients) {
+    const resultsDiv = document.getElementById('searchResults');
+    
+    if (patients.length === 0) {
+        resultsDiv.innerHTML = `
+            <div class="alert alert-info">No patients found</div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    patients.forEach(patient => {
+        html += `
+            <div class="list-group-item list-group-item-action" onclick="selectReturningPatient(${patient.id})">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${patient.full_name}</h6>
+                    <small>${patient.registration_number}</small>
+                </div>
+                <p class="mb-1">DOB: ${patient.date_of_birth} | Contact: ${patient.contact_number}</p>
+                <small class="text-muted">Consultant: ${patient.consultant_name}</small>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    resultsDiv.innerHTML = html;
+}
+
+// Select returning patient
+function selectReturningPatient(patientId) {
+    fetch(`/get_patient_details_by_id/${patientId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            // Fill in the form
+            document.getElementById('returning_patient_id').value = data.id;
+            document.getElementById('returning_full_name').value = data.full_name;
+            document.getElementById('returning_reg_number').value = data.registration_number;
+            document.getElementById('returning_dob').value = data.date_of_birth;
+            document.getElementById('returning_consultant').value = data.consultant_name;
+            
+            // Show the form
+            document.getElementById('returningPatientForm').style.display = 'block';
+            document.getElementById('searchResults').innerHTML = '';
+            
+            // Focus on weight input
+            document.getElementById('returning_weight').focus();
+        })
+        .catch(error => {
+            console.error('Error loading patient details:', error);
+            alert('Error loading patient information');
+        });
+}
+
+// Show notifications
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// Initialize feather icons
+document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+    
+    // Handle tab switching
+    document.getElementById('new-patient-tab').addEventListener('click', function() {
+        document.getElementById('searchResults').innerHTML = '';
+        document.getElementById('returningPatientForm').style.display = 'none';
+        document.getElementById('patientSearch').value = '';
+    });
+});
+
+// Check for URL parameters (success messages)
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+    
+    if (success) {
+        showNotification(decodeURIComponent(success), 'success');
+    }
+    if (error) {
+        showNotification(decodeURIComponent(error), 'error');
+    }
+});
+</script>
+
+<style>
+.nav-tabs .nav-link {
+    color: #6c757d;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #8EC641;
+    border-color: #8EC641;
+    color: white;
+}
+
+.list-group-item {
+    cursor: pointer;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.card-header {
+    font-weight: 600;
+}
+</style>
+
+{% endblock %}

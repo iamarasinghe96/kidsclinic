@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Summary - {{ report_date.strftime('%B %d, %Y') }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { font-size: 12px; }
+            .container-fluid { padding: 0; }
+            h1, h2, h3 { page-break-after: avoid; }
+            table { page-break-inside: avoid; }
+        }
+        
+        .clinic-header {
+            text-align: center;
+            border-bottom: 3px solid #8EC641;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+        }
+        
+        .summary-stats {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .status-waiting {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-completed {
+            background-color: #d1edff;
+            color: #0c5460;
+        }
+        
+        .consultant-badge {
+            background-color: #8EC641;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Print Button -->
+        <div class="no-print mb-3">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print"></i> Print Summary
+            </button>
+            <button onclick="window.close()" class="btn btn-secondary ms-2">
+                Close
+            </button>
+        </div>
+        
+        <!-- Clinic Header -->
+        <div class="clinic-header">
+            <h1>The Kids Clinic / Allergy and Asthma Center</h1>
+            <h3>Daily Consultation Summary</h3>
+            <h4>{{ report_date.strftime('%A, %B %d, %Y') }}</h4>
+        </div>
+        
+        <!-- Summary Statistics -->
+        <div class="summary-stats">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <h4 class="text-primary">{{ total_visits }}</h4>
+                    <p>Total Patients</p>
+                </div>
+                <div class="col-md-3">
+                    <h4 class="text-warning">{{ waiting_count }}</h4>
+                    <p>Still Waiting</p>
+                </div>
+                <div class="col-md-3">
+                    <h4 class="text-success">{{ completed_count }}</h4>
+                    <p>Completed</p>
+                </div>
+                <div class="col-md-3">
+                    <h4 class="text-info">{{ consultant_stats|length }}</h4>
+                    <p>Active Consultants</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Consultant Statistics -->
+        {% if consultant_stats %}
+        <div class="mb-4">
+            <h5>Consultant Summary</h5>
+            <div class="row">
+                {% for consultant_name, stats in consultant_stats.items() %}
+                <div class="col-md-6 mb-2">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ consultant_name }}</h6>
+                            <p class="card-text">
+                                <span class="badge bg-warning">{{ stats.waiting }} Waiting</span>
+                                <span class="badge bg-success ms-1">{{ stats.completed }} Completed</span>
+                                <span class="badge bg-info ms-1">{{ stats.total }} Total</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Patient Details -->
+        {% if visits %}
+        <div class="mb-4">
+            <h5>Patient Details</h5>
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Time</th>
+                        <th>Registration #</th>
+                        <th>Patient Name</th>
+                        <th>Consultant</th>
+                        <th>Status</th>
+                        <th>Completed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for visit in visits %}
+                    <tr class="{% if visit.status == 'waiting' %}status-waiting{% else %}status-completed{% endif %}">
+                        <td>{{ visit.visit_date.strftime('%H:%M') }}</td>
+                        <td>{{ visit.patient.registration_number }}</td>
+                        <td>{{ visit.patient.full_name }}</td>
+                        <td>
+                            <span class="consultant-badge">{{ visit.consultant.name }}</span>
+                        </td>
+                        <td>
+                            {% if visit.status == 'waiting' %}
+                                <span class="badge bg-warning">Waiting</span>
+                            {% else %}
+                                <span class="badge bg-success">Completed</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if visit.completed_at %}
+                                {{ visit.completed_at.strftime('%H:%M') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <h5>No Consultations</h5>
+            <p>No patients were seen on {{ report_date.strftime('%B %d, %Y') }}.</p>
+        </div>
+        {% endif %}
+        
+        <!-- Footer -->
+        <div class="text-center mt-4 pt-3" style="border-top: 1px solid #dee2e6;">
+            <small class="text-muted">
+                Generated on {{ "now"|datetime_format("%Y-%m-%d %H:%M") }} • 
+                The Kids Clinic Management System
+            </small>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-print when page loads (optional)
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>
