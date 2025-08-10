@@ -436,14 +436,32 @@ def complete_consultation():
         ).first()
         
         if visit:
+            consultant_id = visit.consultant_id
             visit.mark_completed()
-            flash(f'Consultation completed for {patient.full_name}', 'success')
+            
+            # Find the next patient in line for the same consultant
+            next_visit = Visit.query.join(Patient).filter(
+                Visit.consultant_id == consultant_id,
+                Visit.status == 'waiting',
+                func.date(Visit.visit_date) == today
+            ).order_by(Visit.visit_date.asc()).first()
+            
+            next_patient_data = None
+            if next_visit:
+                next_patient_data = {
+                    'registration_number': next_visit.patient.registration_number,
+                    'full_name': next_visit.patient.full_name
+                }
+            
+            return jsonify({
+                'success': True,
+                'message': f'Consultation completed for {patient.full_name}',
+                'next_patient': next_patient_data
+            })
         else:
-            flash('No active visit found for this patient', 'error')
+            return jsonify({'success': False, 'error': 'No active visit found for this patient'}), 400
     else:
-        flash('Patient not found', 'error')
-    
-    return redirect(url_for('receptionist'))
+        return jsonify({'success': False, 'error': 'Patient not found'}), 404
 
 @app.route('/report', methods=['GET', 'POST'])
 def report():

@@ -239,11 +239,7 @@
     </div>
 </div>
 
-<!-- Consultation Complete Form -->
-<form method="POST" action="{{ url_for('complete_consultation') }}" id="completeForm" class="d-none">
-    <input type="hidden" name="registration_number" id="completeRegNumber">
-    <input type="hidden" name="consultant_id" value="">
-</form>
+
 
 <!-- Shift Summary Modal -->
 <div class="modal fade" id="shiftSummaryModal" tabindex="-1" aria-labelledby="shiftSummaryModalLabel" aria-hidden="true">
@@ -466,15 +462,44 @@ function selectReturningPatient(patient) {
 }
 
 // Complete consultation
-function completeConsultation() {
+async function completeConsultation() {
     if (!currentPatientRegNumber) {
         alert('No patient selected');
         return;
     }
     
     if (confirm('Mark this consultation as completed?')) {
-        document.getElementById('completeRegNumber').value = currentPatientRegNumber;
-        document.getElementById('completeForm').submit();
+        try {
+            const formData = new FormData();
+            formData.append('registration_number', currentPatientRegNumber);
+            
+            const response = await fetch('/complete_consultation', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Reload the page to update queues
+                window.location.reload();
+                
+                // If there's a next patient, auto-select them after reload
+                if (data.next_patient) {
+                    setTimeout(() => {
+                        const nextPatientElement = document.querySelector(`[data-reg-number="${data.next_patient.registration_number}"]`);
+                        if (nextPatientElement) {
+                            nextPatientElement.click();
+                        }
+                    }, 500);
+                }
+            } else {
+                alert('Error completing consultation: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error completing consultation');
+        }
     }
 }
 
