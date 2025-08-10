@@ -1,19 +1,12 @@
-import os
-import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
+import os
+import logging
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
-
-# Create the app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "clinic-management-secret-key")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -26,7 +19,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Initialize the app with the extension
+db = SQLAlchemy()
 db.init_app(app)
 
 def format_datetime(dt):
@@ -40,16 +33,16 @@ with app.app_context():
     # Import models and routes
     import models
     import routes
-    
+
     # Create all tables
     db.create_all()
-    
+
     # Initialize default consultants if none exist
     from models import Consultant
     if not Consultant.query.first():
         default_consultants = [
             ("Dr. John Smith", 5000.0),
-            ("Dr. Sarah Johnson", 4500.0), 
+            ("Dr. Sarah Johnson", 4500.0),
             ("Dr. Michael Brown", 5500.0),
             ("Dr. Emily Davis", 4000.0),
             ("Dr. David Wilson", 6000.0)

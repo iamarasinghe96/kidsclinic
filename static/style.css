@@ -1,251 +1,63 @@
-/* Print Styles */
-@media print {
-    /* Hide everything first */
-    * {
-        visibility: hidden;
-    }
-    
-    /* Show only print content */
-    .print-page, .print-page * {
-        visibility: visible;
-    }
-    
-    .print-page {
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100vh;
-        background: white;
-        color: black;
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-        line-height: 1.4;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .print-patient-info {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        border: 2px solid #000;
-        padding: 15px;
-        background: white;
-        font-size: 12px;
-        line-height: 1.3;
-        width: 300px;
-    }
-    
-    .print-patient-info p {
-        margin: 8px 0;
-        font-size: 12px;
-    }
-    
-    .print-patient-info strong {
-        font-weight: bold;
-    }
-    
-    .print-consultation-notes {
-        margin-top: 180px;
-        margin-left: 20px;
-        margin-right: 20px;
-    }
-    
-    .print-consultation-notes h3 {
-        font-size: 16px;
-        margin-bottom: 25px;
-        border-bottom: 2px solid #000;
-        padding-bottom: 8px;
-        font-weight: bold;
-    }
-    
-    .print-line {
-        border-bottom: 1px solid #000;
-        height: 25px;
-        margin-bottom: 25px;
-        width: 100%;
-    }
-}
-
-/* Custom Styles */
-.patient-item {
-    cursor: pointer;
-    transition: background-color 0.2s;
-    border: 2px solid transparent;
-}
-
-.patient-item:hover {
-    background-color: #f8f9fa;
-}
-
-.patient-item.active {
-    background-color: #8EC641;
-    color: white;
-    border-color: #8EC641;
-}
-
-.patient-item:focus {
-    border-color: #8EC641;
-    box-shadow: 0 0 0 0.2rem rgba(142, 198, 65, 0.25);
-    outline: none;
-}
-
-/* Custom green theme overrides */
+/* The Kids Clinic - Custom Styles */
 :root {
-    --clinic-green: #8EC641;
-    --clinic-green-hover: #7ab837;
-    --clinic-green-dark: #6aa030;
+    --clinic-primary: #0d6efd;
+    --clinic-secondary: #6c757d;
+    --clinic-success: #198754;
+    --clinic-warning: #ffc107;
+    --clinic-danger: #dc3545;
+    --clinic-info: #0dcaf0;
 }
 
-.btn-primary {
-    background-color: var(--clinic-green);
-    border-color: var(--clinic-green);
+body {
+    background-color: #f8f9fa;
 }
 
-.btn-primary:hover {
-    background-color: var(--clinic-green-hover);
-    border-color: var(--clinic-green-hover);
+.clinic-info {
+    text-align: center;
+    margin-bottom: 2rem;
 }
 
-.btn-primary:focus, .btn-primary.focus {
-    box-shadow: 0 0 0 0.2rem rgba(142, 198, 65, 0.25);
-    background-color: var(--clinic-green-hover);
-    border-color: var(--clinic-green-hover);
+.form-selection {
+    text-align: center;
+    margin-bottom: 2rem;
 }
 
-.btn-primary:not(:disabled):not(.disabled):active, 
-.btn-primary:not(:disabled):not(.disabled).active {
-    background-color: var(--clinic-green-dark);
-    border-color: var(--clinic-green-dark);
+.patient-form {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-.btn-outline-primary {
-    color: var(--clinic-green);
-    border-color: var(--clinic-green);
+.search-results {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
 }
 
-.btn-outline-primary:hover {
-    background-color: var(--clinic-green);
-    border-color: var(--clinic-green);
-}
-
-.text-primary {
-    color: var(--clinic-green) !important;
-}
-
-.bg-primary {
-    background-color: var(--clinic-green) !important;
-}
-
-.border-primary {
-    border-color: var(--clinic-green) !important;
-}
-
-/* Form controls focus state */
-.form-control:focus, .form-select:focus {
-    border-color: var(--clinic-green);
-    box-shadow: 0 0 0 0.2rem rgba(142, 198, 65, 0.25);
-}
-
-.card-header h4, .card-header h5 {
-    margin-bottom: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.text-muted i {
-    margin-right: 8px;
-}
-
-/* Search Results Styling */
-#searchResultsList .list-group-item {
+.search-result-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
     cursor: pointer;
-    border: 1px solid var(--bs-border-color);
-    margin-bottom: 2px;
+    transition: background-color 0.15s ease-in-out;
 }
 
-#searchResultsList .list-group-item:hover {
+.search-result-item:hover {
     background-color: #f8f9fa;
 }
 
-/* Patient Information Card */
-#patientInfo .info-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid var(--bs-gray-200);
+.search-result-item:last-child {
+    border-bottom: none;
 }
 
-#patientInfo .info-label {
-    font-weight: 600;
-    color: var(--bs-gray-600);
-}
-
-#patientInfo .info-value {
-    color: var(--bs-body-color);
-}
-
-/* Complete Consultation Button */
-.complete-consultation-btn {
-    position: sticky;
-    bottom: 20px;
-    z-index: 1000;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .col-lg-4 {
-        margin-bottom: 1rem;
-    }
-    
-    .card-header .btn-sm {
-        padding: 0.25rem 0.5rem;
-    }
-}
-
-/* Table improvements */
-.table th {
-    border-top: none;
-    font-weight: 600;
+.patient-details {
     background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
 }
 
-/* Form improvements */
-.form-label {
-    font-weight: 500;
+.patient-info p {
     margin-bottom: 0.5rem;
-}
-
-/* Alert improvements */
-.alert {
-    border: none;
-    border-left: 4px solid;
-}
-
-.alert-success {
-    border-left-color: var(--bs-success);
-}
-
-.alert-danger {
-    border-left-color: var(--bs-danger);
-}
-
-.alert-info {
-    border-left-color: var(--bs-info);
-}
-
-/* Icon spacing */
-[data-feather] {
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
-}
-
-.navbar-brand [data-feather] {
-    width: 20px;
-    height: 20px;
-    margin-right: 8px;
 }
