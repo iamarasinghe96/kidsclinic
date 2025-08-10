@@ -63,6 +63,8 @@ def receptionist():
                          total_waiting=total_waiting,
                          total_completed=total_completed)
 
+# Consultant route moved to avoid conflict
+
 @app.route('/consultant/<int:consultant_id>')
 def consultant_view(consultant_id):
     consultant = Consultant.query.get_or_404(consultant_id)

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Select Consultant{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header text-center" style="background-color: #8EC641; color: white;">
+                <h4><i data-feather="user-check"></i> Select Consultant</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-center text-muted mb-4">Choose a consultant to view their patient queue</p>
+                
+                <div class="list-group">
+                    {% for consultant in consultants %}
+                        <a href="{{ url_for('consultant_view', consultant_id=consultant.id) }}" 
+                           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ consultant.name }}</h6>
+                                <small class="text-muted">{{ consultant.specialization }}</small>
+                            </div>
+                            <i data-feather="arrow-right"></i>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
