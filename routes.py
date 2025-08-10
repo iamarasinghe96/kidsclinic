@@ -695,6 +695,33 @@ def print_daily_summary():
         flash(f'Error generating report: {str(e)}', 'error')
         return redirect(url_for('queue_management'))
 
+@app.route('/print_patient/<reg_number>')
+def print_patient(reg_number):
+    """Print individual patient summary"""
+    patient = Patient.query.filter_by(registration_number=reg_number).first()
+    
+    if not patient:
+        flash('Patient not found', 'error')
+        return redirect(url_for('queue_management'))
+    
+    # Get today's visit
+    today = date.today()
+    current_visit = Visit.query.filter_by(patient_id=patient.id)\
+                              .filter(func.date(Visit.visit_date) == today)\
+                              .first()
+    
+    # Get recent visits for history
+    recent_visits = Visit.query.filter_by(patient_id=patient.id)\
+                              .filter(Visit.status.in_(['completed', 'completed_archived']))\
+                              .order_by(Visit.visit_date.desc())\
+                              .limit(5).all()
+    
+    return render_template('print_patient.html',
+                         patient=patient,
+                         current_visit=current_visit,
+                         recent_visits=recent_visits,
+                         print_date=date.today())
+
 # Admin Panel Routes
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
