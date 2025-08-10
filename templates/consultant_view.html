@@ -119,11 +119,11 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.reload();
     }, 30000);
     
-    // Check for patient selection from receptionist every 3 seconds
-    setInterval(checkForSelectedPatient, 3000);
+    // Check for patient selection from receptionist every 2 seconds
+    setInterval(checkForSelectedPatient, 2000);
     
     // Initial check
-    setTimeout(checkForSelectedPatient, 1000);
+    setTimeout(checkForSelectedPatient, 500);
 });
 
 // Check if receptionist has selected a patient for this consultant
@@ -139,13 +139,14 @@ function checkForSelectedPatient() {
             console.log('[CONSULTANT] Patient data:', patientData);
             console.log('[CONSULTANT] Current consultant ID:', currentConsultantId);
             console.log('[CONSULTANT] Current selected patient:', consultantCurrentPatientRegNumber);
+            console.log('[CONSULTANT] Patient consultant ID:', patientData.consultantId);
             
             // Check age of the sync data (prevent stale data)
             const dataAge = Date.now() - patientData.timestamp;
             console.log('[CONSULTANT] Data age (ms):', dataAge);
             
-            // Only process if data is fresh (less than 30 seconds old)
-            if (dataAge > 30000) {
+            // Only process if data is fresh (less than 5 minutes old)
+            if (dataAge > 300000) {
                 console.log('[CONSULTANT] Data too old, ignoring');
                 return;
             }
