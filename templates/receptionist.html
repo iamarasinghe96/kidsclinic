@@ -90,12 +90,22 @@
                         
                         <!-- Returning Patient -->
                         <div class="tab-pane fade" id="returning-patient" role="tabpanel">
+                            <!-- Patient Search for Returning Patients -->
+                            <div class="mb-4">
+                                <label for="patient_search" class="form-label">Search Patient</label>
+                                <input type="text" class="form-control" id="patient_search" 
+                                       placeholder="Search by patient name only...">
+                                <div id="searchResults" class="mt-2" style="display: none;">
+                                    <div id="searchResultsList" class="list-group"></div>
+                                </div>
+                            </div>
+                            
                             <form method="POST" action="{{ url_for('register_returning_patient') }}">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label for="returning_reg_number" class="form-label">Registration Number</label>
-                                            <input type="text" class="form-control" name="registration_number" 
+                                            <input type="text" class="form-control" name="registration_number" id="returning_reg_number"
                                                    placeholder="e.g., REG2024010001" required>
                                         </div>
                                         <div class="mb-3">
@@ -107,7 +117,7 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label for="returning_consultant_id" class="form-label">Consultant</label>
-                                            <select class="form-select" name="consultant_id" required>
+                                            <select class="form-select" name="consultant_id" id="returning_consultant_id" required>
                                                 <option value="">Select Consultant</option>
                                                 {% for consultant in consultants %}
                                                     <option value="{{ consultant.id }}">{{ consultant.name }}</option>
@@ -119,33 +129,13 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i data-feather="repeat"></i> Register Visit
                                 </button>
-                                <button type="button" class="btn btn-secondary" onclick="loadPatientDetails()">
-                                    <i data-feather="search"></i> Load Details
-                                </button>
                             </form>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Patient Search -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h4><i data-feather="search"></i> Patient Search</h4>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="search_query" class="form-label">Search by Patient Name or Contact</label>
-                        <input type="text" class="form-control" id="search_query" 
-                               placeholder="Enter patient name or contact number">
-                    </div>
-                    
-                    <div id="searchResults" class="mt-3" style="display: none;">
-                        <h6>Search Results:</h6>
-                        <div id="searchResultsList" class="list-group"></div>
-                    </div>
-                </div>
-            </div>
+
         </div>
         
         <!-- Queue Management -->
@@ -305,11 +295,11 @@ let lastSelectedPatient = null;
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize search functionality
-    const searchInput = document.getElementById('search_query');
-    if (searchInput) {
+    // Initialize patient search functionality for returning patients
+    const patientSearchInput = document.getElementById('patient_search');
+    if (patientSearchInput) {
         let searchTimeout;
-        searchInput.addEventListener('input', function() {
+        patientSearchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(searchPatients, 300);
         });
@@ -420,9 +410,9 @@ function displayPatientInfo(patient) {
     feather.replace();
 }
 
-// Search patients
+// Search patients for returning patient form
 function searchPatients() {
-    const query = document.getElementById('search_query').value.trim();
+    const query = document.getElementById('patient_search').value.trim();
     const resultsDiv = document.getElementById('searchResults');
     const resultsList = document.getElementById('searchResultsList');
     
@@ -464,6 +454,13 @@ function searchPatients() {
         .catch(error => {
             console.error('Search error:', error);
         });
+}
+
+// Select returning patient from search results
+function selectReturningPatient(patient) {
+    document.getElementById('returning_reg_number').value = patient.registration_number;
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('patient_search').value = patient.full_name;
 }
 
 // Complete consultation
@@ -585,7 +582,7 @@ function printPatientInfo() {
                     <div class="patient-info">
                         <p><strong>Reg:</strong> ${data.registration_number}</p>
                         <p><strong>Name:</strong> ${data.full_name}</p>
-                        ${data.parent_name ? `<p><strong>Parent:</strong> ${data.parent_name}</p>` : ''}
+
                         <p><strong>DOB:</strong> ${data.date_of_birth} (${data.age})</p>
                         <p><strong>Gender:</strong> ${data.gender}</p>
                         ${data.weight_kg ? `<p><strong>Weight:</strong> ${data.weight_kg} kg</p>` : ''}
@@ -593,7 +590,7 @@ function printPatientInfo() {
                     </div>
                     
                     <div class="consultation-notes">
-                        <h3>Consultation Notes:</h3>
+                        <h3>Patient Summary:</h3>
                         <div class="line"></div>
                         <div class="line"></div>
                         <div class="line"></div>

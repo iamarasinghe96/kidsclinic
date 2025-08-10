@@ -274,12 +274,9 @@ def search_patients():
     if not query:
         return jsonify([])
     
-    # Search by name or contact number
+    # Search by patient name only
     patients = Patient.query.filter(
-        or_(
-            Patient.full_name.ilike(f'%{query}%'),
-            Patient.contact_number.like(f'%{query}%')
-        )
+        Patient.full_name.ilike(f'%{query}%')
     ).limit(10).all()
     
     results = []
@@ -413,7 +410,7 @@ def get_patient_details(reg_number):
             'registration_number': patient.registration_number,
             'full_name': patient.full_name,
             'parent_name': patient.parent_name,
-            'age': f"({patient.age})",  # Format as (YY) for age
+            'age': patient.age,  # Just the age number
             'gender': patient.gender,
             'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d'),
             'email': patient.email,
@@ -445,7 +442,7 @@ def complete_consultation():
     else:
         flash('Patient not found', 'error')
     
-    return redirect(url_for('consultant', consultant_id=request.form.get('consultant_id')))
+    return redirect(url_for('receptionist'))
 
 @app.route('/report', methods=['GET', 'POST'])
 def report():
