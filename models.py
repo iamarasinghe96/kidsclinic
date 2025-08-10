@@ -5,6 +5,7 @@ class Consultant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     specialization = db.Column(db.String(100))
+    consultation_fee = db.Column(db.Float, default=5000.0)
     patients = db.relationship('Patient', backref='consultant', lazy=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
