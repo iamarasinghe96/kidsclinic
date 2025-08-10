@@ -574,8 +574,7 @@ function printPatientInfo() {
                         <p><strong>Name:</strong> ${data.full_name}</p>
 
                         <p><strong>DOB:</strong> ${data.date_of_birth} (${data.age})</p>
-                        <p><strong>Gender:</strong> ${data.gender}</p>
-                        ${data.weight_kg ? `<p><strong>Weight:</strong> ${data.weight_kg} kg</p>` : ''}
+                        <p><strong>Gender:</strong> ${data.gender}${data.weight_kg ? `, ${data.weight_kg} kg` : ''}</p>
                         <p><strong>Visit:</strong> ${currentDateTime}</p>
                     </div>
                     
