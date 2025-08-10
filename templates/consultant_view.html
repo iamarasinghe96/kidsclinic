@@ -152,6 +152,7 @@ function checkForSelectedPatient() {
                     
                     // Load patient info
                     loadPatientInfo(patientData.regNumber);
+                    consultantCurrentPatientRegNumber = patientData.regNumber;
                 } else {
                     console.log('Patient element not found in current queue');
                 }
