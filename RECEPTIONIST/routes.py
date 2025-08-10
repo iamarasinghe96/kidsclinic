@@ -1,4 +1,3 @@
-
 from flask import render_template, request, jsonify, redirect, url_for, session, flash
 from app import app, db
 from models import Patient, Consultant, Visit
@@ -368,3 +367,34 @@ def delete_patient(patient_id):
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
+
+# New route added as per the intention
+@app.route('/api/register_returning_patient', methods=['POST'])
+def register_returning_patient():
+    try:
+        patient_id = request.form.get('patient_id')
+        weight_kg = request.form.get('weight_kg')
+
+        patient = Patient.query.get_or_404(patient_id)
+
+        # Create new visit
+        visit = Visit(
+            patient_id=patient.id,
+            consultant_id=patient.consultant_id,
+            weight_kg=float(weight_kg) if weight_kg else None,
+            status='waiting' # Set initial status to waiting
+        )
+
+        db.session.add(visit)
+        db.session.commit()
+
+        app.logger.info(f'Returning patient visit created: {patient.registration_number}')
+
+        # Redirect to the receptionist page with a success message
+        return redirect(url_for('receptionist', success=f'Patient {patient.full_name} added to today\'s queue'))
+
+    except Exception as e:
+        app.logger.error(f'Error registering returning patient: {e}')
+        db.session.rollback()
+        # Redirect to the receptionist page with an error message
+        return redirect(url_for('receptionist', error='Error registering returning patient'))
