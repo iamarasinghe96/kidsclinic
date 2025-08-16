@@ -9,8 +9,9 @@ SL_TZ = pytz.timezone('Asia/Colombo')
 class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     registration_number = db.Column(db.String(20), unique=True, nullable=False)
+    title = db.Column(db.String(10), nullable=True, default='')  # Baby, Mr., Mrs., Miss, Rev.
     full_name = db.Column(db.String(100), nullable=False)
-    parent_name = db.Column(db.String(100), nullable=True)
+    parent_name = db.Column(db.String(100), nullable=True)  # Made optional
     date_of_birth = db.Column(db.Date, nullable=False)
     address = db.Column(db.Text, nullable=False)
     contact_number = db.Column(db.String(20), nullable=False)

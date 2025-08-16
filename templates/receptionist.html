@@ -34,16 +34,27 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
+                                            <label for="title" class="form-label">Title</label>
+                                            <select class="form-select" name="title">
+                                                <option value="">Select Title</option>
+                                                <option value="Baby">Baby</option>
+                                                <option value="Mr.">Mr.</option>
+                                                <option value="Mrs.">Mrs.</option>
+                                                <option value="Miss">Miss</option>
+                                                <option value="Rev.">Rev.</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
                                             <label for="full_name" class="form-label">Patient Name</label>
                                             <input type="text" class="form-control" name="full_name" required>
                                         </div>
                                         <div class="mb-3">
-                                            <label for="parent_name" class="form-label">Parent/Guardian Name</label>
+                                            <label for="parent_name" class="form-label">Parent/Guardian Name (Optional)</label>
                                             <input type="text" class="form-control" name="parent_name">
                                         </div>
                                         <div class="mb-3">
-                                            <label for="date_of_birth" class="form-label">Date of Birth</label>
-                                            <input type="date" class="form-control" name="date_of_birth" required>
+                                            <label for="date_of_birth" class="form-label">Date of Birth (DD/MM/YYYY)</label>
+                                            <input type="text" class="form-control" name="date_of_birth" placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}" required>
                                         </div>
                                         <div class="mb-3">
                                             <label for="gender" class="form-label">Gender</label>
