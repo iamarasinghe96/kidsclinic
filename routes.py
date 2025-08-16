@@ -794,7 +794,7 @@ def admin_panel():
         consultants = Consultant.query.all()
         # Handle missing color attribute gracefully
         for consultant in consultants:
-            if not hasattr(consultant, 'color') or consultant.color is None:
+            if not hasattr(consultant, 'color') or getattr(consultant, 'color', None) is None:
                 consultant.color = '#6c757d'  # Default color
     except Exception as e:
         app.logger.error(f"Error accessing consultants: {e}")
@@ -912,7 +912,7 @@ def search_patient_records():
                 'registration_number': visit.patient.registration_number,
                 'patient_name': visit.patient.full_name,
                 'consultant_name': visit.consultant.name,
-                'consultant_color': visit.consultant.color or '#6c757d',
+                'consultant_color': getattr(visit.consultant, 'color', '#6c757d'),
                 'date': visit.visit_date.strftime('%Y-%m-%d %H:%M'),
                 'status': visit.status
             })
@@ -931,7 +931,7 @@ def search_patient_records():
                     'registration_number': patient.registration_number,
                     'patient_name': patient.full_name,
                     'consultant_name': patient_visit.consultant.name,
-                    'consultant_color': patient_visit.consultant.color or '#6c757d',
+                    'consultant_color': getattr(patient_visit.consultant, 'color', '#6c757d'),
                     'date': patient.created_at.strftime('%Y-%m-%d') if hasattr(patient, 'created_at') else 'N/A',
                     'status': f'{len([v for v in visits if v.patient_id == patient.id])} visits'
                 })
