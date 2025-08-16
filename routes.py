@@ -763,7 +763,7 @@ def delete_patient(patient_id):
                 'error': 'Patient not found'
             }), 404
         
-        patient_name = patient.full_name
+        patient_name = patient.display_name
         
         # Delete all visits associated with this patient first
         visits_deleted = Visit.query.filter_by(patient_id=patient_id).delete()
@@ -951,26 +951,31 @@ def delete_record(record_type, record_id):
             if not patient:
                 return jsonify({'success': False, 'error': 'Patient not found'})
             
-            patient_name = patient.full_name
+            patient_name = patient.display_name
+            # Delete all visits for this patient first
             visits_deleted = Visit.query.filter_by(patient_id=record_id).delete()
+            # Then delete the patient record
             db.session.delete(patient)
             db.session.commit()
             
             app.logger.info(f'Patient deleted via admin: {patient_name} (ID: {record_id}), {visits_deleted} visits removed')
-            return jsonify({'success': True, 'message': f'Patient {patient_name} deleted'})
+            return jsonify({'success': True, 'message': f'Patient {patient_name} and {visits_deleted} visits deleted'})
             
         elif record_type == 'visit':
             visit = Visit.query.get(record_id)
             if not visit:
                 return jsonify({'success': False, 'error': 'Visit not found'})
             
-            patient_name = visit.patient.full_name
+            patient_name = visit.patient.display_name
             visit_date = visit.visit_date.strftime('%Y-%m-%d')
+            visit_time = visit.visit_date.strftime('%H:%M')
+            
+            # Only delete the visit record, not the patient
             db.session.delete(visit)
             db.session.commit()
             
-            app.logger.info(f'Visit deleted via admin: {patient_name} on {visit_date} (ID: {record_id})')
-            return jsonify({'success': True, 'message': f'Visit for {patient_name} on {visit_date} deleted'})
+            app.logger.info(f'Visit deleted via admin: {patient_name} on {visit_date} at {visit_time} (ID: {record_id})')
+            return jsonify({'success': True, 'message': f'Visit for {patient_name} on {visit_date} at {visit_time} deleted'})
         
         else:
             return jsonify({'success': False, 'error': 'Invalid record type'}), 400
@@ -999,13 +1004,16 @@ def delete_multiple_records():
             if record_type == 'patient':
                 patient = Patient.query.get(record_id)
                 if patient:
+                    # Delete all visits for this patient first
                     Visit.query.filter_by(patient_id=record_id).delete()
+                    # Then delete the patient
                     db.session.delete(patient)
                     deleted_count += 1
                     
             elif record_type == 'visit':
                 visit = Visit.query.get(record_id)
                 if visit:
+                    # Only delete the visit, keep the patient record
                     db.session.delete(visit)
                     deleted_count += 1
         
