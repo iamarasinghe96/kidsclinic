@@ -296,11 +296,39 @@
 </div>
 
 <script>
+// Date formatting function
+function formatDateInput(input) {
+    let value = input.value.replace(/\D/g, ''); // Remove non-digits
+    
+    if (value.length >= 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2);
+    }
+    if (value.length >= 5) {
+        value = value.substring(0, 5) + '/' + value.substring(5, 9);
+    }
+    
+    input.value = value;
+}
+
 // Enhanced JavaScript for receptionist interface
 // currentPatientRegNumber and lastSelectedPatient are declared globally in script.js
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date formatting for date of birth inputs
+    const dateInputs = document.querySelectorAll('input[name="date_of_birth"]');
+    dateInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            formatDateInput(this);
+        });
+        
+        // Prevent non-numeric input
+        input.addEventListener('keypress', function(e) {
+            if (!/\d/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+    });
     // Initialize patient search functionality for returning patients
     const patientSearchInput = document.getElementById('patient_search');
     if (patientSearchInput) {
