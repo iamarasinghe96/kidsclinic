@@ -140,7 +140,7 @@ def reception():
                     registration_number=registration_number,
                     full_name=request.form['full_name'],
                     parent_name=request.form.get('parent_name', ''),
-                    date_of_birth=datetime.strptime(request.form['date_of_birth'], '%Y-%m-%d').date(),
+                    date_of_birth=datetime.strptime(request.form['date_of_birth'], '%d/%m/%Y').date(),
                     address=request.form['address'],
                     contact_number=request.form['contact_number'],
                     email=request.form.get('email', ''),
@@ -220,7 +220,7 @@ def search_patients():
             'id': patient.id,
             'full_name': patient.full_name,
             'registration_number': patient.registration_number,
-            'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d'),
+            'date_of_birth': patient.date_of_birth.strftime('%d/%m/%Y'),
             'contact_number': patient.contact_number,
             'consultant_name': patient.consultant.name
         })
@@ -331,7 +331,7 @@ def get_patient(reg_number):
         return jsonify({
             'full_name': patient.full_name,
             'parent_name': patient.parent_name,
-            'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d'),
+            'date_of_birth': patient.date_of_birth.strftime('%d/%m/%Y'),
             'address': patient.address,
             'contact_number': patient.contact_number,
             'email': patient.email,
@@ -450,7 +450,7 @@ def get_patient_details(reg_number):
         visit_data = []
         for visit in recent_visits:
             visit_info = {
-                'date': visit.visit_date.strftime('%Y-%m-%d'),
+                'date': visit.visit_date.strftime('%d/%m/%Y'),
                 'weight': f"{visit.weight_kg} kg" if visit.weight_kg else None
             }
             visit_data.append(visit_info)
@@ -469,7 +469,7 @@ def get_patient_details(reg_number):
             'parent_name': patient.parent_name,
             'age': patient.age,  # Just the age number
             'gender': patient.gender,
-            'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d'),
+            'date_of_birth': patient.date_of_birth.strftime('%d/%m/%Y'),
             'email': patient.email,
             'weight_kg': current_weight,
             'consultant_id': patient.consultant_id,
