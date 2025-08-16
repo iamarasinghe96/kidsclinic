@@ -732,3 +732,49 @@ def print_daily_summary():
         app.logger.error(f'Error generating daily summary: {e}')
         flash(f'Error generating report: {str(e)}', 'error')
         return redirect(url_for('queue_management'))
+
+# Global emergency message storage
+emergency_message = {"text": "", "timestamp": 0}
+
+@app.route('/send_emergency_message', methods=['POST'])
+def send_emergency_message():
+    """Send emergency message to all consultants"""
+    try:
+        message = request.form.get('message', '').strip()
+        if not message:
+            return jsonify({'success': False, 'error': 'Message is required'})
+        
+        # Store emergency message with timestamp
+        import time
+        global emergency_message
+        emergency_message = {
+            'text': message,
+            'timestamp': time.time()
+        }
+        
+        logging.info(f"Emergency message sent: {message}")
+        return jsonify({'success': True, 'message': 'Emergency message sent to all consultants'})
+        
+    except Exception as e:
+        logging.error(f"Error sending emergency message: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/get_emergency_message')
+def get_emergency_message():
+    """Get the latest emergency message for consultants"""
+    try:
+        import time
+        global emergency_message
+        
+        # Only return message if it's less than 30 seconds old
+        if emergency_message['timestamp'] and (time.time() - emergency_message['timestamp']) < 30:
+            return jsonify({
+                'success': True, 
+                'message': emergency_message
+            })
+        else:
+            return jsonify({'success': True, 'message': None})
+            
+    except Exception as e:
+        logging.error(f"Error getting emergency message: {e}")
+        return jsonify({'success': False, 'error': str(e)})
