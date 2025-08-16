@@ -320,9 +320,8 @@ function savePatientChanges() {
     const patientId = document.getElementById('returning_patient_id').value;
     const title = document.getElementById('returning_title').value;
     const fullName = document.getElementById('returning_full_name').value;
-    const regNumber = document.getElementById('returning_reg_number').value;
     
-    if (!patientId || !fullName || !regNumber) {
+    if (!patientId || !fullName) {
         alert('Please ensure all required fields are filled');
         return;
     }
@@ -331,7 +330,7 @@ function savePatientChanges() {
     formData.append('patient_id', patientId);
     formData.append('title', title);
     formData.append('full_name', fullName);
-    formData.append('registration_number', regNumber);
+    // Do not send registration_number as it should not be changed
     
     fetch('/update_patient', {
         method: 'POST',

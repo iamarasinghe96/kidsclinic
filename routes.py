@@ -1088,19 +1088,11 @@ def update_patient():
         if not patient:
             return jsonify({'success': False, 'error': 'Patient not found'}), 404
         
-        # Update patient information
+        # Update patient information (do not update registration_number as it should remain unchanged)
         patient.title = request.form.get('title', '').strip()
         patient.full_name = request.form['full_name'].strip()
-        patient.registration_number = request.form['registration_number'].strip()
         
-        # Check if registration number is already used by another patient
-        existing_patient = Patient.query.filter(
-            Patient.registration_number == patient.registration_number,
-            Patient.id != patient.id
-        ).first()
-        
-        if existing_patient:
-            return jsonify({'success': False, 'error': 'Registration number already exists for another patient'}), 400
+        # Registration numbers are unique identifiers that should not be changed
         
         db.session.commit()
         app.logger.info(f"Patient updated: {patient.registration_number} - {patient.display_name}")
