@@ -722,7 +722,18 @@ function confirmDeletePatient() {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('deletePatientModal')).hide();
             showAlert(data.message, 'success');
-            refreshQueue(); // Refresh the queue to remove deleted patient
+            
+            // Clear selection if deleted patient was selected
+            if (currentPatientRegNumber && 
+                document.querySelector(`[data-reg-number="${currentPatientRegNumber}"]`) &&
+                document.querySelector(`[data-reg-number="${currentPatientRegNumber}"]`).closest('.patient-item').onclick.toString().includes(patientToDelete)) {
+                clearPatientSelection();
+            }
+            
+            // Refresh the page to update the queue
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } else {
             showAlert('Error deleting patient: ' + data.error, 'danger');
         }
