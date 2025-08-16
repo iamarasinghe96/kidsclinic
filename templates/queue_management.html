@@ -260,7 +260,7 @@ function displayPatientInfo(patient) {
     feather.replace();
 }
 
-// Mark consultation complete
+// Mark consultation complete with auto-next patient selection
 function markComplete() {
     if (!currentPatientRegNumber) {
         alert('Please select a patient first');
@@ -268,6 +268,10 @@ function markComplete() {
     }
     
     if (confirm('Mark consultation as complete?')) {
+        // Get current patient info before completion for auto-selection
+        const currentPatient = document.querySelector(`[data-reg-number="${currentPatientRegNumber}"]`);
+        const nextPatientInfo = getNextPatientInQueue(currentPatient);
+        
         const formData = new FormData();
         formData.append('registration_number', currentPatientRegNumber);
         
@@ -280,11 +284,18 @@ function markComplete() {
             if (data.success) {
                 showNotification(data.message, 'success');
                 
-                // Clear patient selection and persistent storage
+                // Auto-select next patient before page refresh
+                if (nextPatientInfo) {
+                    localStorage.setItem('autoSelectNextPatient', nextPatientInfo.regNumber);
+                }
+                
+                // Clear current patient selection
                 clearPatientSelection();
                 
-                // Refresh queue immediately
-                refreshQueue();
+                // Refresh queue with auto-selection
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
             } else {
                 showNotification(data.error, 'error');
             }
@@ -294,6 +305,39 @@ function markComplete() {
             showNotification('Error completing consultation', 'error');
         });
     }
+}
+
+// Get next patient in waiting queue for auto-selection
+function getNextPatientInQueue(currentPatientElement) {
+    if (!currentPatientElement) return null;
+    
+    const waitingPatients = Array.from(document.querySelectorAll('.patient-item'));
+    const currentIndex = waitingPatients.indexOf(currentPatientElement);
+    
+    // Try to find the next patient in the list
+    for (let i = currentIndex + 1; i < waitingPatients.length; i++) {
+        const nextPatient = waitingPatients[i];
+        // Make sure it's a waiting patient, not completed
+        if (nextPatient.closest('.card').querySelector('.card-header').textContent.includes('Waiting')) {
+            return {
+                regNumber: nextPatient.dataset.regNumber,
+                name: nextPatient.querySelector('h6').textContent
+            };
+        }
+    }
+    
+    // If no next patient found, try the first waiting patient
+    for (let i = 0; i < currentIndex; i++) {
+        const nextPatient = waitingPatients[i];
+        if (nextPatient.closest('.card').querySelector('.card-header').textContent.includes('Waiting')) {
+            return {
+                regNumber: nextPatient.dataset.regNumber,
+                name: nextPatient.querySelector('h6').textContent
+            };
+        }
+    }
+    
+    return null;
 }
 
 // Print patient summary
@@ -437,6 +481,24 @@ function endShift() {
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
     updateLastRefreshTime();
+    
+    // Check for auto-selection after consultation completion
+    const autoSelectNext = localStorage.getItem('autoSelectNextPatient');
+    if (autoSelectNext) {
+        localStorage.removeItem('autoSelectNextPatient');
+        
+        setTimeout(() => {
+            const nextPatientElement = document.querySelector(`[data-reg-number="${autoSelectNext}"]`);
+            if (nextPatientElement) {
+                console.log('[QUEUE] Auto-selecting next patient after consultation completion:', autoSelectNext);
+                showPatientDetails(autoSelectNext);
+                showNotification(`Next patient auto-selected: ${nextPatientElement.querySelector('h6').textContent}`, 'success');
+            } else {
+                showNotification('No more patients in queue for auto-selection', 'info');
+            }
+        }, 800);
+        return; // Skip regular restore if we're doing auto-selection
+    }
     
     // Restore patient selection from localStorage after page refresh
     const savedPatientRegNumber = localStorage.getItem('selectedPatientRegNumber');
