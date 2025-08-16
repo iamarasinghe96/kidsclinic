@@ -2,7 +2,7 @@
 
 This is a local-only clinic patient management system for "The Kids Clinic / Allergy and Asthma Center" designed for use on two dedicated laptops: one for the consultant and one for the receptionist. The application provides specialized interfaces: Consultant view (completely read-only display showing what receptionist does), Receptionist view (full patient management, registration, queue management, and administrative functions), and Reports for generating consultation summaries. The system operates entirely offline with automated shortcuts that remember laptop roles and auto-start/close the server.
 
-**Current Status**: Complete system ready for deployment with automated shortcuts, cross-device printing setup, and comprehensive documentation.
+**Current Status**: Complete system ready for deployment with automated shortcuts, cross-device printing setup, comprehensive documentation, and enhanced patient management with title dropdown functionality.
 
 # User Preferences
 
@@ -33,12 +33,12 @@ Preferred communication style: Simple, everyday language.
 ## Application Structure
 - **Role-based interfaces**: Consultant (read-only view), Receptionist (full management), Reports (data analytics)
 - **Automated deployment**: Shortcuts remember laptop roles and auto-start appropriate interface
-- **Enhanced patient data**: Weight tracking per visit, email addresses, parent names
+- **Enhanced patient data**: Weight tracking per visit, email addresses, parent names, title dropdown (Baby, Mr., Mrs., Miss, Master, Rev.)
 - **Streamlined workflow**: Receptionist handles all patient actions, consultant only views information
 - **Compact print layouts**: Optimized patient information with age integrated into birth date
 
 ## Data Flow
-- Receptionist creates patients with comprehensive data (weight, email, parent names)
+- Receptionist creates patients with comprehensive data (title, weight, email, parent names)
 - Consultant views assigned patients in completely read-only display (no interactions)
 - Patient information automatically appears in consultant view when receptionist selects patients
 - Receptionist manages all visit status transitions and patient actions
