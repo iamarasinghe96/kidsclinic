@@ -270,8 +270,8 @@ function checkEmergencyMessages() {
     fetch('/get_emergency_message')
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.message) {
-                showEmergencyMessage(data.message.text);
+            if (data.message) {
+                showEmergencyMessage(data.message, data.timestamp);
             }
         })
         .catch(error => {
@@ -280,22 +280,16 @@ function checkEmergencyMessages() {
 }
 
 // Show emergency message with chime sound
-function showEmergencyMessage(message) {
+function showEmergencyMessage(message, timestamp) {
     const alertDiv = document.getElementById('emergencyAlert');
     const textSpan = document.getElementById('emergencyText');
     
-    textSpan.textContent = message;
+    textSpan.textContent = `${message} (${timestamp})`;
     alertDiv.style.display = 'block';
     alertDiv.classList.add('show');
     
-    // Play chime sound (if supported)
-    try {
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvGIcBT2m4O2dNwgZZ7zr7qJXGR+4r++jNQ8EG1XF');
-        audio.volume = 0.5;
-        audio.play();
-    } catch (e) {
-        // Silent fail if audio not supported
-    }
+    // Play chime sound using Web Audio API
+    playChimeSound();
     
     // Auto-hide after 10 seconds
     setTimeout(() => {
@@ -303,6 +297,47 @@ function showEmergencyMessage(message) {
     }, 10000);
     
     feather.replace();
+}
+
+// Play a pleasant chime sound
+function playChimeSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Create a pleasant two-tone chime
+        const frequencies = [800, 1000]; // Two pleasant tones
+        
+        frequencies.forEach((freq, index) => {
+            setTimeout(() => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                // Smooth volume envelope
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }, index * 300); // Delay between tones
+        });
+    } catch (e) {
+        // Fallback to simple beep if Web Audio API not available
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvGIcBT2m4O2dNwgZZ7zr7qJXGR+4r++jNQ8EG1XF');
+            audio.volume = 0.5;
+            audio.play();
+        } catch (e2) {
+            // Silent fail if no audio support
+            console.log('Audio notifications not supported');
+        }
+    }
 }
 
 // Dismiss emergency message

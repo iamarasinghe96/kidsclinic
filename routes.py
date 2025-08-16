@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify, make_response, session
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from sqlalchemy import or_, func
 from app import app, db
 from models import Patient, Consultant, Visit
@@ -540,6 +540,61 @@ def complete_consultation():
         'success': True,
         'message': f'Consultation completed for {patient.full_name}'
     })
+
+@app.route('/send_emergency_message', methods=['POST'])
+def send_emergency_message():
+    """Send emergency message to consultant displays"""
+    message = request.form.get('message', '').strip()
+    
+    if not message:
+        return jsonify({'success': False, 'error': 'Message is required'}), 400
+    
+    # Store the emergency message in session for consultant views to pick up
+    timestamp = datetime.now().strftime('%H:%M:%S')
+    emergency_data = {
+        'message': message,
+        'timestamp': timestamp,
+        'expires_at': (datetime.now() + timedelta(seconds=10)).isoformat()
+    }
+    
+    # Store for all consultants
+    session['emergency_message'] = emergency_data
+    
+    return jsonify({
+        'success': True,
+        'message': 'Emergency message sent to all consultants'
+    })
+
+@app.route('/get_emergency_message', methods=['GET'])
+def get_emergency_message():
+    """Get current emergency message for consultant displays"""
+    emergency_data = session.get('emergency_message')
+    
+    if not emergency_data:
+        return jsonify({'message': None})
+    
+    # Check if message has expired (10 seconds)
+    try:
+        expires_at = datetime.fromisoformat(emergency_data['expires_at'])
+        if datetime.now() > expires_at:
+            # Message expired, clear it
+            session.pop('emergency_message', None)
+            return jsonify({'message': None})
+    except:
+        # Invalid timestamp, clear message
+        session.pop('emergency_message', None)
+        return jsonify({'message': None})
+    
+    return jsonify({
+        'message': emergency_data['message'],
+        'timestamp': emergency_data['timestamp']
+    })
+
+@app.route('/clear_emergency_message', methods=['POST'])
+def clear_emergency_message():
+    """Clear emergency message"""
+    session.pop('emergency_message', None)
+    return jsonify({'success': True})
 
 @app.route('/report', methods=['GET', 'POST'])
 def report():
