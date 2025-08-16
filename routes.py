@@ -520,40 +520,26 @@ def complete_consultation():
     reg_number = request.form['registration_number']
     patient = Patient.query.filter_by(registration_number=reg_number).first()
     
-    if patient:
-        # Find the most recent waiting visit for this patient
-        visit = Visit.query.filter(
-            Visit.patient_id == patient.id,
-            Visit.status == 'waiting'
-        ).order_by(Visit.visit_date.desc()).first()
-        
-        if visit:
-            consultant_id = visit.consultant_id
-            visit.mark_completed()
-            
-            # Find the next patient in line for the same consultant
-            next_visit = Visit.query.join(Patient).filter(
-                Visit.consultant_id == consultant_id,
-                Visit.status == 'waiting',
-                func.date(Visit.visit_date) == today
-            ).order_by(Visit.visit_date.asc()).first()
-            
-            next_patient_data = None
-            if next_visit:
-                next_patient_data = {
-                    'registration_number': next_visit.patient.registration_number,
-                    'full_name': next_visit.patient.full_name
-                }
-            
-            return jsonify({
-                'success': True,
-                'message': f'Consultation completed for {patient.full_name}',
-                'next_patient': next_patient_data
-            })
-        else:
-            return jsonify({'success': False, 'error': 'No active visit found for this patient'}), 400
-    else:
+    if not patient:
         return jsonify({'success': False, 'error': 'Patient not found'}), 404
+    
+    # Find the most recent waiting visit for this patient
+    visit = Visit.query.filter(
+        Visit.patient_id == patient.id,
+        Visit.status == 'waiting'
+    ).order_by(Visit.visit_date.desc()).first()
+    
+    if not visit:
+        return jsonify({'success': False, 'error': 'No active visit found'}), 400
+    
+    # Mark consultation as complete
+    visit.mark_completed()
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Consultation completed for {patient.full_name}'
+    })
 
 @app.route('/report', methods=['GET', 'POST'])
 def report():

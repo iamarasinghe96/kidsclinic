@@ -163,8 +163,9 @@
                             {% if waiting_visits %}
                                 <div class="list-group">
                                     {% for visit in waiting_visits %}
-                                        <a href="#" class="list-group-item list-group-item-action patient-item" 
-                                           data-reg-number="{{ visit.patient.registration_number }}">
+                                        <a href="#" class="list-group-item list-group-item-action patient-item waiting-patient" 
+                                           data-reg-number="{{ visit.patient.registration_number }}"
+                                           data-queue-position="{{ loop.index0 }}">
                                             <div class="d-flex w-100 justify-content-between">
                                                 <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
                                                 <small>{{ visit.visit_date|datetime }}</small>
@@ -195,7 +196,7 @@
                             {% if completed_visits %}
                                 <div class="list-group">
                                     {% for visit in completed_visits %}
-                                        <a href="#" class="list-group-item list-group-item-action patient-item" 
+                                        <a href="#" class="list-group-item list-group-item-action patient-item completed-patient" 
                                            data-reg-number="{{ visit.patient.registration_number }}">
                                             <div class="d-flex w-100 justify-content-between">
                                                 <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
@@ -514,7 +515,7 @@ function selectReturningPatient(patient) {
     document.getElementById('patient_search').value = patient.full_name;
 }
 
-// Complete consultation
+// Complete consultation with auto-next patient selection
 async function completeConsultation() {
     if (!currentPatientRegNumber) {
         alert('No patient selected');
@@ -523,6 +524,10 @@ async function completeConsultation() {
     
     if (confirm('Mark this consultation as completed?')) {
         try {
+            // Get current patient position before completion
+            const currentPatient = document.querySelector(`.patient-item[data-reg-number="${currentPatientRegNumber}"]`);
+            const currentPosition = currentPatient ? parseInt(currentPatient.dataset.queuePosition) : -1;
+            
             const formData = new FormData();
             formData.append('registration_number', currentPatientRegNumber);
             
@@ -534,18 +539,19 @@ async function completeConsultation() {
             const data = await response.json();
             
             if (response.ok) {
-                // Reload the page to update queues
-                window.location.reload();
+                // Show success notification
+                showNotification(data.message, 'success');
                 
-                // If there's a next patient, auto-select them after reload
-                if (data.next_patient) {
-                    setTimeout(() => {
-                        const nextPatientElement = document.querySelector(`[data-reg-number="${data.next_patient.registration_number}"]`);
-                        if (nextPatientElement) {
-                            nextPatientElement.click();
-                        }
-                    }, 500);
+                // Store next patient info for after page reload
+                const nextPatientInfo = getNextPatientInQueue(currentPosition);
+                if (nextPatientInfo) {
+                    localStorage.setItem('autoSelectPatient', nextPatientInfo.regNumber);
                 }
+                
+                // Reload the page to update queues
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } else {
                 alert('Error completing consultation: ' + (data.error || 'Unknown error'));
             }
@@ -554,6 +560,84 @@ async function completeConsultation() {
             alert('Error completing consultation');
         }
     }
+}
+
+// Get next patient in queue
+function getNextPatientInQueue(completedPosition) {
+    const waitingPatients = document.querySelectorAll('.waiting-patient');
+    
+    // Try to find the next patient in line
+    for (let patient of waitingPatients) {
+        const position = parseInt(patient.dataset.queuePosition);
+        const regNumber = patient.dataset.regNumber;
+        
+        // Skip the completed patient
+        if (regNumber === currentPatientRegNumber) continue;
+        
+        if (position > completedPosition) {
+            return {
+                regNumber: regNumber,
+                name: patient.querySelector('h6').textContent
+            };
+        }
+    }
+    
+    // If no next patient found, get the first available waiting patient
+    if (waitingPatients.length > 1) { // More than just the current patient
+        for (let patient of waitingPatients) {
+            const regNumber = patient.dataset.regNumber;
+            if (regNumber !== currentPatientRegNumber) {
+                return {
+                    regNumber: regNumber,
+                    name: patient.querySelector('h6').textContent
+                };
+            }
+        }
+    }
+    
+    return null;
+}
+
+// Auto-select patient after page reload
+document.addEventListener('DOMContentLoaded', function() {
+    const autoSelectPatient = localStorage.getItem('autoSelectPatient');
+    if (autoSelectPatient) {
+        localStorage.removeItem('autoSelectPatient');
+        
+        setTimeout(() => {
+            const patientElement = document.querySelector(`[data-reg-number="${autoSelectPatient}"]`);
+            if (patientElement) {
+                patientElement.click();
+                showNotification(`Next patient auto-selected: ${patientElement.querySelector('h6').textContent}`, 'info');
+            } else {
+                showNotification('No more patients in queue. Please select a patient manually.', 'warning');
+            }
+        }, 500);
+    }
+});
+
+// Show notification helper
+function showNotification(message, type = 'info') {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'warning' ? 'alert-warning' : 
+                      type === 'error' ? 'alert-danger' : 'alert-info';
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 4000);
 }
 
 // Reset patient information

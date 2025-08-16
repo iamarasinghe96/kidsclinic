@@ -33,8 +33,16 @@
         }
         
         .patient-item.active {
-            background-color: #d4edda !important;
+            background-color: #28a745 !important;
             border-color: #28a745 !important;
+            color: white !important;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+        }
+        
+        .patient-item.active h6,
+        .patient-item.active p,
+        .patient-item.active small {
+            color: white !important;
         }
         
         .list-group-item:hover {
@@ -42,11 +50,21 @@
         }
         
         .patient-item {
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
         }
         
-        .patient-item:hover {
+        .patient-item:hover:not(.active) {
             background-color: #e9ecef !important;
+            border-left-color: #6c757d;
+        }
+        
+        .waiting-patient {
+            border-left-color: #ffc107;
+        }
+        
+        .completed-patient {
+            border-left-color: #28a745;
         }
         
         .card-header h4, .card-header h5 {
