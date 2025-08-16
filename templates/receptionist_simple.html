@@ -179,9 +179,12 @@
                                     </div>
                                 </div>
                                 
-                                <div class="d-grid">
+                                <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-success btn-lg">
                                         <i data-feather="plus-circle" class="me-2"></i>Add to Today's Queue
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-lg" onclick="savePatientChanges()">
+                                        <i data-feather="save" class="me-2"></i>Save Changes
                                     </button>
                                 </div>
                             </form>
@@ -310,6 +313,45 @@ function selectReturningPatient(patientId) {
             console.error('Error loading patient details:', error);
             alert('Error loading patient information');
         });
+}
+
+// Save patient changes
+function savePatientChanges() {
+    const patientId = document.getElementById('returning_patient_id').value;
+    const title = document.getElementById('returning_title').value;
+    const fullName = document.getElementById('returning_full_name').value;
+    const regNumber = document.getElementById('returning_reg_number').value;
+    
+    if (!patientId || !fullName || !regNumber) {
+        alert('Please ensure all required fields are filled');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('patient_id', patientId);
+    formData.append('title', title);
+    formData.append('full_name', fullName);
+    formData.append('registration_number', regNumber);
+    
+    fetch('/update_patient', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Patient information updated successfully!', 'success');
+            // Clear the form and hide it
+            document.getElementById('returningPatientForm').style.display = 'none';
+            document.getElementById('patientSearch').value = '';
+        } else {
+            showNotification('Error updating patient: ' + (data.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating patient:', error);
+        showNotification('Error updating patient information', 'error');
+    });
 }
 
 // Show notifications

@@ -1062,3 +1062,37 @@ def print_daily_summary():
         app.logger.error(f'Error generating daily summary: {e}')
         flash(f'Error generating report: {str(e)}', 'error')
         return redirect(url_for('queue_management'))
+
+@app.route('/update_patient', methods=['POST'])
+def update_patient():
+    """Update existing patient information"""
+    try:
+        patient_id = request.form['patient_id']
+        patient = Patient.query.get(patient_id)
+        
+        if not patient:
+            return jsonify({'success': False, 'error': 'Patient not found'}), 404
+        
+        # Update patient information
+        patient.title = request.form.get('title', '').strip()
+        patient.full_name = request.form['full_name'].strip()
+        patient.registration_number = request.form['registration_number'].strip()
+        
+        # Check if registration number is already used by another patient
+        existing_patient = Patient.query.filter(
+            Patient.registration_number == patient.registration_number,
+            Patient.id != patient.id
+        ).first()
+        
+        if existing_patient:
+            return jsonify({'success': False, 'error': 'Registration number already exists for another patient'}), 400
+        
+        db.session.commit()
+        app.logger.info(f"Patient updated: {patient.registration_number} - {patient.display_name}")
+        
+        return jsonify({'success': True, 'message': 'Patient information updated successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating patient: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
