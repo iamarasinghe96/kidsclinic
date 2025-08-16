@@ -9,7 +9,16 @@
         <small class="text-muted ms-2" id="lastUpdate"></small>
     </h3>
     <div class="btn-group">
-        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshNow()" title="Refresh queue now">
+        <button type="button" class="btn btn-outline-info btn-sm" onclick="sendEmergencyMessage('New patient arrived')" title="Send message: New patient arrived">
+            <i data-feather="user-plus" class="me-1"></i>New Patient
+        </button>
+        <button type="button" class="btn btn-outline-warning btn-sm" onclick="sendEmergencyMessage('Patient waiting for long time')" title="Send message: Patient waiting for long time">
+            <i data-feather="clock" class="me-1"></i>Long Wait
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="showCustomMessageModal()" title="Send custom emergency message">
+            <i data-feather="alert-triangle" class="me-1"></i>Custom
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshNow()" title="Refresh queue manually">
             <i data-feather="refresh-cw" class="me-1"></i>Refresh
         </button>
         <button type="button" class="btn btn-outline-warning" onclick="endShift()" title="End shift and clear queue">
@@ -29,8 +38,8 @@
                 </h5>
                 <div>
                     <span class="badge bg-light text-dark fs-6 me-2">{{ total_waiting }}</span>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshNow()" title="Refresh queue now">
-                        <i data-feather="refresh-cw"></i> Refresh
+                    <button type="button" class="btn btn-warning btn-sm" onclick="showEmergencyMessageModal()" title="Send emergency message to consultants">
+                        <i data-feather="alert-triangle"></i> Message
                     </button>
                 </div>
             </div>
@@ -456,6 +465,36 @@ function refreshQueue() {
     setTimeout(function() {
         refreshNow();
     }, 1000);
+}
+
+// Emergency message functions
+function sendEmergencyMessage(message) {
+    const formData = new FormData();
+    formData.append('message', message);
+    
+    fetch('/send_emergency_message', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Emergency message sent: "${message}"`, 'success');
+        } else {
+            showNotification('Error sending emergency message: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending emergency message:', error);
+        showNotification('Error sending emergency message', 'error');
+    });
+}
+
+function showCustomMessageModal() {
+    const customMessage = prompt('Enter custom emergency message:');
+    if (customMessage && customMessage.trim()) {
+        sendEmergencyMessage(customMessage.trim());
+    }
 }
 </script>
 
