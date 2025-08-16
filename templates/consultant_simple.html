@@ -5,15 +5,17 @@
 {% block content %}
 {% if selected_consultant %}
 <!-- Emergency Message Alert -->
-<div id="emergencyAlert" class="alert alert-warning alert-dismissible fade" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1060; min-width: 400px;">
-    <div class="d-flex align-items-center">
-        <i data-feather="alert-triangle" class="me-2"></i>
-        <div>
-            <strong>Emergency Message:</strong>
+<div id="emergencyAlert" class="alert alert-warning alert-dismissible fade emergency-message-alert" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1060; min-width: 600px; max-width: 80vw;">
+    <div class="text-center">
+        <div class="mb-3">
+            <i data-feather="alert-triangle" class="emergency-icon"></i>
+        </div>
+        <h3 class="emergency-title">EMERGENCY MESSAGE</h3>
+        <div class="emergency-content">
             <span id="emergencyText"></span>
         </div>
     </div>
-    <button type="button" class="btn-close" onclick="dismissEmergencyMessage()"></button>
+    <button type="button" class="btn-close emergency-close-btn" onclick="dismissEmergencyMessage()"></button>
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-3" style="padding-bottom: 0.75rem; border-bottom: 1px solid #dee2e6;">
@@ -284,7 +286,7 @@ function showEmergencyMessage(message, timestamp) {
     const alertDiv = document.getElementById('emergencyAlert');
     const textSpan = document.getElementById('emergencyText');
     
-    textSpan.textContent = `${message} (${timestamp})`;
+    textSpan.innerHTML = `${message}<br><small class="text-muted">Received at ${timestamp}</small>`;
     alertDiv.style.display = 'block';
     alertDiv.classList.add('show');
     
@@ -299,15 +301,21 @@ function showEmergencyMessage(message, timestamp) {
     feather.replace();
 }
 
-// Play a pleasant chime sound
+// Play a prominent emergency chime sound
 function playChimeSound() {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
-        // Create a pleasant two-tone chime
-        const frequencies = [800, 1000]; // Two pleasant tones
+        // Create a more prominent emergency chime sequence
+        const chimeSequence = [
+            {freq: 880, delay: 0, duration: 0.4},      // A5
+            {freq: 1174.66, delay: 200, duration: 0.4}, // D6
+            {freq: 1396.91, delay: 400, duration: 0.6}, // F6
+            {freq: 880, delay: 800, duration: 0.3},      // A5 again
+            {freq: 1396.91, delay: 1000, duration: 0.5}  // F6 finale
+        ];
         
-        frequencies.forEach((freq, index) => {
+        chimeSequence.forEach((note) => {
             setTimeout(() => {
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
@@ -315,23 +323,23 @@ function playChimeSound() {
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
                 
-                oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime);
                 oscillator.type = 'sine';
                 
-                // Smooth volume envelope
+                // Smooth volume envelope for emergency chime
                 gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + note.duration);
                 
                 oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
-            }, index * 300); // Delay between tones
+                oscillator.stop(audioContext.currentTime + note.duration);
+            }, note.delay);
         });
     } catch (e) {
         // Fallback to simple beep if Web Audio API not available
         try {
             const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvGIcBT2m4O2dNwgZZ7zr7qJXGR+4r++jNQ8EG1XF');
-            audio.volume = 0.5;
+            audio.volume = 0.7;
             audio.play();
         } catch (e2) {
             // Silent fail if no audio support
@@ -376,6 +384,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .card-header {
     font-weight: 600;
+}
+
+/* Emergency message styling */
+.emergency-message-alert {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+    border: 3px solid #ff6b6b !important;
+    border-radius: 15px !important;
+    box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3), 0 0 0 5px rgba(255, 107, 107, 0.1) !important;
+    animation: emergencyPulse 2s infinite;
+}
+
+.emergency-icon {
+    width: 60px !important;
+    height: 60px !important;
+    color: #e17055 !important;
+    animation: emergencyShake 0.5s infinite;
+}
+
+.emergency-title {
+    color: #e17055 !important;
+    font-weight: bold !important;
+    font-size: 1.8rem !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1) !important;
+    margin-bottom: 15px !important;
+}
+
+.emergency-content {
+    font-size: 1.3rem !important;
+    font-weight: 600 !important;
+    color: #2d3436 !important;
+    line-height: 1.4 !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    padding: 15px !important;
+    border-radius: 8px !important;
+    border-left: 4px solid #e17055 !important;
+}
+
+.emergency-close-btn {
+    position: absolute !important;
+    top: 15px !important;
+    right: 15px !important;
+    font-size: 1.2rem !important;
+}
+
+@keyframes emergencyPulse {
+    0%, 100% { 
+        transform: translate(-50%, -50%) scale(1); 
+        box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3), 0 0 0 5px rgba(255, 107, 107, 0.1);
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(1.02); 
+        box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4), 0 0 0 8px rgba(255, 107, 107, 0.2);
+    }
+}
+
+@keyframes emergencyShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
 }
 </style>
 
