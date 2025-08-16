@@ -49,13 +49,13 @@ This system operates on two dedicated laptops with specialized interfaces:
 **Windows Command Prompt (Run as Administrator):**
 ```cmd
 cd C:\ClinicApp
-pip install flask flask-sqlalchemy gunicorn werkzeug
+pip install flask flask-sqlalchemy werkzeug
 ```
 
 **Mac/Linux Terminal:**
 ```bash
 cd ~/ClinicApp
-pip3 install flask flask-sqlalchemy gunicorn werkzeug
+pip3 install flask flask-sqlalchemy werkzeug
 ```
 
 ### Step 3: Configure Network Settings

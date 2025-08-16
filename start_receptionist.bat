@@ -17,5 +17,5 @@ echo.
 echo Server is running... Do NOT close this window!
 echo To stop server: Press Ctrl+C
 echo.
-python -m gunicorn --bind 0.0.0.0:5000 --reload main:app
+python main.py
 pause

@@ -16,4 +16,4 @@ open "http://localhost:5000/receptionist" 2>/dev/null || xdg-open "http://localh
 echo ""
 echo "Server is running... Do NOT close this window!"
 echo ""
-python3 -m gunicorn --bind 0.0.0.0:5000 --reload main:app
+python3 main.py

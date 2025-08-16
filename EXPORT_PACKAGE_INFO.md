@@ -33,7 +33,7 @@ This export package contains everything needed to run your clinic management sys
 ### Quick Deployment Steps:
 
 1. **Copy this entire folder** to both computers
-2. **Install Python 3.8+** and required packages: `pip install flask flask-sqlalchemy gunicorn werkzeug`
+2. **Install Python 3.8+** and required packages: `pip install flask flask-sqlalchemy werkzeug`
 3. **Configure network IPs** as specified above
 4. **Configure firewall** to allow port 5000 on receptionist computer
 5. **Start receptionist first**: Double-click `start_receptionist.bat` (Windows) or `start_receptionist.sh` (Mac/Linux)
