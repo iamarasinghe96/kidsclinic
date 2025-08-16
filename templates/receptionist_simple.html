@@ -52,6 +52,18 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
+                                        <label for="title" class="form-label">Title</label>
+                                        <select class="form-select" name="title">
+                                            <option value="">-</option>
+                                            <option value="Baby">Baby</option>
+                                            <option value="Mr.">Mr.</option>
+                                            <option value="Mrs.">Mrs.</option>
+                                            <option value="Miss">Miss</option>
+                                            <option value="Master">Master</option>
+                                            <option value="Rev.">Rev.</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
                                         <label for="full_name" class="form-label">Patient Name *</label>
                                         <input type="text" class="form-control" name="full_name" required>
                                     </div>
@@ -125,12 +137,24 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label class="form-label">Patient Name</label>
-                                            <input type="text" class="form-control" id="returning_full_name" readonly>
+                                            <label for="returning_title" class="form-label">Title</label>
+                                            <select class="form-select" name="title" id="returning_title">
+                                                <option value="">-</option>
+                                                <option value="Baby">Baby</option>
+                                                <option value="Mr.">Mr.</option>
+                                                <option value="Mrs.">Mrs.</option>
+                                                <option value="Miss">Miss</option>
+                                                <option value="Master">Master</option>
+                                                <option value="Rev.">Rev.</option>
+                                            </select>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Registration Number</label>
-                                            <input type="text" class="form-control" id="returning_reg_number" readonly>
+                                            <label for="returning_full_name" class="form-label">Patient Name</label>
+                                            <input type="text" class="form-control" name="full_name" id="returning_full_name" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="returning_reg_number" class="form-label">Registration Number</label>
+                                            <input type="text" class="form-control" name="registration_number" id="returning_reg_number" required>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Date of Birth</label>
@@ -144,8 +168,13 @@
                                                    id="returning_weight" placeholder="Optional">
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Assigned Consultant</label>
-                                            <input type="text" class="form-control" id="returning_consultant" readonly>
+                                            <label for="returning_consultant_id" class="form-label">Consultant</label>
+                                            <select class="form-select" name="consultant_id" id="returning_consultant_id" required>
+                                                <option value="">Select Consultant</option>
+                                                {% for consultant in consultants %}
+                                                    <option value="{{ consultant.id }}">{{ consultant.name }}</option>
+                                                {% endfor %}
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -264,10 +293,11 @@ function selectReturningPatient(patientId) {
             
             // Fill in the form
             document.getElementById('returning_patient_id').value = data.id;
+            document.getElementById('returning_title').value = data.title || '';
             document.getElementById('returning_full_name').value = data.full_name;
             document.getElementById('returning_reg_number').value = data.registration_number;
-            document.getElementById('returning_dob').value = data.date_of_birth;
-            document.getElementById('returning_consultant').value = data.consultant_name;
+            document.getElementById('returning_dob').value = data.date_of_birth_formatted;
+            document.getElementById('returning_consultant_id').value = data.consultant_id;
             
             // Show the form
             document.getElementById('returningPatientForm').style.display = 'block';
