@@ -18,8 +18,8 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "clinic-management-secret-key")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the SQLite database
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///clinic.db"
+# Configure the SQLite database (use absolute path to avoid instance folder)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////home/runner/workspace/clinic.db"
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
