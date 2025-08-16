@@ -155,7 +155,7 @@
 <script>
 let currentPatientRegNumber = null;
 
-// Show patient details
+// Show patient details with persistent selection
 function showPatientDetails(regNumber) {
     // Remove active state from all items
     document.querySelectorAll('.patient-item').forEach(item => {
@@ -163,7 +163,13 @@ function showPatientDetails(regNumber) {
     });
     
     // Add active state to clicked item
-    document.querySelector('[data-reg-number="' + regNumber + '"]').classList.add('active');
+    const selectedItem = document.querySelector('[data-reg-number="' + regNumber + '"]');
+    if (selectedItem) {
+        selectedItem.classList.add('active');
+    }
+    
+    // Save selection to localStorage for persistence across page refreshes
+    localStorage.setItem('selectedPatientRegNumber', regNumber);
     
     // Load patient information
     fetch('/get_patient_details/' + regNumber)
@@ -274,7 +280,7 @@ function markComplete() {
             if (data.success) {
                 showNotification(data.message, 'success');
                 
-                // Clear patient selection
+                // Clear patient selection and persistent storage
                 clearPatientSelection();
                 
                 // Refresh queue immediately
@@ -343,7 +349,7 @@ function printPatientSummary() {
         });
 }
 
-// Clear patient selection
+// Clear patient selection and persistent storage
 function clearPatientSelection() {
     const patientInfo = document.getElementById('patientInfo');
     patientInfo.innerHTML = 
@@ -353,6 +359,9 @@ function clearPatientSelection() {
         '</div>';
     document.getElementById('patientActions').style.display = 'none';
     currentPatientRegNumber = null;
+    
+    // Clear persistent selection
+    localStorage.removeItem('selectedPatientRegNumber');
     
     // Clear consultant synchronization
     fetch('/set_selected_patient', {
@@ -424,10 +433,28 @@ function endShift() {
     }
 }
 
-// Initialize feather icons when page loads
+// Initialize feather icons and restore selection when page loads
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
     updateLastRefreshTime();
+    
+    // Restore patient selection from localStorage after page refresh
+    const savedPatientRegNumber = localStorage.getItem('selectedPatientRegNumber');
+    if (savedPatientRegNumber) {
+        // Small delay to ensure DOM is fully loaded
+        setTimeout(() => {
+            const savedPatientElement = document.querySelector(`[data-reg-number="${savedPatientRegNumber}"]`);
+            if (savedPatientElement) {
+                console.log('[QUEUE] Restoring selected patient after page refresh:', savedPatientRegNumber);
+                showPatientDetails(savedPatientRegNumber);
+                showNotification(`Restored selection: ${savedPatientElement.querySelector('h6').textContent}`, 'info');
+            } else {
+                // Patient no longer in queue, clear saved selection
+                localStorage.removeItem('selectedPatientRegNumber');
+                console.log('[QUEUE] Previously selected patient no longer in queue, cleared selection');
+            }
+        }, 500);
+    }
 });
 
 // Auto-refresh queue every 10 seconds to show new registrations
