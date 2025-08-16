@@ -240,6 +240,7 @@ def get_patient_details_by_id(patient_id):
             'id': patient.id,
             'title': getattr(patient, 'title', ''),
             'full_name': patient.full_name,
+            'registration_number': patient.registration_number,
             'parent_name': getattr(patient, 'parent_name', ''),
             'date_of_birth_formatted': patient.date_of_birth.strftime('%d/%m/%Y'),
             'address': patient.address,
