@@ -130,9 +130,9 @@ echo "=========================================="
 echo " THE KIDS CLINIC - RECEPTIONIST SYSTEM"
 echo "=========================================="
 echo ""
-echo "Starting server on IP: 192.168.1.11:5000"
+echo "Starting server on IP: 192.168.1.2:5000"
 echo "Local access: http://localhost:5000"
-echo "Consultant can access: http://192.168.1.11:5000"
+echo "Consultant can access: http://192.168.1.2:5000"
 echo ""
 echo "Opening browser in 3 seconds..."
 sleep 3
@@ -168,8 +168,8 @@ Same as Mac, but might need to use `python3` instead of `python`
 ### Step 1: Verify Network Connection
 
 1. **Test Connection to Receptionist Computer**:
-   - **Windows**: Open Command Prompt, type: `ping 192.168.1.11`
-   - **Mac/Linux**: Open Terminal, type: `ping 192.168.1.11`
+   - **Windows**: Open Command Prompt, type: `ping 192.168.1.2`
+   - **Mac/Linux**: Open Terminal, type: `ping 192.168.1.2`
    - You should see replies confirming connection
 
 ### Step 2: Setup Printer Sharing (So Receptionist Can Print)
@@ -219,15 +219,15 @@ echo   THE KIDS CLINIC - CONSULTANT VIEW
 echo ==========================================
 echo.
 echo Connecting to receptionist computer...
-echo Receptionist IP: 192.168.1.11:5000
+echo Receptionist IP: 192.168.1.2:5000
 echo.
 echo Testing connection...
-ping -n 2 192.168.1.11 > nul
+ping -n 2 192.168.1.2 > nul
 if %errorlevel% == 0 (
     echo Connection successful!
     echo Opening consultant view in 3 seconds...
     timeout /t 3
-    start "" "http://192.168.1.11:5000/consultant"
+    start "" "http://192.168.1.2:5000/consultant"
 ) else (
     echo ERROR: Cannot connect to receptionist computer!
     echo Please ensure:
@@ -250,14 +250,14 @@ echo "  THE KIDS CLINIC - CONSULTANT VIEW"
 echo "=========================================="
 echo ""
 echo "Connecting to receptionist computer..."
-echo "Receptionist IP: 192.168.1.11:5000"
+echo "Receptionist IP: 192.168.1.2:5000"
 echo ""
 echo "Testing connection..."
-if ping -c 2 192.168.1.11 > /dev/null; then
+if ping -c 2 192.168.1.2 > /dev/null; then
     echo "Connection successful!"
     echo "Opening consultant view in 3 seconds..."
     sleep 3
-    open "http://192.168.1.11:5000/consultant"
+    open "http://192.168.1.2:5000/consultant"
 else
     echo "ERROR: Cannot connect to receptionist computer!"
     echo "Please ensure:"
@@ -341,9 +341,9 @@ system-config-printer
 
 - **Receptionist Dashboard**: `http://localhost:5000` (on receptionist computer)
 - **Queue Management**: `http://localhost:5000/queue_management` (on receptionist computer)
-- **Consultant View**: `http://192.168.1.11:5000/consultant` (access from anywhere)
-- **Reports**: `http://192.168.1.11:5000/report`
-- **Admin Panel**: `http://192.168.1.11:5000/admin_login`
+- **Consultant View**: `http://192.168.1.2:5000/consultant` (access from anywhere)
+- **Reports**: `http://192.168.1.2:5000/report`
+- **Admin Panel**: `http://192.168.1.2:5000/admin_login`
 
 ---
 
@@ -353,7 +353,7 @@ system-config-printer
 
 **Solutions to Try:**
 1. **Check Network**: Both computers on same WiFi?
-2. **Ping Test**: From consultant computer, type: `ping 192.168.1.11`
+2. **Ping Test**: From consultant computer, type: `ping 192.168.1.2`
 3. **Firewall**: Make sure port 5000 is allowed on receptionist computer
 4. **Server Running**: Is the receptionist startup script still running?
 5. **Restart**: Close everything and start receptionist first, then consultant

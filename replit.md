@@ -49,6 +49,7 @@ Preferred communication style: Simple, everyday language.
 - Cross-device printing configuration with network printer sharing
 - Auto-refresh queue management (10-second intervals) with manual refresh option
 - Multiple patient visits per day support with enhanced visit tracking
+- Network configuration: Receptionist laptop (192.168.1.2), Consultant laptop (192.168.1.12)
 
 # External Dependencies
 
