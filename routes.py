@@ -628,7 +628,7 @@ def report():
         end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date()
         consultant_id = request.form.get('consultant_id')
         
-        # Build query for all visits within date range (include all statuses for comprehensive reporting)
+        # Build query for visits within date range (include all relevant statuses)
         query = Visit.query.join(Patient).filter(
             func.date(Visit.visit_date) >= start_date,
             func.date(Visit.visit_date) <= end_date
