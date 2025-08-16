@@ -40,6 +40,7 @@
                         {% for visit in waiting_visits %}
                             <div class="list-group-item list-group-item-action patient-item" 
                                  data-reg-number="{{ visit.patient.registration_number }}"
+                                 data-consultant-id="{{ visit.consultant_id }}"
                                  onclick="showPatientDetails('{{ visit.patient.registration_number }}')">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1">{{ visit.patient.display_name }}</h6>

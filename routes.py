@@ -438,26 +438,36 @@ def consultant():
 
 @app.route('/set_selected_patient', methods=['POST'])
 def set_selected_patient():
-    """Set the currently selected patient for consultant synchronization"""
-    reg_number = request.form.get('registration_number')
-    consultant_id = request.form.get('consultant_id')
+    """Set currently selected patient (called by receptionist)"""
+    consultant_id = request.json.get('consultant_id')
+    registration_number = request.json.get('registration_number')
     
-    if reg_number and consultant_id:
-        # Store in session for this consultant
-        session[f'selected_patient_{consultant_id}'] = {
-            'registration_number': reg_number,
-            'timestamp': datetime.now().isoformat()
-        }
-        return jsonify({'success': True})
-    return jsonify({'success': False}), 400
+    if not hasattr(app, 'selected_patients'):
+        app.selected_patients = {}
+    
+    if registration_number:
+        app.selected_patients[consultant_id] = registration_number
+        logging.info(f"Selected patient {registration_number} for consultant {consultant_id}")
+    else:
+        # Clear selection
+        app.selected_patients.pop(consultant_id, None)
+        logging.info(f"Cleared patient selection for consultant {consultant_id}")
+    
+    return jsonify({'success': True})
 
 @app.route('/get_selected_patient/<int:consultant_id>')
 def get_selected_patient(consultant_id):
-    """Get the currently selected patient for a consultant"""
-    selected = session.get(f'selected_patient_{consultant_id}')
-    if selected:
-        return jsonify(selected)
-    return jsonify({'registration_number': None})
+    """Get currently selected patient by receptionist for this consultant"""
+    # Use global variable to track selected patient
+    if not hasattr(app, 'selected_patients'):
+        app.selected_patients = {}
+    
+    selected_reg = app.selected_patients.get(consultant_id)
+    
+    if selected_reg:
+        return jsonify({'registration_number': selected_reg})
+    else:
+        return jsonify({'registration_number': None})
 
 @app.route('/get_patient_details/<reg_number>')
 def get_patient_details(reg_number):
@@ -571,16 +581,17 @@ def send_emergency_message():
     if not message:
         return jsonify({'success': False, 'error': 'Message is required'}), 400
     
-    # Store the emergency message in session for consultant views to pick up
+    # Store the emergency message globally so all consultants can see it
     timestamp = datetime.now().strftime('%H:%M:%S')
     emergency_data = {
         'message': message,
         'timestamp': timestamp,
-        'expires_at': (datetime.now() + timedelta(seconds=10)).isoformat()
+        'expires_at': (datetime.now() + timedelta(seconds=15)).isoformat()  # 15 seconds display
     }
     
-    # Store for all consultants
-    session['emergency_message'] = emergency_data
+    # Store globally instead of in session
+    app.emergency_message_data = emergency_data
+    logging.info(f"Emergency message sent: {message}")
     
     return jsonify({
         'success': True,
@@ -590,27 +601,33 @@ def send_emergency_message():
 @app.route('/get_emergency_message', methods=['GET'])
 def get_emergency_message():
     """Get current emergency message for consultant displays"""
-    emergency_data = session.get('emergency_message')
+    # Use global variable instead of session to ensure all consultants see it
+    global emergency_message_data
     
-    if not emergency_data:
+    if not hasattr(app, 'emergency_message_data'):
+        app.emergency_message_data = None
+    
+    if not app.emergency_message_data:
         return jsonify({'message': None})
     
-    # Check if message has expired (10 seconds)
+    # Check if message has expired (15 seconds)
     try:
-        expires_at = datetime.fromisoformat(emergency_data['expires_at'])
+        expires_at = datetime.fromisoformat(app.emergency_message_data['expires_at'])
         if datetime.now() > expires_at:
             # Message expired, clear it
-            session.pop('emergency_message', None)
+            app.emergency_message_data = None
             return jsonify({'message': None})
     except:
         # Invalid timestamp, clear message
-        session.pop('emergency_message', None)
+        app.emergency_message_data = None
         return jsonify({'message': None})
     
     return jsonify({
-        'message': emergency_data['message'],
-        'timestamp': emergency_data['timestamp']
+        'message': app.emergency_message_data['message'],
+        'timestamp': app.emergency_message_data['timestamp']
     })
+
+
 
 @app.route('/clear_emergency_message', methods=['POST'])
 def clear_emergency_message():

@@ -157,6 +157,9 @@ function loadPatientInfo(regNumber) {
             displayPatientInfo(data);
             currentPatientRegNumber = regNumber;
             
+            // Notify consultant interface about selected patient
+            notifyConsultantSelection(data.consultant_id, regNumber);
+            
             // Show patient actions buttons
             document.getElementById('patientActions').style.display = 'block';
         })
@@ -171,6 +174,31 @@ function loadPatientInfo(regNumber) {
             `;
             feather.replace();
         });
+}
+
+// Notify consultant interface about patient selection
+function notifyConsultantSelection(consultantId, regNumber) {
+    if (!consultantId) return;
+    
+    fetch('/set_selected_patient', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            consultant_id: consultantId,
+            registration_number: regNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log(`[RECEPTIONIST] Notified consultant ${consultantId} about patient ${regNumber}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error notifying consultant:', error);
+    });
 }
 
 // Display patient information
@@ -241,6 +269,17 @@ function resetPatientInfo() {
         item.classList.remove('active');
     });
     
+    // Clear consultant selection if there was a previous patient
+    if (currentPatientRegNumber) {
+        const previousItem = document.querySelector(`[data-reg-number="${currentPatientRegNumber}"]`);
+        if (previousItem) {
+            const consultantId = previousItem.getAttribute('data-consultant-id');
+            if (consultantId) {
+                clearConsultantSelection(consultantId);
+            }
+        }
+    }
+    
     // If there was a last selected patient, load them
     if (lastSelectedPatient) {
         loadPatientInfo(lastSelectedPatient);
@@ -255,6 +294,29 @@ function resetPatientInfo() {
     currentPatientRegNumber = null;
     document.getElementById('patientActions').style.display = 'none';
     feather.replace();
+}
+
+// Clear consultant selection notification
+function clearConsultantSelection(consultantId) {
+    fetch('/set_selected_patient', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            consultant_id: consultantId,
+            registration_number: null  // Clear selection
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log(`[RECEPTIONIST] Cleared patient selection for consultant ${consultantId}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error clearing consultant selection:', error);
+    });
 }
 
 // Print patient information
