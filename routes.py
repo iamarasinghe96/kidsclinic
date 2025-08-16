@@ -849,7 +849,7 @@ def add_consultant():
 
 @app.route('/admin/delete_consultant/<int:consultant_id>', methods=['POST'])
 def delete_consultant(consultant_id):
-    """Delete a consultant and all associated visits"""
+    """Delete a consultant and all associated visits and patients"""
     try:
         consultant = Consultant.query.get(consultant_id)
         if not consultant:
@@ -857,16 +857,23 @@ def delete_consultant(consultant_id):
         
         consultant_name = consultant.name
         
-        # Delete all visits for this consultant
+        # Get all patients assigned to this consultant
+        patients = Patient.query.filter_by(consultant_id=consultant_id).all()
+        patients_deleted = len(patients)
+        
+        # Delete all visits for this consultant first
         visits_deleted = Visit.query.filter_by(consultant_id=consultant_id).delete()
+        
+        # Delete all patients assigned to this consultant (this will also cascade delete their visits)
+        Patient.query.filter_by(consultant_id=consultant_id).delete()
         
         # Delete the consultant
         db.session.delete(consultant)
         db.session.commit()
         
-        app.logger.warning(f'Consultant deleted: {consultant_name} (ID: {consultant_id}), {visits_deleted} visits removed')
+        app.logger.warning(f'Consultant deleted: {consultant_name} (ID: {consultant_id}), {patients_deleted} patients and {visits_deleted} visits removed')
         
-        return jsonify({'success': True, 'message': f'Consultant {consultant_name} and {visits_deleted} visits deleted'})
+        return jsonify({'success': True, 'message': f'Consultant {consultant_name}, {patients_deleted} patients, and {visits_deleted} visits deleted'})
         
     except Exception as e:
         db.session.rollback()
