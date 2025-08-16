@@ -766,6 +766,213 @@ def delete_patient(patient_id):
             'error': f'Error deleting patient: {str(e)}'
         }), 500
 
+@app.route('/admin_panel')
+def admin_panel():
+    """Admin panel for managing consultants and patient data"""
+    consultants = Consultant.query.all()
+    return render_template('admin_panel.html', consultants=consultants)
+
+@app.route('/admin/add_consultant', methods=['POST'])
+def add_consultant():
+    """Add a new consultant"""
+    try:
+        data = request.get_json()
+        name = data.get('name', '').strip()
+        color = data.get('color', '#6c757d')
+        
+        if not name:
+            return jsonify({'success': False, 'error': 'Consultant name is required'})
+        
+        # Check if consultant already exists
+        existing = Consultant.query.filter_by(name=name).first()
+        if existing:
+            return jsonify({'success': False, 'error': 'Consultant with this name already exists'})
+        
+        consultant = Consultant(name=name, color=color)
+        db.session.add(consultant)
+        db.session.commit()
+        
+        app.logger.info(f'New consultant added: {name}')
+        
+        return jsonify({'success': True, 'message': f'Consultant {name} added successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error adding consultant: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/admin/delete_consultant/<int:consultant_id>', methods=['POST'])
+def delete_consultant(consultant_id):
+    """Delete a consultant and all associated visits"""
+    try:
+        consultant = Consultant.query.get(consultant_id)
+        if not consultant:
+            return jsonify({'success': False, 'error': 'Consultant not found'})
+        
+        consultant_name = consultant.name
+        
+        # Delete all visits for this consultant
+        visits_deleted = Visit.query.filter_by(consultant_id=consultant_id).delete()
+        
+        # Delete the consultant
+        db.session.delete(consultant)
+        db.session.commit()
+        
+        app.logger.warning(f'Consultant deleted: {consultant_name} (ID: {consultant_id}), {visits_deleted} visits removed')
+        
+        return jsonify({'success': True, 'message': f'Consultant {consultant_name} and {visits_deleted} visits deleted'})
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error deleting consultant {consultant_id}: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/admin/search_patient_records', methods=['POST'])
+def search_patient_records():
+    """Search for patient records and visits based on criteria"""
+    try:
+        data = request.get_json()
+        reg_number = data.get('registration_number', '').strip()
+        name = data.get('name', '').strip()
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        consultant_ids = data.get('consultant_ids', [])
+        
+        results = []
+        
+        # Build base query for visits
+        visit_query = Visit.query.join(Patient).join(Consultant)
+        
+        # Apply filters
+        if reg_number:
+            visit_query = visit_query.filter(Patient.registration_number.like(f'%{reg_number}%'))
+        if name:
+            visit_query = visit_query.filter(Patient.full_name.like(f'%{name}%'))
+        if start_date:
+            visit_query = visit_query.filter(func.date(Visit.visit_date) >= start_date)
+        if end_date:
+            visit_query = visit_query.filter(func.date(Visit.visit_date) <= end_date)
+        if consultant_ids:
+            visit_query = visit_query.filter(Visit.consultant_id.in_(consultant_ids))
+        
+        # Get visits
+        visits = visit_query.order_by(Visit.visit_date.desc()).all()
+        
+        # Add visits to results
+        for visit in visits:
+            results.append({
+                'type': 'visit',
+                'id': visit.id,
+                'registration_number': visit.patient.registration_number,
+                'patient_name': visit.patient.full_name,
+                'consultant_name': visit.consultant.name,
+                'consultant_color': visit.consultant.color or '#6c757d',
+                'date': visit.visit_date.strftime('%Y-%m-%d %H:%M'),
+                'status': visit.status
+            })
+        
+        # Also get unique patients from these visits for patient-level deletion
+        patient_ids = list(set(visit.patient_id for visit in visits))
+        patients = Patient.query.filter(Patient.id.in_(patient_ids)).all() if patient_ids else []
+        
+        for patient in patients:
+            # Get the first consultant for this patient from filtered visits
+            patient_visit = next((v for v in visits if v.patient_id == patient.id), None)
+            if patient_visit:
+                results.append({
+                    'type': 'patient',
+                    'id': patient.id,
+                    'registration_number': patient.registration_number,
+                    'patient_name': patient.full_name,
+                    'consultant_name': patient_visit.consultant.name,
+                    'consultant_color': patient_visit.consultant.color or '#6c757d',
+                    'date': patient.created_at.strftime('%Y-%m-%d') if hasattr(patient, 'created_at') else 'N/A',
+                    'status': f'{len([v for v in visits if v.patient_id == patient.id])} visits'
+                })
+        
+        return jsonify({'success': True, 'results': results})
+        
+    except Exception as e:
+        app.logger.error(f'Error searching patient records: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/admin/delete_record/<record_type>/<int:record_id>', methods=['POST'])
+def delete_record(record_type, record_id):
+    """Delete a single patient or visit record"""
+    try:
+        if record_type == 'patient':
+            patient = Patient.query.get(record_id)
+            if not patient:
+                return jsonify({'success': False, 'error': 'Patient not found'})
+            
+            patient_name = patient.full_name
+            visits_deleted = Visit.query.filter_by(patient_id=record_id).delete()
+            db.session.delete(patient)
+            db.session.commit()
+            
+            app.logger.info(f'Patient deleted via admin: {patient_name} (ID: {record_id}), {visits_deleted} visits removed')
+            return jsonify({'success': True, 'message': f'Patient {patient_name} deleted'})
+            
+        elif record_type == 'visit':
+            visit = Visit.query.get(record_id)
+            if not visit:
+                return jsonify({'success': False, 'error': 'Visit not found'})
+            
+            patient_name = visit.patient.full_name
+            visit_date = visit.visit_date.strftime('%Y-%m-%d')
+            db.session.delete(visit)
+            db.session.commit()
+            
+            app.logger.info(f'Visit deleted via admin: {patient_name} on {visit_date} (ID: {record_id})')
+            return jsonify({'success': True, 'message': f'Visit for {patient_name} on {visit_date} deleted'})
+        
+        else:
+            return jsonify({'success': False, 'error': 'Invalid record type'}), 400
+            
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error deleting {record_type} record {record_id}: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/admin/delete_multiple_records', methods=['POST'])
+def delete_multiple_records():
+    """Delete multiple patient or visit records"""
+    try:
+        data = request.get_json()
+        records = data.get('records', [])
+        
+        if not records:
+            return jsonify({'success': False, 'error': 'No records specified'})
+        
+        deleted_count = 0
+        
+        for record in records:
+            record_type = record.get('type')
+            record_id = int(record.get('id'))
+            
+            if record_type == 'patient':
+                patient = Patient.query.get(record_id)
+                if patient:
+                    Visit.query.filter_by(patient_id=record_id).delete()
+                    db.session.delete(patient)
+                    deleted_count += 1
+                    
+            elif record_type == 'visit':
+                visit = Visit.query.get(record_id)
+                if visit:
+                    db.session.delete(visit)
+                    deleted_count += 1
+        
+        db.session.commit()
+        
+        app.logger.info(f'Multiple records deleted via admin: {deleted_count} records')
+        return jsonify({'success': True, 'deleted_count': deleted_count})
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error deleting multiple records: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/print_daily_summary')
 def print_daily_summary():
     """Print summary of all consultations for a specific date"""

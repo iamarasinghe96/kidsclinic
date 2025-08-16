@@ -157,10 +157,16 @@
     <div class="col-12">
         <div class="text-center">
             <hr>
-            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
-                <i data-feather="home"></i>
-                Back to Home
-            </a>
+            <div class="d-flex justify-content-center gap-2">
+                <a href="{{ url_for('admin_panel') }}" class="btn btn-danger btn-sm">
+                    <i data-feather="settings"></i>
+                    Admin Panel
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+                    <i data-feather="home"></i>
+                    Back to Home
+                </a>
+            </div>
         </div>
     </div>
 </div>

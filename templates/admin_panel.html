@@ -3,147 +3,469 @@
 {% block title %}Admin Panel{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="text-nowrap mb-0">
-        <i data-feather="settings" class="me-2"></i>Admin Panel
-    </h3>
-    <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-secondary">
-        <i data-feather="log-out" class="me-2"></i>Logout
-    </a>
-</div>
-
-<div class="row">
-    <!-- System Statistics -->
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header" style="background-color: #8EC641; color: white;">
-                <h5 class="mb-0">
-                    <i data-feather="bar-chart-2"></i>
-                    System Statistics
-                </h5>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i data-feather="shield"></i> Admin Panel</h2>
+                <a href="{{ url_for('report') }}" class="btn btn-outline-secondary">
+                    <i data-feather="arrow-left"></i> Back to Reports
+                </a>
             </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <strong>Total Patients:</strong> {{ total_patients }}
-                </div>
-                <div class="mb-3">
-                    <strong>Total Visits:</strong> {{ total_visits }}
-                </div>
-                <div class="mb-3">
-                    <strong>Active Consultants:</strong> {{ consultants|length }}
-                </div>
-            </div>
+            <p class="text-muted">Manage consultants and patient data</p>
         </div>
     </div>
 
-    <!-- Add Consultant -->
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header" style="background-color: #8EC641; color: white;">
-                <h5 class="mb-0">
-                    <i data-feather="user-plus"></i>
-                    Add New Consultant
-                </h5>
-            </div>
-            <div class="card-body">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="consultants-tab" data-bs-toggle="tab" data-bs-target="#consultants" type="button" role="tab">
+                <i data-feather="users"></i> Manage Consultants
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="patients-tab" data-bs-toggle="tab" data-bs-target="#patients" type="button" role="tab">
+                <i data-feather="user-x"></i> Delete Patient Data
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="adminTabContent">
+        <!-- Consultant Management Tab -->
+        <div class="tab-pane fade show active" id="consultants" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i data-feather="user-plus"></i> Add New Consultant</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="addConsultantForm">
+                                <div class="mb-3">
+                                    <label for="consultantName" class="form-label">Consultant Name</label>
+                                    <input type="text" class="form-control" id="consultantName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="consultantColor" class="form-label">Badge Color</label>
+                                    <select class="form-select" id="consultantColor">
+                                        <option value="#007bff">Blue</option>
+                                        <option value="#28a745">Green</option>
+                                        <option value="#dc3545">Red</option>
+                                        <option value="#fd7e14">Orange</option>
+                                        <option value="#6f42c1">Purple</option>
+                                        <option value="#20c997">Teal</option>
+                                        <option value="#e83e8c">Pink</option>
+                                        <option value="#6c757d">Gray</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="plus"></i> Add Consultant
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
                 
-                <form method="POST" action="{{ url_for('admin_add_consultant') }}">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Consultant Name</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
-                            </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i data-feather="list"></i> Current Consultants</h5>
                         </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="consultation_fee" class="form-label">Consultation Fee</label>
-                                <input type="number" class="form-control" id="consultation_fee" name="consultation_fee" step="0.01" min="0">
+                        <div class="card-body">
+                            <div id="consultantsList">
+                                {% for consultant in consultants %}
+                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded" data-consultant-id="{{ consultant.id }}">
+                                    <div>
+                                        <span class="badge" style="background-color: {{ consultant.color or '#6c757d' }};">{{ consultant.name }}</span>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteConsultant({{ consultant.id }}, '{{ consultant.name }}')">
+                                        <i data-feather="trash-2"></i>
+                                    </button>
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-success">
-                        <i data-feather="plus" class="me-2"></i>Add Consultant
-                    </button>
-                </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Data Management Tab -->
+        <div class="tab-pane fade" id="patients" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i data-feather="search"></i> Search & Delete Patient Records</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Search Form -->
+                            <form id="patientSearchForm" class="mb-4">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="searchRegNumber" class="form-label">Registration Number</label>
+                                        <input type="text" class="form-control" id="searchRegNumber" placeholder="REG202508...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="searchName" class="form-label">Patient Name</label>
+                                        <input type="text" class="form-control" id="searchName" placeholder="Patient name">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="startDate" class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="startDate">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="endDate" class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="endDate">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button type="submit" class="btn btn-primary d-block w-100">
+                                            <i data-feather="search"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Consultants (Select All/None)</label>
+                                        <div class="d-flex gap-2 mb-2">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllConsultants()">Select All</button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectNoConsultants()">Select None</button>
+                                        </div>
+                                        <div id="consultantFilters" class="d-flex flex-wrap gap-2">
+                                            {% for consultant in consultants %}
+                                            <div class="form-check">
+                                                <input class="form-check-input consultant-filter" type="checkbox" 
+                                                       value="{{ consultant.id }}" id="consultant{{ consultant.id }}" checked>
+                                                <label class="form-check-label" for="consultant{{ consultant.id }}">
+                                                    <span class="badge" style="background-color: {{ consultant.color or '#6c757d' }};">{{ consultant.name }}</span>
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Search Results -->
+                            <div id="searchResults" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6>Search Results</h6>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllResults()">Select All</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectNoResults()">Select None</button>
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelectedRecords()">
+                                            <i data-feather="trash-2"></i> Delete Selected
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th><input type="checkbox" id="selectAllCheckbox" onchange="toggleAllResults()"></th>
+                                                <th>Type</th>
+                                                <th>Registration Number</th>
+                                                <th>Patient Name</th>
+                                                <th>Consultant</th>
+                                                <th>Date</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="resultsTableBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Current Consultants -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header" style="background-color: #8EC641; color: white;">
-                <h5 class="mb-0">
-                    <i data-feather="users"></i>
-                    Current Consultants
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i data-feather="alert-triangle"></i>
+                    Confirm Deletion
                 </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="card-body">
-                {% if consultants %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Consultation Fee</th>
-                                    <th>Color</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for consultant in consultants %}
-                                    <tr>
-                                        <td>{{ consultant.name }}</td>
-                                        <td>${{ "%.2f"|format(consultant.consultation_fee or 0) }}</td>
-                                        <td>
-                                            <span class="badge" style="background-color: {{ consultant.color or '#6c757d' }};">
-                                                {{ consultant.color or 'Default' }}
-                                            </span>
-                                        </td>
-                                        <td>{{ consultant.created_at.strftime('%Y-%m-%d') if consultant.created_at else 'N/A' }}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary" onclick="editConsultant({{ consultant.id }})">
-                                                <i data-feather="edit-2"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center text-muted">
-                        <i data-feather="users"></i>
-                        <p>No consultants added yet</p>
-                    </div>
-                {% endif %}
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                <p id="deleteConfirmText"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i data-feather="trash-2"></i> Delete
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    feather.replace();
+let deleteAction = null;
+
+// Add consultant
+document.getElementById('addConsultantForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('consultantName').value.trim();
+    const color = document.getElementById('consultantColor').value;
+    
+    if (!name) {
+        alert('Please enter consultant name');
+        return;
+    }
+    
+    fetch('/admin/add_consultant', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: name,
+            color: color
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Consultant added successfully', 'success');
+            location.reload();
+        } else {
+            showNotification('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error adding consultant', 'error');
+    });
 });
 
-function editConsultant(consultantId) {
-    // Placeholder for edit functionality
-    alert('Edit consultant functionality - to be implemented');
+// Delete consultant
+function deleteConsultant(consultantId, consultantName) {
+    document.getElementById('deleteConfirmText').textContent = 
+        `Are you sure you want to delete consultant "${consultantName}"? This will also delete all associated visits.`;
+    
+    deleteAction = () => {
+        fetch(`/admin/delete_consultant/${consultantId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Consultant deleted successfully', 'success');
+                location.reload();
+            } else {
+                showNotification('Error: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Error deleting consultant', 'error');
+        });
+    };
+    
+    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
 }
+
+// Consultant filter functions
+function selectAllConsultants() {
+    document.querySelectorAll('.consultant-filter').forEach(cb => cb.checked = true);
+}
+
+function selectNoConsultants() {
+    document.querySelectorAll('.consultant-filter').forEach(cb => cb.checked = false);
+}
+
+// Search patients
+document.getElementById('patientSearchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const searchData = {
+        registration_number: document.getElementById('searchRegNumber').value.trim(),
+        name: document.getElementById('searchName').value.trim(),
+        start_date: document.getElementById('startDate').value,
+        end_date: document.getElementById('endDate').value,
+        consultant_ids: Array.from(document.querySelectorAll('.consultant-filter:checked')).map(cb => cb.value)
+    };
+    
+    fetch('/admin/search_patient_records', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displaySearchResults(data.results);
+        } else {
+            showNotification('Search error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Search failed', 'error');
+    });
+});
+
+// Display search results
+function displaySearchResults(results) {
+    const resultsDiv = document.getElementById('searchResults');
+    const tbody = document.getElementById('resultsTableBody');
+    
+    tbody.innerHTML = '';
+    
+    results.forEach(result => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="checkbox" class="result-checkbox" data-type="${result.type}" data-id="${result.id}"></td>
+            <td><span class="badge ${result.type === 'patient' ? 'bg-primary' : 'bg-info'}">${result.type === 'patient' ? 'Patient' : 'Visit'}</span></td>
+            <td>${result.registration_number}</td>
+            <td>${result.patient_name}</td>
+            <td><span class="badge" style="background-color: ${result.consultant_color};">${result.consultant_name}</span></td>
+            <td>${result.date}</td>
+            <td>${result.status || '-'}</td>
+            <td>
+                <button type="button" class="btn btn-outline-danger btn-sm" 
+                        onclick="deleteSingleRecord('${result.type}', ${result.id}, '${result.patient_name}')">
+                    <i data-feather="trash-2"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    resultsDiv.style.display = 'block';
+    feather.replace();
+}
+
+// Result selection functions
+function selectAllResults() {
+    document.querySelectorAll('.result-checkbox').forEach(cb => cb.checked = true);
+}
+
+function selectNoResults() {
+    document.querySelectorAll('.result-checkbox').forEach(cb => cb.checked = false);
+}
+
+function toggleAllResults() {
+    const selectAll = document.getElementById('selectAllCheckbox').checked;
+    document.querySelectorAll('.result-checkbox').forEach(cb => cb.checked = selectAll);
+}
+
+// Delete functions
+function deleteSingleRecord(type, id, name) {
+    document.getElementById('deleteConfirmText').textContent = 
+        `Are you sure you want to delete this ${type} record for "${name}"?`;
+    
+    deleteAction = () => {
+        fetch(`/admin/delete_record/${type}/${id}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`${type} record deleted successfully`, 'success');
+                // Refresh search results
+                document.getElementById('patientSearchForm').dispatchEvent(new Event('submit'));
+            } else {
+                showNotification('Error: ' + data.error, 'error');
+            }
+        });
+    };
+    
+    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+}
+
+function deleteSelectedRecords() {
+    const selected = Array.from(document.querySelectorAll('.result-checkbox:checked')).map(cb => ({
+        type: cb.dataset.type,
+        id: cb.dataset.id
+    }));
+    
+    if (selected.length === 0) {
+        alert('Please select records to delete');
+        return;
+    }
+    
+    document.getElementById('deleteConfirmText').textContent = 
+        `Are you sure you want to delete ${selected.length} selected record(s)?`;
+    
+    deleteAction = () => {
+        fetch('/admin/delete_multiple_records', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({records: selected})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`${data.deleted_count} records deleted successfully`, 'success');
+                // Refresh search results
+                document.getElementById('patientSearchForm').dispatchEvent(new Event('submit'));
+            } else {
+                showNotification('Error: ' + data.error, 'error');
+            }
+        });
+    };
+    
+    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+}
+
+// Confirm delete action
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (deleteAction) {
+        deleteAction();
+        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+        deleteAction = null;
+    }
+});
+
+// Notification function
+function showNotification(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    feather.replace();
+    
+    // Set default date range (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    document.getElementById('endDate').value = today.toISOString().split('T')[0];
+    document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+});
 </script>
 {% endblock %}
