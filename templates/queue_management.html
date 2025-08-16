@@ -42,11 +42,11 @@
                                  data-reg-number="{{ visit.patient.registration_number }}"
                                  onclick="showPatientDetails('{{ visit.patient.registration_number }}')">
                                 <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">{{ visit.patient.full_name }}</h6>
+                                    <h6 class="mb-1">{{ visit.patient.display_name }}</h6>
                                     <div class="d-flex align-items-center">
                                         <small class="me-2">{{ visit.visit_date.strftime('%H:%M') }}</small>
                                         <button type="button" class="btn btn-outline-danger btn-sm" 
-                                                onclick="deletePatient(event, {{ visit.patient.id }}, '{{ visit.patient.full_name }}')"
+                                                onclick="deletePatient(event, {{ visit.patient.id }}, '{{ visit.patient.display_name }}')"
                                                 title="Delete patient">
                                             <i data-feather="minus" style="width: 14px; height: 14px;"></i>
                                         </button>
@@ -128,7 +128,7 @@
                             <div class="col-md-3 mb-2">
                                 <div class="card border-success">
                                     <div class="card-body p-2">
-                                        <h6 class="card-title mb-1">{{ visit.patient.full_name }}</h6>
+                                        <h6 class="card-title mb-1">{{ visit.patient.display_name }}</h6>
                                         <p class="card-text mb-1">
                                             <small>{{ visit.patient.registration_number }}</small>
                                         </p>
@@ -222,7 +222,7 @@ function displayPatientInfo(patient) {
             '</div>' +
             '<div class="info-row mb-2">' +
                 '<span class="fw-bold">Full Name:</span>' +
-                '<span class="ms-2">' + patient.full_name + '</span>' +
+                '<span class="ms-2">' + (patient.title ? patient.title + ' ' + patient.full_name : patient.full_name) + '</span>' +
             '</div>' +
             (patient.parent_name ? 
                 '<div class="info-row mb-2">' +
@@ -362,7 +362,7 @@ function printPatientSummary() {
             
             const printContent = '<div style="position: absolute; top: 20px; right: 20px; border: 2px solid #000; padding: 10px; font-family: Arial, sans-serif; width: 250px; font-size: 11px; background: white;">' +
                 '<div style="margin-bottom: 8px;"><strong>Reg:</strong> ' + patient.registration_number + '</div>' +
-                '<div style="margin-bottom: 8px;"><strong>Name:</strong> ' + patient.full_name + '</div>' +
+                '<div style="margin-bottom: 8px;"><strong>Name:</strong> ' + (patient.title ? patient.title + ' ' + patient.full_name : patient.full_name) + '</div>' +
                 '<div style="margin-bottom: 8px;"><strong>DOB:</strong> ' + patient.date_of_birth + ' (' + patient.age + ')</div>' +
                 '<div style="margin-bottom: 8px;"><strong>Gender:</strong> ' + genderWeight + '</div>' +
                 '<div style="margin-bottom: 0;"><strong>Visit:</strong> ' + visitTime + '</div>' +
@@ -373,7 +373,7 @@ function printPatientSummary() {
             const printHtml = '<!DOCTYPE html>' +
                 '<html>' +
                 '<head>' +
-                '<title>Patient Summary - ' + patient.full_name + '</title>' +
+                '<title>Patient Summary - ' + (patient.title ? patient.title + ' ' + patient.full_name : patient.full_name) + '</title>' +
                 '<style>' +
                 'body { margin: 0; padding: 0; position: relative; height: 100vh; }' +
                 '@media print { body { margin: 0; padding: 0; } }' +

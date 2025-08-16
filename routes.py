@@ -349,7 +349,8 @@ def get_patient(reg_number):
     patient = Patient.query.filter_by(registration_number=reg_number).first()
     if patient:
         return jsonify({
-            'full_name': patient.full_name,
+            'title': patient.title or '',
+            'full_name': patient.display_name,
             'parent_name': patient.parent_name,
             'date_of_birth': patient.date_of_birth.strftime('%d/%m/%Y'),
             'address': patient.address,

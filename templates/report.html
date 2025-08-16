@@ -124,7 +124,7 @@
                                 {% for visit in report_data.visits %}
                                     <tr>
                                         <td>{{ visit.patient.registration_number }}</td>
-                                        <td>{{ visit.patient.full_name }}</td>
+                                        <td>{{ visit.patient.display_name }}</td>
                                         <td>{{ visit.consultant.name }}</td>
                                         <td>{{ visit.visit_date.strftime('%Y-%m-%d') }}</td>
                                         <td>{{ visit.visit_date.strftime('%H:%M') }}</td>

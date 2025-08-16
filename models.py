@@ -25,7 +25,14 @@ class Patient(db.Model):
     visits = db.relationship('Visit', backref='patient', cascade='all, delete-orphan')
     
     def __repr__(self):
-        return f'<Patient {self.registration_number}: {self.full_name}>'
+        return f'<Patient {self.registration_number}: {self.display_name}>'
+    
+    @property
+    def display_name(self):
+        """Return the full display name with title"""
+        if self.title and self.title.strip():
+            return f"{self.title} {self.full_name}"
+        return self.full_name
     
     @property
     def age(self):
