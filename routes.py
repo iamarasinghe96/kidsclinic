@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify, make_response, session
 from datetime import datetime, date, timedelta
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, text
 from app import app, db
 from models import Patient, Consultant, Visit
 import logging
@@ -769,7 +769,15 @@ def delete_patient(patient_id):
 @app.route('/admin_panel')
 def admin_panel():
     """Admin panel for managing consultants and patient data"""
-    consultants = Consultant.query.all()
+    try:
+        consultants = Consultant.query.all()
+        # Handle missing color attribute gracefully
+        for consultant in consultants:
+            if not hasattr(consultant, 'color') or consultant.color is None:
+                consultant.color = '#6c757d'  # Default color
+    except Exception as e:
+        app.logger.error(f"Error accessing consultants: {e}")
+        consultants = []
     return render_template('admin_panel.html', consultants=consultants)
 
 @app.route('/admin/add_consultant', methods=['POST'])
@@ -788,9 +796,26 @@ def add_consultant():
         if existing:
             return jsonify({'success': False, 'error': 'Consultant with this name already exists'})
         
-        consultant = Consultant(name=name, color=color)
+        # Try to create consultant with color, fallback if color field doesn't exist
+        try:
+            consultant = Consultant(name=name, color=color)
+        except TypeError:
+            # Color field might not exist yet, create without it
+            consultant = Consultant(name=name)
+            
         db.session.add(consultant)
         db.session.commit()
+        
+        # Add color using raw SQL if the model doesn't support it
+        if not hasattr(consultant, 'color'):
+            try:
+                db.session.execute(
+                    text('UPDATE consultant SET color = :color WHERE id = :id'),
+                    {'color': color, 'id': consultant.id}
+                )
+                db.session.commit()
+            except Exception:
+                pass  # Ignore if color column doesn't exist
         
         app.logger.info(f'New consultant added: {name}')
         

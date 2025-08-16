@@ -44,6 +44,7 @@ class Patient(db.Model):
 class Consultant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
+    # color = db.Column(db.String(7), default='#6c757d')  # Temporarily commented out for migration
     consultation_fee = db.Column(db.Float, default=0.0, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(SL_TZ).replace(tzinfo=None))
     
