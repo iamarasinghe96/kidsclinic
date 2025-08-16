@@ -218,11 +218,14 @@ def search_patients():
     for patient in patients:
         results.append({
             'id': patient.id,
+            'title': getattr(patient, 'title', ''),
             'full_name': patient.full_name,
             'registration_number': patient.registration_number,
             'date_of_birth': patient.date_of_birth.strftime('%d/%m/%Y'),
             'contact_number': patient.contact_number,
-            'consultant_name': patient.consultant.name
+            'consultant_name': patient.consultant.name,
+            'consultant': patient.consultant.name,
+            'consultant_id': patient.consultant_id
         })
     
     return jsonify(results)
@@ -253,12 +256,27 @@ def get_patient_details_by_id(patient_id):
 @app.route('/register_returning_patient', methods=['POST'])
 def register_returning_patient():
     try:
-        patient_id = request.form.get('patient_id')
+        # Get form data
+        registration_number = request.form.get('registration_number')
+        title = request.form.get('title', '')
+        full_name = request.form.get('full_name')
+        consultant_id = request.form.get('consultant_id')
         weight_kg = request.form.get('weight_kg')
         
-        patient = Patient.query.get_or_404(patient_id)
+        # Find patient by registration number
+        patient = Patient.query.filter_by(registration_number=registration_number).first()
         
-        # Allow multiple visits per day - removed restriction
+        if not patient:
+            flash('Patient not found with this registration number.', 'error')
+            return redirect(url_for('receptionist'))
+        
+        # Update patient details if provided
+        if title and hasattr(patient, 'title'):
+            patient.title = title
+        if full_name:
+            patient.full_name = full_name
+        if consultant_id:
+            patient.consultant_id = int(consultant_id)
         
         # Create new visit
         visit = Visit(
@@ -272,12 +290,14 @@ def register_returning_patient():
         
         app.logger.info(f'Returning patient visit created: {patient.registration_number}')
         
-        return redirect(url_for('receptionist', success=f'Patient {patient.full_name} added to today\'s queue'))
+        flash(f'Welcome back, {patient.full_name}! Visit registered.', 'success')
+        return redirect(url_for('receptionist'))
         
     except Exception as e:
         app.logger.error(f'Error registering returning patient: {e}')
         db.session.rollback()
-        return redirect(url_for('receptionist', error='Error registering returning patient'))
+        flash('Error registering returning patient', 'error')
+        return redirect(url_for('receptionist'))
 
 @app.route('/register_patient', methods=['POST'])
 def register_patient():
