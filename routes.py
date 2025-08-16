@@ -628,9 +628,8 @@ def report():
         end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date()
         consultant_id = request.form.get('consultant_id')
         
-        # Build query for completed visits within date range (excluding incomplete consultations)
+        # Build query for all visits within date range (include all statuses for comprehensive reporting)
         query = Visit.query.join(Patient).filter(
-            Visit.status.in_(['completed', 'completed_archived']),  # Only completed visits in summary count
             func.date(Visit.visit_date) >= start_date,
             func.date(Visit.visit_date) <= end_date
         )
@@ -670,9 +669,8 @@ def download_report_csv():
     start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
     end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
     
-    # Build query for completed visits within date range
+    # Build query for all visits within date range
     query = Visit.query.join(Patient).filter(
-        Visit.status.in_(['completed', 'completed_archived']),
         func.date(Visit.visit_date) >= start_date,
         func.date(Visit.visit_date) <= end_date
     )
