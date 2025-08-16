@@ -721,49 +721,34 @@ function confirmDeletePatient() {
     .then(data => {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('deletePatientModal')).hide();
-            showAlert(data.message, 'success');
+            showNotification(data.message, 'success');
             
             // Clear selection if deleted patient was selected
-            if (currentPatientRegNumber && 
-                document.querySelector(`[data-reg-number="${currentPatientRegNumber}"]`) &&
-                document.querySelector(`[data-reg-number="${currentPatientRegNumber}"]`).closest('.patient-item').onclick.toString().includes(patientToDelete)) {
-                clearPatientSelection();
+            if (currentPatientRegNumber) {
+                const deletedPatientElement = document.querySelector(`[data-reg-number="${currentPatientRegNumber}"]`);
+                if (deletedPatientElement && deletedPatientElement.onclick.toString().includes(patientToDelete)) {
+                    clearPatientSelection();
+                }
             }
             
-            // Refresh the page to update the queue
+            // Immediate page refresh to update the queue
             setTimeout(() => {
                 window.location.reload();
-            }, 1000);
+            }, 1500);
         } else {
-            showAlert('Error deleting patient: ' + data.error, 'danger');
+            showNotification('Error deleting patient: ' + data.error, 'error');
         }
         patientToDelete = null;
     })
     .catch(error => {
-        showAlert('Error deleting patient', 'danger');
+        showNotification('Error deleting patient', 'error');
         patientToDelete = null;
     });
 }
 
-// Show alert function
+// Show alert function (keeping for compatibility)
 function showAlert(message, type) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    // Insert at top of page
-    const container = document.querySelector('.container-fluid');
-    container.insertBefore(alertDiv, container.firstChild);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
-        }
-    }, 5000);
+    showNotification(message, type === 'danger' ? 'error' : type);
 }
 </script>
 
