@@ -46,6 +46,11 @@
                                     <h6 class="mb-1">{{ visit.patient.display_name }}</h6>
                                     <div class="d-flex align-items-center">
                                         <small class="me-2">{{ visit.visit_date.strftime('%H:%M') }}</small>
+                                        <button type="button" class="btn btn-outline-success btn-sm me-1" 
+                                                onclick="openWhatsApp(event, '{{ visit.patient.registration_number }}', '{{ visit.patient.contact_number }}', '{{ visit.patient.display_name }}')"
+                                                title="Open WhatsApp">
+                                            <i data-feather="message-circle" style="width: 14px; height: 14px;"></i>
+                                        </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm" 
                                                 onclick="deleteVisit(event, {{ visit.id }}, '{{ visit.patient.display_name }}')"
                                                 title="Remove from queue">
@@ -849,6 +854,32 @@ function confirmDeleteVisit() {
 // Show alert function (keeping for compatibility)
 function showAlert(message, type) {
     showNotification(message, type === 'danger' ? 'error' : type);
+}
+
+// Open WhatsApp function
+function openWhatsApp(event, registrationNumber, contactNumber, patientName) {
+    event.stopPropagation(); // Prevent triggering patient selection
+    
+    // Clean the contact number (remove any non-numeric characters except +)
+    let cleanNumber = contactNumber.replace(/[^\d+]/g, '');
+    
+    // If number doesn't start with + or country code, assume Sri Lankan number
+    if (!cleanNumber.startsWith('+') && !cleanNumber.startsWith('94')) {
+        // Remove leading 0 if present and add Sri Lankan country code
+        cleanNumber = cleanNumber.replace(/^0+/, '');
+        cleanNumber = '+94' + cleanNumber;
+    }
+    
+    // Create WhatsApp desktop URL with pre-filled contact info
+    // WhatsApp Web/Desktop URL format: https://web.whatsapp.com/send?phone=number&text=message
+    const message = encodeURIComponent(`Hello ${patientName}, this is from The Kids Clinic / Allergy and Asthma Center. Your registration number is ${registrationNumber}.`);
+    const whatsappURL = `https://web.whatsapp.com/send?phone=${cleanNumber}&text=${message}`;
+    
+    // Open WhatsApp in a new window/tab
+    window.open(whatsappURL, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+    
+    // Show confirmation message
+    showNotification(`WhatsApp opened for ${patientName} (${cleanNumber})`, 'success');
 }
 </script>
 
