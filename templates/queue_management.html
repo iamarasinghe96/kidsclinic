@@ -843,18 +843,35 @@ function openWhatsApp(event, regNumber, patientName, phoneNumber) {
     // Create the message
     const message = `Hello ${patientName}, Your registration number at the Kids Clinic & Allergy & Asthma Center is ${regNumber}. Please be ready, you're the next in the queue!`;
     
-    // If phone number is provided, use it; otherwise just open WhatsApp with the message
+    // Clean phone number if provided
     if (phoneNumber && phoneNumber.trim() !== '') {
-        // Clean phone number (remove any non-digit characters except +)
-        const cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, '');
+        let cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, '');
         
-        // Create WhatsApp URL with phone number and message
+        // Format for Sri Lankan numbers
+        if (!cleanPhoneNumber.startsWith('+')) {
+            if (cleanPhoneNumber.startsWith('0')) {
+                cleanPhoneNumber = '94' + cleanPhoneNumber.substring(1);
+            } else {
+                cleanPhoneNumber = '94' + cleanPhoneNumber;
+            }
+        } else {
+            cleanPhoneNumber = cleanPhoneNumber.substring(1);
+        }
+        
+        // Use the most compatible WhatsApp URL format
         const whatsappUrl = `https://wa.me/${cleanPhoneNumber}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
+        
     } else {
-        // Open WhatsApp Web with just the message (user will need to select contact)
-        const whatsappUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+        // No phone number - just copy message to clipboard and open WhatsApp
+        navigator.clipboard.writeText(message).then(function() {
+            showNotification('Message copied to clipboard! Paste it in WhatsApp.', 'info');
+            window.open('https://web.whatsapp.com/', '_blank');
+        }).catch(function() {
+            // Fallback if clipboard doesn't work
+            const whatsappUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
     }
 }
 
