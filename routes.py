@@ -827,6 +827,39 @@ def delete_patient(patient_id):
             'error': f'Error deleting patient: {str(e)}'
         }), 500
 
+@app.route('/delete_visit/<int:visit_id>', methods=['POST'])
+def delete_visit(visit_id):
+    """Delete a specific visit (remove from queue) without deleting patient data"""
+    try:
+        # Find the visit
+        visit = Visit.query.get(visit_id)
+        if not visit:
+            return jsonify({
+                'success': False,
+                'error': 'Visit not found'
+            }), 404
+        
+        patient_name = visit.patient.display_name
+        
+        # Delete only the visit, keep patient data
+        db.session.delete(visit)
+        db.session.commit()
+        
+        app.logger.info(f'Visit deleted: {patient_name} (Visit ID: {visit_id}), patient data preserved')
+        
+        return jsonify({
+            'success': True,
+            'message': f'{patient_name} removed from queue'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error deleting visit {visit_id}: {e}')
+        return jsonify({
+            'success': False,
+            'error': f'Error removing from queue: {str(e)}'
+        }), 500
+
 @app.route('/admin_panel')
 def admin_panel():
     """Admin panel for managing consultants and patient data"""
