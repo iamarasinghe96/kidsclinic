@@ -368,7 +368,7 @@ function printPatientSummary() {
             const genderWeight = patient.weight_kg ? patient.gender + ', ' + patient.weight_kg + ' kg' : patient.gender;
             const visitTime = new Date().toLocaleDateString('en-GB') + ', ' + new Date().toLocaleTimeString('en-US', {hour12: true, timeStyle: 'short'});
             
-            const printContent = '<div style="position: absolute; top: 20px; right: 20px; border: 2px solid #000; padding: 10px; font-family: Arial, sans-serif; width: 250px; font-size: 11px; background: white;">' +
+            const printContent = '<div style="position: absolute; top: 35px; right: 20px; border: 2px solid #000; padding: 10px; font-family: Arial, sans-serif; width: 250px; font-size: 11px; background: white;">' +
                 '<div style="margin-bottom: 8px;"><strong>Reg:</strong> ' + patient.registration_number + '</div>' +
                 '<div style="margin-bottom: 8px;"><strong>Name:</strong> ' + (patient.title ? patient.title + ' ' + patient.full_name : patient.full_name) + '</div>' +
                 '<div style="margin-bottom: 8px;"><strong>DOB:</strong> ' + patient.date_of_birth + ' (' + patient.age + ')</div>' +

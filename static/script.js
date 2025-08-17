@@ -406,7 +406,7 @@ function printPatientInfo() {
                         
                         .patient-info {
                             position: absolute;
-                            top: 20px;
+                            top: 35px;
                             right: 20px;
                             border: 2px solid #000;
                             padding: 10px;
