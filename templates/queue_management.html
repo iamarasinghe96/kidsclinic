@@ -384,7 +384,10 @@ function printPatientSummary() {
                 '<title>Patient Summary - ' + (patient.title ? patient.title + ' ' + patient.full_name : patient.full_name) + '</title>' +
                 '<style>' +
                 'body { margin: 0; padding: 0; position: relative; height: 100vh; }' +
-                '@media print { body { margin: 0; padding: 0; } }' +
+                '@media print { ' +
+                '  body { margin: 0; padding: 0; } ' +
+                '  @page { margin: 0; size: auto; } ' +
+                '}' +
                 '</style>' +
                 '</head>' +
                 '<body>' +

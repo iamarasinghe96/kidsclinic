@@ -445,6 +445,7 @@ function printPatientInfo() {
                         
                         @media print {
                             body { margin: 0; padding: 20px; }
+                            @page { margin: 0; size: auto; }
                         }
                     </style>
                 </head>
