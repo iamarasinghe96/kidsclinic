@@ -1,6 +1,8 @@
 // Global variables
 let currentPatientRegNumber = null;
 let lastSelectedPatient = null;
+let previousPatientCount = 0;
+let queueWasEmpty = false;
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -37,7 +39,13 @@ function selectConsultant() {
 
 // Initialize patient click handlers
 function initializePatientHandlers() {
-    document.querySelectorAll('.patient-item').forEach(item => {
+    const patientItems = document.querySelectorAll('.patient-item');
+    const currentPatientCount = patientItems.length;
+    
+    // Check if we need to auto-select first patient
+    checkForAutoSelect(currentPatientCount);
+    
+    patientItems.forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
             const regNumber = this.dataset.regNumber;
@@ -51,6 +59,44 @@ function initializePatientHandlers() {
             lastSelectedPatient = regNumber;
         });
     });
+    
+    // Update patient count for next check
+    previousPatientCount = currentPatientCount;
+}
+
+// Check if we should auto-select the first patient
+function checkForAutoSelect(currentPatientCount) {
+    // If queue was empty (0 patients) and now has patients, auto-select first one
+    if (previousPatientCount === 0 && currentPatientCount > 0) {
+        queueWasEmpty = true;
+        autoSelectFirstPatient();
+    }
+    // If queue has patients but none selected and queue was previously empty
+    else if (currentPatientCount > 0 && !currentPatientRegNumber && queueWasEmpty) {
+        autoSelectFirstPatient();
+    }
+    // Update empty status
+    queueWasEmpty = (currentPatientCount === 0);
+}
+
+// Auto-select the first patient in queue
+function autoSelectFirstPatient() {
+    const firstPatient = document.querySelector('.patient-item');
+    if (firstPatient) {
+        const regNumber = firstPatient.dataset.regNumber;
+        console.log(`[AUTO-SELECT] Queue was empty, auto-selecting first patient: ${regNumber}`);
+        
+        // Load patient info
+        loadPatientInfo(regNumber);
+        
+        // Update active state
+        document.querySelectorAll('.patient-item').forEach(i => i.classList.remove('active'));
+        firstPatient.classList.add('active');
+        
+        // Store as selected
+        lastSelectedPatient = regNumber;
+        queueWasEmpty = false; // Reset flag after auto-selection
+    }
 }
 
 // Search patients

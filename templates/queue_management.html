@@ -293,6 +293,13 @@ function markComplete() {
                 // Clear current patient selection
                 clearPatientSelection();
                 
+                // Check if queue becomes empty after completion
+                const remainingPatients = document.querySelectorAll('.patient-item').length - 1; // -1 for the one being completed
+                if (remainingPatients === 0) {
+                    localStorage.setItem('queueWasEmpty', 'true');
+                    console.log('[QUEUE] Queue will be empty after this completion');
+                }
+                
                 // Refresh queue with auto-selection
                 setTimeout(() => {
                     window.location.reload();
@@ -464,6 +471,8 @@ function endShift() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Set queue as empty after shift end
+                    localStorage.setItem('queueWasEmpty', 'true');
                     alert('✅ Shift ended successfully!');
                     window.location.reload();
                 } else {
@@ -501,6 +510,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return; // Skip regular restore if we're doing auto-selection
     }
     
+    // Auto-select first patient if queue was empty before
+    checkForEmptyQueueAutoSelect();
+    
     // Restore patient selection from localStorage after page refresh
     const savedPatientRegNumber = localStorage.getItem('selectedPatientRegNumber');
     if (savedPatientRegNumber) {
@@ -520,10 +532,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Check if we should auto-select first patient when queue was previously empty
+function checkForEmptyQueueAutoSelect() {
+    const waitingPatients = document.querySelectorAll('.patient-item');
+    const queueWasEmpty = localStorage.getItem('queueWasEmpty') === 'true';
+    
+    // If queue was empty and now has patients, auto-select the first one
+    if (queueWasEmpty && waitingPatients.length > 0) {
+        console.log('[QUEUE] Queue was empty, auto-selecting first patient after new registration');
+        const firstPatient = waitingPatients[0];
+        const regNumber = firstPatient.dataset.regNumber;
+        const patientName = firstPatient.querySelector('h6').textContent;
+        
+        showPatientDetails(regNumber);
+        showNotification(`Auto-selected first patient: ${patientName}`, 'success');
+        
+        // Clear the empty queue flag
+        localStorage.removeItem('queueWasEmpty');
+        return;
+    }
+    
+    // Update empty queue status for next time
+    if (waitingPatients.length === 0) {
+        localStorage.setItem('queueWasEmpty', 'true');
+    } else {
+        localStorage.removeItem('queueWasEmpty');
+    }
+}
+
 // Auto-refresh queue every 10 seconds to show new registrations
 let autoRefreshInterval = setInterval(function() {
     // Only refresh if no patient is currently selected (to avoid interrupting workflow)
     if (!currentPatientRegNumber) {
+        // Store current patient count before refresh
+        const currentPatientCount = document.querySelectorAll('.patient-item').length;
+        if (currentPatientCount === 0) {
+            localStorage.setItem('queueWasEmpty', 'true');
+        }
         refreshNow();
     }
 }, 10000);
