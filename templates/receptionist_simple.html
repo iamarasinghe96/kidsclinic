@@ -153,6 +153,10 @@
                                             <input type="text" class="form-control" name="full_name" id="returning_full_name" required>
                                         </div>
                                         <div class="mb-3">
+                                            <label for="returning_contact_number" class="form-label">Contact Number</label>
+                                            <input type="text" class="form-control" name="contact_number" id="returning_contact_number">
+                                        </div>
+                                        <div class="mb-3">
                                             <label for="returning_reg_number" class="form-label">Registration Number</label>
                                             <input type="text" class="form-control" name="registration_number" id="returning_reg_number" readonly>
                                             <div class="form-text">Registration numbers cannot be changed</div>
@@ -299,6 +303,7 @@ function selectReturningPatient(patientId) {
             document.getElementById('returning_patient_id').value = data.id;
             document.getElementById('returning_title').value = data.title || '';
             document.getElementById('returning_full_name').value = data.full_name;
+            document.getElementById('returning_contact_number').value = data.contact_number || '';
             document.getElementById('returning_reg_number').value = data.registration_number;
             document.getElementById('returning_dob').value = data.date_of_birth_formatted;
             document.getElementById('returning_consultant_id').value = data.consultant_id;
@@ -321,6 +326,7 @@ function savePatientChanges() {
     const patientId = document.getElementById('returning_patient_id').value;
     const title = document.getElementById('returning_title').value;
     const fullName = document.getElementById('returning_full_name').value;
+    const contactNumber = document.getElementById('returning_contact_number').value;
     
     if (!patientId || !fullName) {
         alert('Please ensure all required fields are filled');
@@ -331,7 +337,8 @@ function savePatientChanges() {
     formData.append('patient_id', patientId);
     formData.append('title', title);
     formData.append('full_name', fullName);
-    // Do not send registration_number as it should not be changed
+    formData.append('contact_number', contactNumber);
+    // Do not send registration_number, visit date, or visit time as they should not be changed
     
     fetch('/update_patient', {
         method: 'POST',

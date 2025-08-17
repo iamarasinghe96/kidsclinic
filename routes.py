@@ -1108,7 +1108,12 @@ def update_patient():
         patient.title = request.form.get('title', '').strip()
         patient.full_name = request.form['full_name'].strip()
         
+        # Update contact number if provided
+        if request.form.get('contact_number'):
+            patient.contact_number = request.form['contact_number'].strip()
+        
         # Registration numbers are unique identifiers that should not be changed
+        # Visit dates and times are also not touched - they remain unchanged
         
         db.session.commit()
         app.logger.info(f"Patient updated: {patient.registration_number} - {patient.display_name}")
