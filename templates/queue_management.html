@@ -46,6 +46,11 @@
                                     <h6 class="mb-1">{{ visit.patient.display_name }}</h6>
                                     <div class="d-flex align-items-center">
                                         <small class="me-2">{{ visit.visit_date.strftime('%H:%M') }}</small>
+                                        <button type="button" class="btn btn-outline-success btn-sm me-1" 
+                                                onclick="openWhatsApp(event, '{{ visit.patient.registration_number }}', '{{ visit.patient.display_name }}', '{{ visit.patient.contact_number if visit.patient.contact_number else '' }}')"
+                                                title="Send WhatsApp message">
+                                            <i data-feather="message-circle" style="width: 14px; height: 14px;"></i>
+                                        </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm" 
                                                 onclick="deleteVisit(event, {{ visit.id }}, '{{ visit.patient.display_name }}')"
                                                 title="Remove visit from queue">
@@ -829,6 +834,28 @@ function sendEmergencyMessage() {
     .catch(error => {
         showAlert('Error sending message', 'danger');
     });
+}
+
+// WhatsApp function for queue management
+function openWhatsApp(event, regNumber, patientName, phoneNumber) {
+    event.stopPropagation(); // Prevent triggering patient selection
+    
+    // Create the message
+    const message = `Hello ${patientName}, Your registration number at the Kids Clinic & Allergy & Asthma Center is ${regNumber}. Please be ready, you're the next in the queue!`;
+    
+    // If phone number is provided, use it; otherwise just open WhatsApp with the message
+    if (phoneNumber && phoneNumber.trim() !== '') {
+        // Clean phone number (remove any non-digit characters except +)
+        const cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, '');
+        
+        // Create WhatsApp URL with phone number and message
+        const whatsappUrl = `https://wa.me/${cleanPhoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    } else {
+        // Open WhatsApp Web with just the message (user will need to select contact)
+        const whatsappUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    }
 }
 
 // Delete visit function (for queue management)
