@@ -276,7 +276,9 @@ function displayPatientInfo(patient) {
             <div class="mt-3">
                 <h6>Recent Visits:</h6>
                 ${patient.recent_visits.length > 0 ? 
-                    patient.recent_visits.map(date => `<small class="d-block">${date}</small>`).join('') :
+                    patient.recent_visits.map(visit => 
+                        `<small class="d-block">${visit.date}${visit.weight ? ' - ' + visit.weight : ''}</small>`
+                    ).join('') :
                     '<small class="text-muted">No previous visits</small>'
                 }
             </div>
