@@ -401,6 +401,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (success) {
         showNotification(decodeURIComponent(success), 'success');
+        
+        // If this is a successful patient registration, trigger queue refresh
+        if (success.includes('registered successfully') || success.includes('Welcome back')) {
+            console.log('[RECEPTIONIST] Triggering queue refresh after patient registration');
+            localStorage.setItem('queueRefreshTrigger', Date.now().toString());
+        }
     }
     if (error) {
         showNotification(decodeURIComponent(error), 'error');

@@ -62,6 +62,30 @@ def queue_management():
                          total_completed=total_completed,
                          total_patients_today=total_patients_today)
 
+@app.route('/api/queue_status')
+def api_queue_status():
+    """API endpoint to check current queue status without full page load"""
+    today = date.today()
+    
+    # Get today's waiting visits count
+    waiting_count = Visit.query.join(Patient).filter(
+        Visit.status == 'waiting',
+        func.date(Visit.visit_date) == today
+    ).count()
+    
+    # Get today's completed visits count
+    completed_count = Visit.query.join(Patient).filter(
+        Visit.status == 'completed',
+        func.date(Visit.visit_date) == today
+    ).count()
+    
+    return jsonify({
+        'waiting_count': waiting_count,
+        'completed_count': completed_count,
+        'total_count': waiting_count + completed_count,
+        'timestamp': datetime.now().isoformat()
+    })
+
 @app.route('/receptionist')
 def receptionist():
     consultants = Consultant.query.all()

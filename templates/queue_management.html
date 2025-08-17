@@ -577,25 +577,58 @@ function checkForEmptyQueueAutoSelect() {
     }
 }
 
-// Auto-refresh queue every 5 seconds to show new registrations
-let autoRefreshInterval = setInterval(function() {
-    // Always refresh to show new registrations, but save current selection
-    const currentPatientCount = document.querySelectorAll('.patient-item').length;
-    if (currentPatientCount === 0) {
-        localStorage.setItem('queueWasEmpty', 'true');
+// Check for new registrations periodically (every 10 seconds) but only refresh if changes detected
+let checkForUpdatesInterval = setInterval(function() {
+    checkForNewRegistrations();
+}, 10000);
+
+// Function to check for new registrations without full page refresh
+function checkForNewRegistrations() {
+    fetch('/api/queue_status')
+        .then(response => response.json())
+        .then(data => {
+            const currentPatientCount = document.querySelectorAll('.patient-item').length;
+            const serverPatientCount = data.waiting_count;
+            
+            // If server has more patients than what we're showing, refresh the page
+            if (serverPatientCount > currentPatientCount) {
+                console.log(`[QUEUE] New registrations detected: ${serverPatientCount} vs ${currentPatientCount}`);
+                
+                // Save current selection before refresh
+                if (currentPatientRegNumber) {
+                    localStorage.setItem('selectedPatientRegNumber', currentPatientRegNumber);
+                }
+                
+                // Store current patient count before refresh
+                localStorage.setItem('previousPatientCount', currentPatientCount.toString());
+                
+                showNotification('New patient registered! Refreshing queue...', 'success');
+                setTimeout(() => refreshNow(), 1000);
+            }
+        })
+        .catch(error => {
+            console.error('[QUEUE] Error checking for updates:', error);
+        });
+}
+
+// Listen for storage events to detect immediate refresh requests from other tabs
+window.addEventListener('storage', function(e) {
+    if (e.key === 'queueRefreshTrigger' && e.newValue) {
+        console.log('[QUEUE] Immediate refresh triggered by patient registration');
+        
+        // Save current selection before refresh
+        if (currentPatientRegNumber) {
+            localStorage.setItem('selectedPatientRegNumber', currentPatientRegNumber);
+        }
+        
+        showNotification('New patient registered! Refreshing queue...', 'success');
+        setTimeout(() => {
+            // Clear the trigger
+            localStorage.removeItem('queueRefreshTrigger');
+            refreshNow();
+        }, 500);
     }
-    
-    // Save current selection before refresh
-    if (currentPatientRegNumber) {
-        localStorage.setItem('selectedPatientRegNumber', currentPatientRegNumber);
-    }
-    
-    // Store current patient count before refresh
-    localStorage.setItem('previousPatientCount', currentPatientCount.toString());
-    
-    console.log('[QUEUE] Auto-refreshing queue for new registrations...');
-    refreshNow();
-}, 5000);
+});
 
 // Update last refresh time
 function updateLastRefreshTime() {
