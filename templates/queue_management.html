@@ -843,36 +843,56 @@ function openWhatsApp(event, regNumber, patientName, phoneNumber) {
     // Create the message
     const message = `Hello ${patientName}, Your registration number at the Kids Clinic & Allergy & Asthma Center is ${regNumber}. Please be ready, you're the next in the queue!`;
     
-    // Clean phone number if provided
-    if (phoneNumber && phoneNumber.trim() !== '') {
-        let cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, '');
+    // Always copy message to clipboard first
+    navigator.clipboard.writeText(message).then(function() {
+        showNotification('Message copied to clipboard! Opening WhatsApp...', 'success');
         
-        // Format for Sri Lankan numbers
-        if (!cleanPhoneNumber.startsWith('+')) {
-            if (cleanPhoneNumber.startsWith('0')) {
-                cleanPhoneNumber = '94' + cleanPhoneNumber.substring(1);
+        // Clean phone number if provided
+        if (phoneNumber && phoneNumber.trim() !== '') {
+            let cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, '');
+            
+            // Format for Sri Lankan numbers
+            if (!cleanPhoneNumber.startsWith('+')) {
+                if (cleanPhoneNumber.startsWith('0')) {
+                    cleanPhoneNumber = '94' + cleanPhoneNumber.substring(1);
+                } else {
+                    cleanPhoneNumber = '94' + cleanPhoneNumber;
+                }
             } else {
-                cleanPhoneNumber = '94' + cleanPhoneNumber;
+                cleanPhoneNumber = cleanPhoneNumber.substring(1);
             }
+            
+            // Open WhatsApp with the contact
+            const whatsappUrl = `https://wa.me/${cleanPhoneNumber}`;
+            window.open(whatsappUrl, '_blank');
+            
         } else {
-            cleanPhoneNumber = cleanPhoneNumber.substring(1);
+            // No phone number - just open WhatsApp
+            window.open('https://web.whatsapp.com/', '_blank');
         }
         
-        // Use the most compatible WhatsApp URL format
-        const whatsappUrl = `https://wa.me/${cleanPhoneNumber}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+    }).catch(function() {
+        // Fallback if clipboard doesn't work - show message in alert
+        alert(`Message for ${patientName}:\n\n${message}\n\nPlease copy this message and paste it in WhatsApp.`);
         
-    } else {
-        // No phone number - just copy message to clipboard and open WhatsApp
-        navigator.clipboard.writeText(message).then(function() {
-            showNotification('Message copied to clipboard! Paste it in WhatsApp.', 'info');
+        if (phoneNumber && phoneNumber.trim() !== '') {
+            let cleanPhoneNumber = phoneNumber.replace(/[^\d+]/g, '');
+            
+            if (!cleanPhoneNumber.startsWith('+')) {
+                if (cleanPhoneNumber.startsWith('0')) {
+                    cleanPhoneNumber = '94' + cleanPhoneNumber.substring(1);
+                } else {
+                    cleanPhoneNumber = '94' + cleanPhoneNumber;
+                }
+            } else {
+                cleanPhoneNumber = cleanPhoneNumber.substring(1);
+            }
+            
+            window.open(`https://wa.me/${cleanPhoneNumber}`, '_blank');
+        } else {
             window.open('https://web.whatsapp.com/', '_blank');
-        }).catch(function() {
-            // Fallback if clipboard doesn't work
-            const whatsappUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-        });
-    }
+        }
+    });
 }
 
 // Delete visit function (for queue management)
