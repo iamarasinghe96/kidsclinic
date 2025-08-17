@@ -791,6 +791,40 @@ def reset_daily_queue():
             'error': f'Error resetting queue: {str(e)}'
         }), 500
 
+@app.route('/delete_visit/<int:visit_id>', methods=['POST'])
+def delete_visit(visit_id):
+    """Delete a specific visit from the queue"""
+    try:
+        # Find the visit
+        visit = Visit.query.get(visit_id)
+        if not visit:
+            return jsonify({
+                'success': False,
+                'error': 'Visit not found'
+            }), 404
+        
+        patient_name = visit.patient.display_name
+        visit_date = visit.visit_date.strftime('%Y-%m-%d %H:%M')
+        
+        # Delete only this visit, not the patient
+        db.session.delete(visit)
+        db.session.commit()
+        
+        app.logger.info(f'Visit deleted from queue: {patient_name} - {visit_date} (ID: {visit_id})')
+        
+        return jsonify({
+            'success': True,
+            'message': f'Visit for {patient_name} removed from queue'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error deleting visit {visit_id}: {e}')
+        return jsonify({
+            'success': False,
+            'error': f'Error removing visit: {str(e)}'
+        }), 500
+
 @app.route('/delete_patient/<int:patient_id>', methods=['POST'])
 def delete_patient(patient_id):
     """Delete a patient and all associated visits"""
