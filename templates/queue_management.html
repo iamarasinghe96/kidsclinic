@@ -725,13 +725,13 @@ function refreshQueue() {
     </div>
 </div>
 
-<!-- Patient Delete Confirmation Modal -->
-<div class="modal fade" id="deletePatientModal" tabindex="-1">
+<!-- Visit Delete Confirmation Modal -->
+<div class="modal fade" id="deleteVisitModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i data-feather="trash-2" class="me-2"></i>
+                    <i data-feather="user-minus" class="me-2"></i>
                     Remove from Queue
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -739,14 +739,14 @@ function refreshQueue() {
             <div class="modal-body">
                 <p>Are you sure you want to remove this patient from today's queue?</p>
                 <div class="alert alert-info">
-                    <strong>Patient:</strong> <span id="deletePatientName"></span><br>
-                    <strong>Note:</strong> This will only remove today's visit. Patient data will be preserved for future visits.
+                    <strong>Patient:</strong> <span id="deleteVisitPatientName"></span><br>
+                    <strong>Note:</strong> This will only remove today's visit. Patient data will be preserved.
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" onclick="confirmDeleteVisit()">
-                    <i data-feather="minus"></i> Yes, Remove
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteVisit()">
+                    <i data-feather="user-minus"></i> Remove from Queue
                 </button>
             </div>
         </div>
@@ -806,15 +806,15 @@ function sendEmergencyMessage() {
 function deleteVisit(event, visitId, patientName) {
     event.stopPropagation(); // Prevent triggering patient selection
     visitToDelete = visitId;
-    document.getElementById('deletePatientName').textContent = patientName;
-    new bootstrap.Modal(document.getElementById('deletePatientModal')).show();
+    document.getElementById('deleteVisitPatientName').textContent = patientName;
+    new bootstrap.Modal(document.getElementById('deleteVisitModal')).show();
 }
 
 // Confirm visit deletion
 function confirmDeleteVisit() {
     if (!visitToDelete) return;
 
-    fetch(`/admin/delete_record/visit/${visitToDelete}`, {
+    fetch(`/delete_visit/${visitToDelete}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -823,7 +823,7 @@ function confirmDeleteVisit() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('deletePatientModal')).hide();
+            bootstrap.Modal.getInstance(document.getElementById('deleteVisitModal')).hide();
             showNotification(data.message, 'success');
             
             // Clear selection if deleted visit's patient was selected
