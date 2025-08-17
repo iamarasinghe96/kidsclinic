@@ -13,6 +13,9 @@ from app import app
 def open_browser():
     """Open browser after short delay"""
     webbrowser.open('http://localhost:5000/receptionist')
+    # Small delay between opening tabs
+    time.sleep(1)
+    webbrowser.open('http://localhost:5000/queue_management')
 
 def main():
     print("=" * 50)
@@ -25,7 +28,7 @@ def main():
     print("Reports: http://YOUR_IP:5000/report")
     print("Admin: http://YOUR_IP:5000/admin")
     print()
-    print("Opening receptionist interface in 3 seconds...")
+    print("Opening receptionist interface and queue management in 3 seconds...")
     print()
     print("Server is running... Do NOT close this window!")
     print("To stop server: Press Ctrl+C")
