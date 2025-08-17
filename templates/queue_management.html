@@ -516,6 +516,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-select first patient if queue was empty before
     checkForEmptyQueueAutoSelect();
     
+    // Store patient count for detecting new registrations
+    const currentPatientCount = document.querySelectorAll('.patient-item').length;
+    const previousPatientCount = localStorage.getItem('previousPatientCount');
+    
+    // Check if new patients were added
+    if (previousPatientCount && parseInt(previousPatientCount) < currentPatientCount) {
+        const newPatients = currentPatientCount - parseInt(previousPatientCount);
+        showNotification(`${newPatients} new patient${newPatients > 1 ? 's' : ''} registered!`, 'success');
+        console.log(`[QUEUE] Detected ${newPatients} new patient registrations`);
+    }
+    
+    // Update patient count
+    localStorage.setItem('previousPatientCount', currentPatientCount.toString());
+    
     // Restore patient selection from localStorage after page refresh
     const savedPatientRegNumber = localStorage.getItem('selectedPatientRegNumber');
     if (savedPatientRegNumber) {
@@ -563,18 +577,25 @@ function checkForEmptyQueueAutoSelect() {
     }
 }
 
-// Auto-refresh queue every 10 seconds to show new registrations
+// Auto-refresh queue every 5 seconds to show new registrations
 let autoRefreshInterval = setInterval(function() {
-    // Only refresh if no patient is currently selected (to avoid interrupting workflow)
-    if (!currentPatientRegNumber) {
-        // Store current patient count before refresh
-        const currentPatientCount = document.querySelectorAll('.patient-item').length;
-        if (currentPatientCount === 0) {
-            localStorage.setItem('queueWasEmpty', 'true');
-        }
-        refreshNow();
+    // Always refresh to show new registrations, but save current selection
+    const currentPatientCount = document.querySelectorAll('.patient-item').length;
+    if (currentPatientCount === 0) {
+        localStorage.setItem('queueWasEmpty', 'true');
     }
-}, 10000);
+    
+    // Save current selection before refresh
+    if (currentPatientRegNumber) {
+        localStorage.setItem('selectedPatientRegNumber', currentPatientRegNumber);
+    }
+    
+    // Store current patient count before refresh
+    localStorage.setItem('previousPatientCount', currentPatientCount.toString());
+    
+    console.log('[QUEUE] Auto-refreshing queue for new registrations...');
+    refreshNow();
+}, 5000);
 
 // Update last refresh time
 function updateLastRefreshTime() {
