@@ -136,8 +136,36 @@
 let currentSelectedPatient = null;
 const consultantId = {{ selected_consultant_id }};
 
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    checkInitialQueueState();
+});
+
+// Check initial queue state on page load
+function checkInitialQueueState() {
+    const queueItems = document.querySelectorAll('.patient-item');
+    const hasPatients = queueItems.length > 0;
+    
+    if (!hasPatients) {
+        // No patients in queue - ensure patient display is cleared
+        console.log('[CONSULTANT] Page loaded with empty queue - clearing display');
+        clearPatientDisplay();
+    }
+}
+
 // Check for selected patient from receptionist every 3 seconds
 setInterval(function() {
+    // First check if there are any patients in the queue
+    const queueItems = document.querySelectorAll('.patient-item');
+    const hasPatients = queueItems.length > 0;
+    
+    if (!hasPatients && currentSelectedPatient) {
+        // No patients in queue - clear patient display
+        console.log('[CONSULTANT] No patients in queue - clearing display');
+        clearPatientDisplay();
+        return;
+    }
+    
     fetch(`/get_selected_patient/${consultantId}`)
         .then(response => response.json())
         .then(data => {
