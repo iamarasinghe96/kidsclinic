@@ -523,6 +523,16 @@ def get_patient_details(reg_number):
         
         current_weight = current_visit.weight_kg if current_visit and current_visit.weight_kg else None
         
+        # Calculate age-based title from DOB + gender
+        age = patient.age
+        gender = patient.gender
+        if age <= 5:
+            calc_title = 'Baby'
+        elif age <= 17:
+            calc_title = 'Master' if gender == 'Male' else 'Miss'
+        else:
+            calc_title = 'Adult Male' if gender == 'Male' else 'Adult Female'
+
         return jsonify({
             'registration_number': patient.registration_number,
             'full_name': patient.full_name,
@@ -532,6 +542,7 @@ def get_patient_details(reg_number):
             'date_of_birth': patient.date_of_birth.strftime('%d/%m/%Y'),
             'email': patient.email,
             'total_visits': total_visits,
+            'calc_title': calc_title,
             'weight_kg': current_weight,
             'consultant_id': patient.consultant_id,
             'recent_visits': visit_data
