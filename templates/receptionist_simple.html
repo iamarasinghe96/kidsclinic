@@ -9,8 +9,8 @@
     </h3>
 </div>
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
+<div class="row">
+    <div class="col-12">
         <div class="card">
             <div class="card-header" style="background-color: #8EC641; color: white;">
                 <h5 class="mb-0">
@@ -21,87 +21,79 @@
             <div class="card-body">
                 <ul class="nav nav-tabs" id="registrationTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="new-patient-tab" data-bs-toggle="tab" 
+                        <button class="nav-link active" id="new-patient-tab" data-bs-toggle="tab"
                                 data-bs-target="#new-patient" type="button" role="tab">
                             <i data-feather="user-plus"></i> New Patient
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="returning-patient-tab" data-bs-toggle="tab" 
+                        <button class="nav-link" id="returning-patient-tab" data-bs-toggle="tab"
                                 data-bs-target="#returning-patient" type="button" role="tab">
                             <i data-feather="repeat"></i> Returning Patient
                         </button>
                     </li>
                 </ul>
-                
+
                 <div class="tab-content mt-3" id="registrationTabContent">
                     <!-- New Patient Registration -->
                     <div class="tab-pane fade show active" id="new-patient" role="tabpanel">
                         <form method="POST" action="{{ url_for('register_patient') }}">
-                            <div class="row">
+                            <input type="hidden" name="title" id="new_auto_title">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Patient Name *</label>
+                                    <input type="text" class="form-control" name="full_name" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Date of Birth (DD/MM/YYYY) *</label>
+                                    <input type="text" class="form-control" name="date_of_birth" id="new_dob"
+                                           placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Gender *</label>
+                                    <select class="form-select" name="gender" id="new_gender" required>
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Title <small class="text-muted">(auto)</small></label>
+                                    <input type="text" class="form-control bg-light fw-bold" id="new_title_display" readonly placeholder="—">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Parent/Guardian Name</label>
+                                    <input type="text" class="form-control" name="parent_name">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Contact Number *</label>
+                                    <input type="text" class="form-control" name="contact_number" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Weight (kg)</label>
+                                    <input type="number" step="0.1" class="form-control" name="weight_kg" placeholder="e.g., 25.5">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Consultant *</label>
+                                    <select class="form-select" name="consultant_id" required>
+                                        <option value="">Select Consultant</option>
+                                        {% for consultant in consultants %}
+                                            <option value="{{ consultant.id }}">{{ consultant.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="title" class="form-label">Title</label>
-                                        <select class="form-select" name="title">
-                                            <option value="">-</option>
-                                            <option value="Baby">Baby</option>
-                                            <option value="Mr.">Mr.</option>
-                                            <option value="Mrs.">Mrs.</option>
-                                            <option value="Miss">Miss</option>
-                                            <option value="Master">Master</option>
-                                            <option value="Rev.">Rev.</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="full_name" class="form-label">Patient Name *</label>
-                                        <input type="text" class="form-control" name="full_name" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="parent_name" class="form-label">Parent/Guardian Name</label>
-                                        <input type="text" class="form-control" name="parent_name">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="date_of_birth" class="form-label">Date of Birth (DD/MM/YYYY) *</label>
-                                        <input type="text" class="form-control" name="date_of_birth" placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="gender" class="form-label">Gender *</label>
-                                        <select class="form-select" name="gender" required>
-                                            <option value="">Select Gender</option>
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="weight_kg" class="form-label">Weight (kg)</label>
-                                        <input type="number" step="0.1" class="form-control" name="weight_kg" placeholder="e.g., 25.5">
-                                    </div>
+                                    <label class="form-label">Address *</label>
+                                    <textarea class="form-control" name="address" rows="2" required></textarea>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="address" class="form-label">Address *</label>
-                                        <textarea class="form-control" name="address" rows="2" required></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="contact_number" class="form-label">Contact Number *</label>
-                                        <input type="text" class="form-control" name="contact_number" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="email" class="form-label">Email Address</label>
-                                        <input type="email" class="form-control" name="email" placeholder="Optional">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="consultant_id" class="form-label">Consultant *</label>
-                                        <select class="form-select" name="consultant_id" required>
-                                            <option value="">Select Consultant</option>
-                                            {% for consultant in consultants %}
-                                                <option value="{{ consultant.id }}">{{ consultant.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" name="email" placeholder="Optional">
                                 </div>
                             </div>
-                            <div class="d-grid">
+                            <div class="d-grid mt-3">
                                 <button type="submit" class="btn btn-primary btn-lg" style="background-color: #8EC641; border-color: #8EC641;">
                                     <i data-feather="user-plus" class="me-2"></i>Register New Patient
                                 </button>
@@ -113,67 +105,57 @@
                     <div class="tab-pane fade" id="returning-patient" role="tabpanel">
                         <div class="mb-3">
                             <label for="patientSearch" class="form-label">Search Patient</label>
-                            <input type="text" class="form-control" id="patientSearch" 
+                            <input type="text" class="form-control" id="patientSearch"
                                    placeholder="Enter patient name, registration number, or contact number">
                         </div>
-                        
+
                         <div id="searchResults" class="mb-3"></div>
-                        
+
                         <div id="returningPatientForm" style="display: none;">
                             <form method="POST" action="{{ url_for('register_returning_patient') }}">
                                 <input type="hidden" id="returning_patient_id" name="patient_id">
-                                
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="returning_title" class="form-label">Title</label>
-                                            <select class="form-select" name="title" id="returning_title">
-                                                <option value="">-</option>
-                                                <option value="Baby">Baby</option>
-                                                <option value="Mr.">Mr.</option>
-                                                <option value="Mrs.">Mrs.</option>
-                                                <option value="Miss">Miss</option>
-                                                <option value="Master">Master</option>
-                                                <option value="Rev.">Rev.</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="returning_full_name" class="form-label">Patient Name</label>
-                                            <input type="text" class="form-control" name="full_name" id="returning_full_name" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="returning_contact_number" class="form-label">Contact Number</label>
-                                            <input type="text" class="form-control" name="contact_number" id="returning_contact_number">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="returning_reg_number" class="form-label">Registration Number</label>
-                                            <input type="text" class="form-control" name="registration_number" id="returning_reg_number" readonly>
-                                            <div class="form-text">Registration numbers cannot be changed</div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Date of Birth</label>
-                                            <input type="text" class="form-control" id="returning_dob" readonly>
-                                        </div>
+                                <input type="hidden" id="returning_title" name="title">
+                                <input type="hidden" id="returning_gender_hidden" value="">
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Patient Name</label>
+                                        <input type="text" class="form-control" name="full_name" id="returning_full_name" required>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="returning_weight" class="form-label">Today's Weight (kg)</label>
-                                            <input type="number" step="0.1" class="form-control" name="weight_kg" 
-                                                   id="returning_weight" placeholder="Optional">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="returning_consultant_id" class="form-label">Consultant</label>
-                                            <select class="form-select" name="consultant_id" id="returning_consultant_id" required>
-                                                <option value="">Select Consultant</option>
-                                                {% for consultant in consultants %}
-                                                    <option value="{{ consultant.id }}">{{ consultant.name }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Date of Birth</label>
+                                        <input type="text" class="form-control bg-light" id="returning_dob" readonly>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Title <small class="text-muted">(auto)</small></label>
+                                        <input type="text" class="form-control bg-light fw-bold" id="returning_title_display" readonly placeholder="—">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Registration No.</label>
+                                        <input type="text" class="form-control bg-light" name="registration_number" id="returning_reg_number" readonly>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Contact Number</label>
+                                        <input type="text" class="form-control" name="contact_number" id="returning_contact_number">
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">Today's Weight (kg)</label>
+                                        <input type="number" step="0.1" class="form-control" name="weight_kg"
+                                               id="returning_weight" placeholder="Optional">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Consultant</label>
+                                        <select class="form-select" name="consultant_id" id="returning_consultant_id" required>
+                                            <option value="">Select Consultant</option>
+                                            {% for consultant in consultants %}
+                                                <option value="{{ consultant.id }}">{{ consultant.name }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                 </div>
-                                
-                                <div class="d-grid gap-2">
+
+                                <div class="d-grid gap-2 mt-3">
                                     <button type="submit" class="btn btn-success btn-lg">
                                         <i data-feather="plus-circle" class="me-2"></i>Add to Today's Queue
                                     </button>
@@ -191,35 +173,51 @@
 </div>
 
 <script>
+// Auto-title calculation from DOB + gender
+function calculateTitle(dob, gender) {
+    if (!dob || !gender) return '';
+    const parts = dob.split('/');
+    if (parts.length !== 3 || parts[2].length !== 4) return '';
+    const birthDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    if (isNaN(birthDate.getTime())) return '';
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+    if (age < 2) return 'Baby';
+    if (age < 18) return gender === 'Male' ? 'Master' : 'Miss';
+    return gender === 'Male' ? 'Mr.' : 'Mrs.';
+}
+
+function updateNewPatientTitle() {
+    const dob = document.getElementById('new_dob').value;
+    const gender = document.getElementById('new_gender').value;
+    const title = calculateTitle(dob, gender);
+    document.getElementById('new_auto_title').value = title;
+    document.getElementById('new_title_display').value = title;
+}
+
 // Date formatting function
 function formatDateInput(input) {
-    let value = input.value.replace(/\D/g, ''); // Remove non-digits
-    
-    if (value.length >= 2) {
-        value = value.substring(0, 2) + '/' + value.substring(2);
-    }
-    if (value.length >= 5) {
-        value = value.substring(0, 5) + '/' + value.substring(5, 9);
-    }
-    
+    let value = input.value.replace(/\D/g, '');
+    if (value.length >= 2) value = value.substring(0, 2) + '/' + value.substring(2);
+    if (value.length >= 5) value = value.substring(0, 5) + '/' + value.substring(5, 9);
     input.value = value;
 }
 
-// Initialize date formatting on page load
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    const dateInputs = document.querySelectorAll('input[name="date_of_birth"]');
-    dateInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            formatDateInput(this);
-        });
-        
-        // Prevent non-numeric input
-        input.addEventListener('keypress', function(e) {
-            if (!/\d/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter'].includes(e.key)) {
-                e.preventDefault();
-            }
-        });
+    const dobInput = document.getElementById('new_dob');
+    dobInput.addEventListener('input', function() {
+        formatDateInput(this);
+        updateNewPatientTitle();
     });
+    dobInput.addEventListener('keypress', function(e) {
+        if (!/\d/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter'].includes(e.key)) {
+            e.preventDefault();
+        }
+    });
+    document.getElementById('new_gender').addEventListener('change', updateNewPatientTitle);
 });
 
 // Patient search functionality
@@ -287,21 +285,22 @@ function selectReturningPatient(patientId) {
             if (data.error) {
                 throw new Error(data.error);
             }
-            
-            // Fill in the form
+
+            // Auto-calculate title from stored DOB + gender
+            const title = calculateTitle(data.date_of_birth_formatted, data.gender);
+
             document.getElementById('returning_patient_id').value = data.id;
-            document.getElementById('returning_title').value = data.title || '';
+            document.getElementById('returning_title').value = title;
+            document.getElementById('returning_title_display').value = title;
+            document.getElementById('returning_gender_hidden').value = data.gender;
             document.getElementById('returning_full_name').value = data.full_name;
             document.getElementById('returning_contact_number').value = data.contact_number || '';
             document.getElementById('returning_reg_number').value = data.registration_number;
             document.getElementById('returning_dob').value = data.date_of_birth_formatted;
             document.getElementById('returning_consultant_id').value = data.consultant_id;
-            
-            // Show the form
+
             document.getElementById('returningPatientForm').style.display = 'block';
             document.getElementById('searchResults').innerHTML = '';
-            
-            // Focus on weight input
             document.getElementById('returning_weight').focus();
         })
         .catch(error => {
