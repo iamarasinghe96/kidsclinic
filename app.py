@@ -38,6 +38,13 @@ def format_datetime(dt):
 # Add filter to Jinja2 environment
 app.jinja_env.filters['datetime'] = format_datetime
 
+@app.after_request
+def no_cache(response):
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
 with app.app_context():
     # Import models and routes
     import models
