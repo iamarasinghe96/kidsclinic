@@ -502,7 +502,11 @@ def get_patient_details(reg_number):
                                   .filter(Visit.status.in_(['completed', 'completed_archived']))\
                                   .order_by(Visit.visit_date.desc())\
                                   .limit(5).all()
-        
+
+        total_visits = Visit.query.filter_by(patient_id=patient.id)\
+                                  .filter(Visit.status.in_(['completed', 'completed_archived']))\
+                                  .count()
+
         visit_data = []
         for visit in recent_visits:
             visit_info = {
@@ -523,10 +527,11 @@ def get_patient_details(reg_number):
             'registration_number': patient.registration_number,
             'full_name': patient.full_name,
             'parent_name': patient.parent_name,
-            'age': patient.age,  # Just the age number
+            'age': patient.age,
             'gender': patient.gender,
             'date_of_birth': patient.date_of_birth.strftime('%d/%m/%Y'),
             'email': patient.email,
+            'total_visits': total_visits,
             'weight_kg': current_weight,
             'consultant_id': patient.consultant_id,
             'recent_visits': visit_data
