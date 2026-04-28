@@ -503,9 +503,7 @@ def get_patient_details(reg_number):
                                   .order_by(Visit.visit_date.desc())\
                                   .limit(5).all()
 
-        total_visits = Visit.query.filter_by(patient_id=patient.id)\
-                                  .filter(Visit.status.in_(['completed', 'completed_archived']))\
-                                  .count()
+        total_visits = Visit.query.filter_by(patient_id=patient.id).count()
 
         visit_data = []
         for visit in recent_visits:
