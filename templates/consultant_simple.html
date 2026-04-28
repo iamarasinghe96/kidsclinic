@@ -105,28 +105,28 @@
                 </h5>
                 <span class="badge bg-light text-success fs-6">{{ total_completed }}</span>
             </div>
-            <div class="card-body p-2">
+            <div class="card-body">
                 {% if completed_visits %}
-                    <div class="completed-scroll-wrapper">
-                        <div class="completed-scroll">
-                            {% for visit in completed_visits %}
-                                <div class="completed-card flex-shrink-0 card border-success"
+                    <div class="row">
+                        {% for visit in completed_visits %}
+                            <div class="col-md-3 mb-2">
+                                <div class="card border-success"
                                      data-reg-number="{{ visit.patient.registration_number }}"
                                      onmouseenter="showHoverTooltip(event, '{{ visit.patient.registration_number }}')"
                                      onmouseleave="hideHoverTooltip()">
                                     <div class="card-body p-2">
-                                        <h6 class="card-title mb-1" style="white-space:nowrap;">{{ visit.patient.display_name }}</h6>
+                                        <h6 class="card-title mb-1">{{ visit.patient.display_name }}</h6>
                                         <p class="card-text mb-1"><small>{{ visit.patient.registration_number }}</small></p>
                                         <small class="text-success">{{ visit.completed_at.strftime('%H:%M') }}</small>
                                     </div>
                                 </div>
-                            {% endfor %}
-                        </div>
+                            </div>
+                        {% endfor %}
                     </div>
                 {% else %}
-                    <div class="text-center text-muted py-2">
+                    <div class="text-center text-muted">
                         <i data-feather="check-circle"></i>
-                        <p class="mb-0">No completed consultations today</p>
+                        <p>No completed consultations today</p>
                     </div>
                 {% endif %}
             </div>
@@ -503,35 +503,6 @@ document.addEventListener('DOMContentLoaded', function() {
 .card-header {
     font-weight: 600;
 }
-
-/* Horizontal scroll for completed visits */
-.completed-scroll-wrapper {
-    position: relative;
-}
-.completed-scroll-wrapper::after {
-    content: '';
-    position: absolute;
-    top: 0; right: 0;
-    width: 60px; height: 100%;
-    background: linear-gradient(to right, transparent, white);
-    pointer-events: none;
-}
-.completed-scroll {
-    display: flex;
-    overflow-x: auto;
-    gap: 10px;
-    padding-bottom: 6px;
-    scrollbar-width: thin;
-}
-.completed-scroll::-webkit-scrollbar { height: 4px; }
-.completed-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
-.completed-card {
-    min-width: 160px;
-    max-width: 160px;
-    cursor: default;
-    transition: box-shadow 0.15s;
-}
-.completed-card:hover { box-shadow: 0 2px 8px rgba(40,167,69,0.25); }
 
 /* Recent visits horizontal chips */
 .visits-scroll-wrapper {
