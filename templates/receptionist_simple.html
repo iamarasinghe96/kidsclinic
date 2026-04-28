@@ -84,17 +84,26 @@
                                     </select>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label">Address *</label>
-                                    <textarea class="form-control" name="address" rows="2" required></textarea>
+                                <input type="hidden" name="address" id="new_address_combined">
+                                <div class="col-md-4">
+                                    <label class="form-label">Address Line 1 *</label>
+                                    <input type="text" class="form-control" id="new_addr1" placeholder="House No. / Street" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Email Address</label>
+                                <div class="col-md-3">
+                                    <label class="form-label">Address Line 2</label>
+                                    <input type="text" class="form-control" id="new_addr2" placeholder="Village / Area">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">City</label>
+                                    <input type="text" class="form-control" id="new_addr_city" placeholder="City">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Email</label>
                                     <input type="email" class="form-control" name="email" placeholder="Optional">
                                 </div>
                             </div>
                             <div class="d-grid mt-3">
-                                <button type="submit" class="btn btn-primary btn-lg" style="background-color: #8EC641; border-color: #8EC641;">
+                                <button type="submit" class="btn btn-primary btn-lg" style="background-color: #8EC641; border-color: #8EC641;" onclick="combineNewAddress()">
                                     <i data-feather="user-plus" class="me-2"></i>Register New Patient
                                 </button>
                             </div>
@@ -187,6 +196,15 @@ function calculateTitle(dob, gender) {
     if (age <= 5) return 'Baby';
     if (age <= 17) return gender === 'Male' ? 'Master' : 'Miss';
     return gender === 'Male' ? 'Adult Male' : 'Adult Female';
+}
+
+function combineNewAddress() {
+    const parts = [
+        document.getElementById('new_addr1').value.trim(),
+        document.getElementById('new_addr2').value.trim(),
+        document.getElementById('new_addr_city').value.trim()
+    ].filter(p => p);
+    document.getElementById('new_address_combined').value = parts.join(', ');
 }
 
 function updateNewPatientTitle() {
