@@ -184,9 +184,9 @@ function calculateTitle(dob, gender) {
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-    if (age < 2) return 'Baby';
-    if (age < 18) return gender === 'Male' ? 'Master' : 'Miss';
-    return gender === 'Male' ? 'Mr.' : 'Mrs.';
+    if (age <= 5) return 'Baby';
+    if (age <= 17) return gender === 'Male' ? 'Master' : 'Miss';
+    return gender === 'Male' ? 'Adult Male' : 'Adult Female';
 }
 
 function updateNewPatientTitle() {
