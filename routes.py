@@ -1162,16 +1162,16 @@ def update_patient():
         if not patient:
             return jsonify({'success': False, 'error': 'Patient not found'}), 404
         
-        # Update patient information (do not update registration_number as it should remain unchanged)
         patient.title = request.form.get('title', '').strip()
         patient.full_name = request.form['full_name'].strip()
-        
-        # Update contact number if provided
         if request.form.get('contact_number'):
             patient.contact_number = request.form['contact_number'].strip()
-        
-        # Registration numbers are unique identifiers that should not be changed
-        # Visit dates and times are also not touched - they remain unchanged
+        if request.form.get('parent_name') is not None:
+            patient.parent_name = request.form.get('parent_name', '').strip()
+        if request.form.get('email') is not None:
+            patient.email = request.form.get('email', '').strip()
+        if request.form.get('address'):
+            patient.address = request.form.get('address').strip()
         
         db.session.commit()
         app.logger.info(f"Patient updated: {patient.registration_number} - {patient.display_name}")
