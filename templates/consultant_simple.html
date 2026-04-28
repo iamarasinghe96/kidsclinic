@@ -354,8 +354,16 @@ function showHoverTooltip(event, regNumber) {
 }
 
 function renderTooltip(tooltip, data, event) {
+    const titleColors = {
+        'Baby': '#fd7e14', 'Master': '#0d6efd', 'Miss': '#d63384',
+        'Adult Male': '#198754', 'Adult Female': '#6f42c1'
+    };
+    const titleColor = titleColors[data.calc_title] || '#6c757d';
     tooltip.innerHTML = `
-        <div class="fw-bold mb-1">${data.full_name}</div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="fw-bold">${data.full_name}</span>
+            <span style="background:${titleColor};color:white;border-radius:10px;padding:1px 8px;font-size:0.72rem;white-space:nowrap;">${data.calc_title}</span>
+        </div>
         <div class="text-muted small">${data.registration_number}</div>
         <hr class="my-1">
         <div class="small">Age: ${data.age} yrs &nbsp;|&nbsp; ${data.gender}</div>
