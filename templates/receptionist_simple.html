@@ -3,36 +3,27 @@
 {% block title %}Patient Registration - The Kids Clinic{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h3 class="text-nowrap mb-0">
-        <i data-feather="user-plus" class="me-2"></i>Patient Registration
-    </h3>
-</div>
-
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header" style="background-color: #8EC641; color: white;">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #8EC641; color: white;">
                 <h5 class="mb-0">
                     <i data-feather="user-plus"></i>
                     Patient Registration
                 </h5>
+                <div class="btn-group" role="group" id="registrationTabs">
+                    <button class="btn btn-light active" id="new-patient-tab" data-bs-toggle="tab"
+                            data-bs-target="#new-patient" type="button" role="tab"
+                            style="font-weight:600;">
+                        <i data-feather="user-plus"></i> New Patient
+                    </button>
+                    <button class="btn btn-outline-light" id="returning-patient-tab" data-bs-toggle="tab"
+                            data-bs-target="#returning-patient" type="button" role="tab">
+                        <i data-feather="repeat"></i> Returning Patient
+                    </button>
+                </div>
             </div>
             <div class="card-body">
-                <ul class="nav nav-tabs" id="registrationTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="new-patient-tab" data-bs-toggle="tab"
-                                data-bs-target="#new-patient" type="button" role="tab">
-                            <i data-feather="user-plus"></i> New Patient
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="returning-patient-tab" data-bs-toggle="tab"
-                                data-bs-target="#returning-patient" type="button" role="tab">
-                            <i data-feather="repeat"></i> Returning Patient
-                        </button>
-                    </li>
-                </ul>
 
                 <div class="tab-content mt-3" id="registrationTabContent">
                     <!-- New Patient Registration -->
@@ -186,13 +177,17 @@
                                     </div>
                                 </div>
 
-                                <div class="d-grid gap-2 mt-3">
-                                    <button type="submit" class="btn btn-success btn-lg" onclick="combineRetAddress()">
-                                        <i data-feather="plus-circle" class="me-2"></i>Add to Today's Queue
-                                    </button>
-                                    <button type="button" class="btn btn-warning btn-lg" onclick="savePatientChanges()">
-                                        <i data-feather="save" class="me-2"></i>Save Changes
-                                    </button>
+                                <div class="row g-2 mt-3">
+                                    <div class="col-6">
+                                        <button type="submit" class="btn btn-success btn-lg w-100" onclick="combineRetAddress()">
+                                            <i data-feather="plus-circle" class="me-2"></i>Add to Today's Queue
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        <button type="button" class="btn btn-warning btn-lg w-100" onclick="savePatientChanges()">
+                                            <i data-feather="save" class="me-2"></i>Save Changes
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -435,11 +430,23 @@ function showNotification(message, type) {
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
     
-    // Handle tab switching
+    // Handle tab switching — swap button styles
     document.getElementById('new-patient-tab').addEventListener('click', function() {
+        this.classList.replace('btn-outline-light', 'btn-light');
+        this.style.fontWeight = '600';
+        const ret = document.getElementById('returning-patient-tab');
+        ret.classList.replace('btn-light', 'btn-outline-light');
+        ret.style.fontWeight = '';
         document.getElementById('searchResults').innerHTML = '';
         document.getElementById('returningPatientForm').style.display = 'none';
         document.getElementById('patientSearch').value = '';
+    });
+    document.getElementById('returning-patient-tab').addEventListener('click', function() {
+        this.classList.replace('btn-outline-light', 'btn-light');
+        this.style.fontWeight = '600';
+        const np = document.getElementById('new-patient-tab');
+        np.classList.replace('btn-light', 'btn-outline-light');
+        np.style.fontWeight = '';
     });
 });
 
