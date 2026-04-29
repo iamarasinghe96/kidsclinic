@@ -237,6 +237,7 @@
 
         case 'christian':
             createShimmer(60);
+            createStars(40, 'star');
             break;
 
         case 'public_holiday':
