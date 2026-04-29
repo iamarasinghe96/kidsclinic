@@ -546,6 +546,36 @@ def get_patient_details(reg_number):
         })
     return jsonify({'error': 'Patient not found'}), 404
 
+@app.route('/get_queue_state/<int:consultant_id>')
+def get_queue_state(consultant_id):
+    """Return current waiting and completed lists for live queue diffing."""
+    today = date.today()
+    waiting = Visit.query.filter(
+        Visit.consultant_id == consultant_id,
+        Visit.status == 'waiting',
+        func.date(Visit.visit_date) == today
+    ).order_by(Visit.visit_date.asc()).all()
+
+    completed = Visit.query.filter(
+        Visit.consultant_id == consultant_id,
+        Visit.status == 'completed',
+        func.date(Visit.visit_date) == today
+    ).order_by(Visit.completed_at.desc()).all()
+
+    return jsonify({
+        'waiting': [{
+            'reg':    v.patient.registration_number,
+            'name':   v.patient.display_name,
+            'time':   v.visit_date.strftime('%H:%M'),
+            'weight': v.weight_kg
+        } for v in waiting],
+        'completed': [{
+            'reg':  v.patient.registration_number,
+            'name': v.patient.display_name,
+            'time': v.completed_at.strftime('%H:%M') if v.completed_at else ''
+        } for v in completed]
+    })
+
 @app.route('/get_patient_info_html/<reg_number>')
 def get_patient_info_html(reg_number):
     """Return server-rendered HTML for the patient info panel."""

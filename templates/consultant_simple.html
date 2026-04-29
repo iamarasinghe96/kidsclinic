@@ -36,11 +36,11 @@
                     <i data-feather="clock"></i>
                     Waiting Queue
                 </h5>
-                <span class="badge bg-light text-dark fs-6">{{ total_waiting }}</span>
+                <span id="waitingBadge" class="badge bg-light text-dark fs-6">{{ total_waiting }}</span>
             </div>
-            <div class="card-body">
+            <div class="card-body" id="waitingQueueBody">
                 {% if waiting_visits %}
-                    <div class="list-group">
+                    <div class="list-group" id="waitingQueueList">
                         {% for visit in waiting_visits %}
                             <div class="list-group-item patient-item d-flex justify-content-between align-items-center"
                                  data-reg-number="{{ visit.patient.registration_number }}"
@@ -64,7 +64,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="text-center text-muted">
+                    <div id="waitingQueueList" class="text-center text-muted">
                         <i data-feather="users"></i>
                         <p>No patients waiting</p>
                     </div>
@@ -103,15 +103,14 @@
                     <i data-feather="check-circle"></i>
                     Completed Today
                 </h5>
-                <span class="badge bg-light text-success fs-6">{{ total_completed }}</span>
+                <span id="completedBadge" class="badge bg-light text-success fs-6">{{ total_completed }}</span>
             </div>
-            <div class="card-body">
+            <div class="card-body" id="completedQueueBody">
                 {% if completed_visits %}
-                    <div class="row">
+                    <div class="row" id="completedQueueGrid">
                         {% for visit in completed_visits %}
-                            <div class="col-md-3 mb-2">
+                            <div class="col-md-3 mb-2 completed-col" data-reg-number="{{ visit.patient.registration_number }}">
                                 <div class="card border-success"
-                                     data-reg-number="{{ visit.patient.registration_number }}"
                                      onmouseenter="showHoverTooltip(event, '{{ visit.patient.registration_number }}')"
                                      onmouseleave="hideHoverTooltip()">
                                     <div class="card-body p-2">
@@ -124,7 +123,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="text-center text-muted">
+                    <div id="completedQueueGrid" class="text-center text-muted">
                         <i data-feather="check-circle"></i>
                         <p>No completed consultations today</p>
                     </div>
@@ -146,139 +145,207 @@
 {% endif %}
 
 <script>
-// Simple consultant view JavaScript - read-only interface
-let currentSelectedPatient = null;
-const consultantId = {{ selected_consultant_id }};
+var currentSelectedPatient = null;
+var consultantId = {{ selected_consultant_id }};
+var lastWaitingKey = null;
+var lastCompletedKey = null;
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    checkInitialQueueState();
-});
+// ── Queue state polling (replaces 30-second full reload) ─────────────────────
+function pollQueueState() {
+    fetch('/get_queue_state/' + consultantId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var newWaitingKey  = data.waiting.map(function(p) { return p.reg; }).join(',');
+            var newCompletedKey = data.completed.map(function(p) { return p.reg; }).join(',');
 
-// Check initial queue state on page load
-function checkInitialQueueState() {
-    const queueItems = document.querySelectorAll('.patient-item');
-    const hasPatients = queueItems.length > 0;
-    
-    if (!hasPatients) {
-        // No patients in queue - ensure patient display is cleared
-        console.log('[CONSULTANT] Page loaded with empty queue - clearing display');
-        clearPatientDisplay();
+            if (newWaitingKey !== lastWaitingKey) {
+                lastWaitingKey = newWaitingKey;
+                updateWaitingQueue(data.waiting);
+            }
+            if (newCompletedKey !== lastCompletedKey) {
+                lastCompletedKey = newCompletedKey;
+                updateCompletedSection(data.completed);
+            }
+        })
+        .catch(function() {});
+}
+setInterval(pollQueueState, 5000);
+
+// ── Update waiting queue (smooth add/remove) ─────────────────────────────────
+function updateWaitingQueue(patients) {
+    document.getElementById('waitingBadge').textContent = patients.length;
+    var body = document.getElementById('waitingQueueBody');
+
+    if (patients.length === 0) {
+        body.innerHTML = '<div id="waitingQueueList" class="text-center text-muted py-3">' +
+            '<p class="mb-0">No patients waiting</p></div>';
+        if (currentSelectedPatient) clearPatientDisplay();
+        return;
+    }
+
+    var list = document.getElementById('waitingQueueList');
+    if (!list || !list.classList.contains('list-group')) {
+        body.innerHTML = '<div class="list-group" id="waitingQueueList"></div>';
+        list = document.getElementById('waitingQueueList');
+    }
+
+    var existing = Array.from(list.querySelectorAll('.patient-item')).map(function(el) {
+        return el.dataset.regNumber;
+    });
+    var incoming = patients.map(function(p) { return p.reg; });
+
+    // Fade out removed patients
+    existing.forEach(function(reg) {
+        if (incoming.indexOf(reg) === -1) {
+            var el = list.querySelector('[data-reg-number="' + reg + '"]');
+            if (el) { el.style.transition = 'opacity 0.35s'; el.style.opacity = '0';
+                setTimeout(function() { if (el.parentNode) el.remove(); }, 360); }
+            if (currentSelectedPatient === reg) clearPatientDisplay();
+        }
+    });
+
+    // Fade in new patients (prepend so newest appears at top if added urgently)
+    patients.forEach(function(patient) {
+        if (existing.indexOf(patient.reg) === -1) {
+            var el = buildWaitingItem(patient);
+            el.style.opacity = '0';
+            list.appendChild(el);
+            requestAnimationFrame(function() {
+                el.style.transition = 'opacity 0.35s';
+                el.style.opacity = '1';
+                feather.replace();
+            });
+        }
+    });
+
+    // Re-highlight selected patient
+    if (currentSelectedPatient) {
+        var sel = list.querySelector('[data-reg-number="' + currentSelectedPatient + '"]');
+        if (sel) sel.classList.add('active');
     }
 }
 
-// Check for selected patient from receptionist every 3 seconds
-setInterval(function() {
-    // First check if there are any patients in the queue
-    const queueItems = document.querySelectorAll('.patient-item');
-    const hasPatients = queueItems.length > 0;
-    
-    if (!hasPatients && currentSelectedPatient) {
-        // No patients in queue - clear patient display
-        console.log('[CONSULTANT] No patients in queue - clearing display');
-        clearPatientDisplay();
+function buildWaitingItem(patient) {
+    var div = document.createElement('div');
+    div.className = 'list-group-item patient-item d-flex justify-content-between align-items-center';
+    div.dataset.regNumber = patient.reg;
+    div.addEventListener('mouseenter', function(e) { showHoverTooltip(e, patient.reg); });
+    div.addEventListener('mouseleave', hideHoverTooltip);
+    div.innerHTML =
+        '<div style="flex:1;">' +
+            '<div class="d-flex justify-content-between">' +
+                '<h6 class="mb-1">' + patient.name + '</h6>' +
+                '<small>' + patient.time + '</small>' +
+            '</div>' +
+            '<p class="mb-0">Reg: ' + patient.reg + '</p>' +
+            (patient.weight ? '<small class="text-muted">Weight: ' + patient.weight + ' kg</small>' : '') +
+        '</div>' +
+        '<button class="btn btn-success btn-sm ms-3 flex-shrink-0" onclick="completeConsultation(\'' + patient.reg + '\', event)">' +
+            '<i data-feather="check" style="width:14px;height:14px;"></i> Done' +
+        '</button>';
+    return div;
+}
+
+// ── Update completed section ─────────────────────────────────────────────────
+function updateCompletedSection(completed) {
+    document.getElementById('completedBadge').textContent = completed.length;
+    var body = document.getElementById('completedQueueBody');
+
+    if (completed.length === 0) {
+        body.innerHTML = '<div id="completedQueueGrid" class="text-center text-muted">' +
+            '<p>No completed consultations today</p></div>';
         return;
     }
-    
-    fetch(`/get_selected_patient/${consultantId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.registration_number && data.registration_number !== currentSelectedPatient) {
-                console.log('[CONSULTANT] New patient selected by receptionist:', data.registration_number);
-                showPatientDetails(data.registration_number);
-            } else if (!data.registration_number && currentSelectedPatient) {
-                // Receptionist cleared selection - clear consultant view
-                console.log('[CONSULTANT] Patient selection cleared by receptionist');
-                clearPatientDisplay();
-            }
-        })
-        .catch(error => {
-            console.error('[CONSULTANT] Error checking selected patient:', error);
-        });
-}, 3000);
 
-// Clear patient display function
+    var grid = document.getElementById('completedQueueGrid');
+    if (!grid || !grid.classList.contains('row')) {
+        body.innerHTML = '<div class="row" id="completedQueueGrid"></div>';
+        grid = document.getElementById('completedQueueGrid');
+    }
+
+    var existing = Array.from(grid.querySelectorAll('.completed-col')).map(function(el) {
+        return el.dataset.regNumber;
+    });
+    var incoming = completed.map(function(p) { return p.reg; });
+
+    // Add new completed cards with fade-in
+    completed.forEach(function(patient) {
+        if (existing.indexOf(patient.reg) === -1) {
+            var col = document.createElement('div');
+            col.className = 'col-md-3 mb-2 completed-col';
+            col.dataset.regNumber = patient.reg;
+            col.style.opacity = '0';
+            col.innerHTML =
+                '<div class="card border-success" onmouseenter="showHoverTooltip(event,\'' + patient.reg + '\')" onmouseleave="hideHoverTooltip()">' +
+                    '<div class="card-body p-2">' +
+                        '<h6 class="card-title mb-1">' + patient.name + '</h6>' +
+                        '<p class="card-text mb-1"><small>' + patient.reg + '</small></p>' +
+                        '<small class="text-success">' + patient.time + '</small>' +
+                    '</div>' +
+                '</div>';
+            grid.prepend(col);
+            requestAnimationFrame(function() {
+                col.style.transition = 'opacity 0.4s';
+                col.style.opacity = '1';
+            });
+        }
+    });
+}
+
+// ── Patient info panel ───────────────────────────────────────────────────────
 function clearPatientDisplay() {
-    document.getElementById('patientInfo').innerHTML = 
+    document.getElementById('patientInfo').innerHTML =
         '<div class="text-center text-muted">' +
             '<i data-feather="user"></i>' +
             '<p>Patient information will appear when receptionist selects a patient</p>' +
         '</div>';
-    
-    // Remove active state from all items
-    document.querySelectorAll('.patient-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
+    document.querySelectorAll('.patient-item').forEach(function(item) { item.classList.remove('active'); });
     currentSelectedPatient = null;
     feather.replace();
 }
 
-// Auto-refresh page every 30 seconds to update queues
-setInterval(function() {
-    window.location.reload();
-}, 30000);
-
-// Show patient details (automatically triggered by receptionist selection)
 function showPatientDetails(regNumber) {
-    // Remove active state from all items
-    document.querySelectorAll('.patient-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    // Add active state to selected item
-    const selectedItem = document.querySelector(`[data-reg-number="${regNumber}"]`);
-    if (selectedItem) {
-        selectedItem.classList.add('active');
-    }
-    
-    // Load server-rendered patient info HTML (avoids any client-side caching issues)
+    document.querySelectorAll('.patient-item').forEach(function(item) { item.classList.remove('active'); });
+    var sel = document.querySelector('[data-reg-number="' + regNumber + '"]');
+    if (sel) sel.classList.add('active');
     fetch('/get_patient_info_html/' + regNumber)
-        .then(function(response) { return response.text(); })
+        .then(function(r) { return r.text(); })
         .then(function(html) {
             document.getElementById('patientInfo').innerHTML = html;
             currentSelectedPatient = regNumber;
             feather.replace();
         })
-        .catch(function(error) {
-            console.error('[CONSULTANT] Error loading patient info:', error);
+        .catch(function() {
             document.getElementById('patientInfo').innerHTML = '<div class="alert alert-warning">Could not load patient information.</div>';
         });
 }
 
-// Display patient information
-function displayPatientInfo(patient) {
-    var genderWeight = patient.weight_kg ? (patient.gender + ', ' + patient.weight_kg + ' kg') : patient.gender;
-    var visitCount = patient.total_visits || 0;
-    var visitLabel = visitCount !== 1 ? 'visits' : 'visit';
+// Poll for receptionist-selected patient every 4 seconds
+setInterval(function() {
+    fetch('/get_selected_patient/' + consultantId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.registration_number && data.registration_number !== currentSelectedPatient) {
+                showPatientDetails(data.registration_number);
+            } else if (!data.registration_number && currentSelectedPatient) {
+                clearPatientDisplay();
+            }
+        })
+        .catch(function() {});
+}, 4000);
 
-    var visitsHtml = '';
-    if (patient.recent_visits && patient.recent_visits.length > 0) {
-        patient.recent_visits.forEach(function(visit) {
-            visitsHtml += '<span class="visit-chip">' + visit.date + (visit.weight ? ' · ' + visit.weight : '') + '</span>';
-        });
-    } else {
-        visitsHtml = '<span class="text-muted small">No previous visits</span>';
-    }
-
-    var html = '<div class="patient-details">';
-    html += '<div class="info-row mb-2"><span class="fw-bold">Registration #:</span><span class="ms-2">' + patient.registration_number + '</span></div>';
-    html += '<div class="info-row mb-2"><span class="fw-bold">Name:</span><span class="ms-2">' + patient.full_name + '</span></div>';
-    if (patient.parent_name) {
-        html += '<div class="info-row mb-2"><span class="fw-bold">Parent:</span><span class="ms-2">' + patient.parent_name + '</span></div>';
-    }
-    html += '<div class="info-row mb-2"><span class="fw-bold">Date of Birth:</span><span class="ms-2">' + patient.date_of_birth + ' (' + patient.age + ' years)</span></div>';
-    html += '<div class="info-row mb-2"><span class="fw-bold">Gender/Weight:</span><span class="ms-2">' + genderWeight + '</span></div>';
-    if (patient.email) {
-        html += '<div class="info-row mb-2"><span class="fw-bold">Email:</span><span class="ms-2">' + patient.email + '</span></div>';
-    }
-    html += '<div class="mt-3">';
-    html += '<h6>Recent Visits: <span class="badge bg-secondary">' + visitCount + ' ' + visitLabel + '</span></h6>';
-    html += '<div class="visits-scroll-wrapper"><div class="visits-scroll">' + visitsHtml + '</div></div>';
-    html += '</div></div>';
-
-    document.getElementById('patientInfo').innerHTML = html;
-    feather.replace();
+// ── Complete consultation (no page reload) ───────────────────────────────────
+function completeConsultation(regNumber, event) {
+    event.stopPropagation();
+    var btn = event.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = '...';
+    var formData = new FormData();
+    formData.append('registration_number', regNumber);
+    fetch('/mark_complete', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function() { pollQueueState(); })
+        .catch(function() { pollQueueState(); });
 }
 
 // Complete consultation from consultant view
