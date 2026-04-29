@@ -1,4 +1,5 @@
 import os
+import time
 import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -37,6 +38,11 @@ def format_datetime(dt):
 
 # Add filter to Jinja2 environment
 app.jinja_env.filters['datetime'] = format_datetime
+
+# Unique ID stamped into every page so browsers detect a server restart
+# and hard-reload instead of serving cached JavaScript
+SERVER_BOOT_ID = str(int(time.time()))
+app.jinja_env.globals['server_boot_id'] = SERVER_BOOT_ID
 
 @app.after_request
 def no_cache(response):
