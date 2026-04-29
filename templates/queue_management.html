@@ -544,7 +544,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (savedPatientElement) {
                 console.log('[QUEUE] Restoring selected patient after page refresh:', savedPatientRegNumber);
                 showPatientDetails(savedPatientRegNumber);
-                showNotification(`Restored selection: ${savedPatientElement.querySelector('h6').textContent}`, 'info');
             } else {
                 // Patient no longer in queue, clear saved selection
                 localStorage.removeItem('selectedPatientRegNumber');
