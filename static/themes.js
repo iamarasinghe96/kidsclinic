@@ -154,7 +154,30 @@
     function createFlag() {
         var f = document.createElement('div');
         f.className = 'independence-flag';
-        f.textContent = '🇱🇰';
+        f.innerHTML =
+            '<svg width="58" height="38" viewBox="0 0 58 38" xmlns="http://www.w3.org/2000/svg">' +
+            // Gold outer border
+            '<rect width="58" height="38" rx="3" fill="#FAC80A"/>' +
+            // Saffron stripe
+            '<rect x="2.5" y="2.5" width="9" height="33" fill="#E88200"/>' +
+            // Green stripe
+            '<rect x="11.5" y="2.5" width="9" height="33" fill="#00843D"/>' +
+            // Maroon field
+            '<rect x="20.5" y="2.5" width="35" height="33" fill="#8D153A"/>' +
+            // Bo leaves — diamond shapes in each corner of the maroon area
+            '<polygon points="24,6.5 26,8.5 24,10.5 22,8.5" fill="#FAC80A"/>' +
+            '<polygon points="52,6.5 54,8.5 52,10.5 50,8.5" fill="#FAC80A"/>' +
+            '<polygon points="24,27.5 26,29.5 24,31.5 22,29.5" fill="#FAC80A"/>' +
+            '<polygon points="52,27.5 54,29.5 52,31.5 50,29.5" fill="#FAC80A"/>' +
+            // Sword (vertical)
+            '<rect x="36" y="10" width="2" height="18" rx="1" fill="#FAC80A"/>' +
+            // Lion head
+            '<circle cx="37" cy="14" r="4" fill="#FAC80A"/>' +
+            // Lion body
+            '<rect x="33" y="17" width="8" height="7" rx="2" fill="#FAC80A"/>' +
+            // Tail
+            '<path d="M41 22 Q47 18 45 12" stroke="#FAC80A" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
+            '</svg>';
         document.body.appendChild(f);
     }
 
