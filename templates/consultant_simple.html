@@ -257,57 +257,36 @@ function showPatientDetails(regNumber) {
 
 // Display patient information
 function displayPatientInfo(patient) {
-    const genderWeight = patient.weight_kg ? 
-        `${patient.gender}, ${patient.weight_kg} kg` : 
-        patient.gender;
-    
-    const patientInfo = document.getElementById('patientInfo');
-    patientInfo.innerHTML = `
-        <div class="patient-details">
-            <div class="info-row mb-2">
-                <span class="fw-bold">Registration #:</span>
-                <span class="ms-2">${patient.registration_number}</span>
-            </div>
-            <div class="info-row mb-2">
-                <span class="fw-bold">Name:</span>
-                <span class="ms-2">${patient.full_name}</span>
-            </div>
-            ${patient.parent_name ? `
-            <div class="info-row mb-2">
-                <span class="fw-bold">Parent:</span>
-                <span class="ms-2">${patient.parent_name}</span>
-            </div>
-            ` : ''}
-            <div class="info-row mb-2">
-                <span class="fw-bold">Date of Birth:</span>
-                <span class="ms-2">${patient.date_of_birth} (${patient.age} years)</span>
-            </div>
-            <div class="info-row mb-2">
-                <span class="fw-bold">Gender/Weight:</span>
-                <span class="ms-2">${genderWeight}</span>
-            </div>
-            ${patient.email ? `
-            <div class="info-row mb-2">
-                <span class="fw-bold">Email:</span>
-                <span class="ms-2">${patient.email}</span>
-            </div>
-            ` : ''}
-            
-            <div class="mt-3">
-                <h6>Recent Visits: <span class="badge bg-secondary">${patient.total_visits || 0} visit${patient.total_visits !== 1 ? 's' : ''}</span></h6>
-                <div class="visits-scroll-wrapper">
-                    <div class="visits-scroll">
-                        ${patient.recent_visits && patient.recent_visits.length > 0 ?
-                            patient.recent_visits.map(visit => `
-                                <span class="visit-chip">${visit.date}${visit.weight ? ' · ' + visit.weight : ''}</span>
-                            `).join('') :
-                            '<span class="text-muted small">No previous visits</span>'
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+    var genderWeight = patient.weight_kg ? (patient.gender + ', ' + patient.weight_kg + ' kg') : patient.gender;
+    var visitCount = patient.total_visits || 0;
+    var visitLabel = visitCount !== 1 ? 'visits' : 'visit';
+
+    var visitsHtml = '';
+    if (patient.recent_visits && patient.recent_visits.length > 0) {
+        patient.recent_visits.forEach(function(visit) {
+            visitsHtml += '<span class="visit-chip">' + visit.date + (visit.weight ? ' · ' + visit.weight : '') + '</span>';
+        });
+    } else {
+        visitsHtml = '<span class="text-muted small">No previous visits</span>';
+    }
+
+    var html = '<div class="patient-details">';
+    html += '<div class="info-row mb-2"><span class="fw-bold">Registration #:</span><span class="ms-2">' + patient.registration_number + '</span></div>';
+    html += '<div class="info-row mb-2"><span class="fw-bold">Name:</span><span class="ms-2">' + patient.full_name + '</span></div>';
+    if (patient.parent_name) {
+        html += '<div class="info-row mb-2"><span class="fw-bold">Parent:</span><span class="ms-2">' + patient.parent_name + '</span></div>';
+    }
+    html += '<div class="info-row mb-2"><span class="fw-bold">Date of Birth:</span><span class="ms-2">' + patient.date_of_birth + ' (' + patient.age + ' years)</span></div>';
+    html += '<div class="info-row mb-2"><span class="fw-bold">Gender/Weight:</span><span class="ms-2">' + genderWeight + '</span></div>';
+    if (patient.email) {
+        html += '<div class="info-row mb-2"><span class="fw-bold">Email:</span><span class="ms-2">' + patient.email + '</span></div>';
+    }
+    html += '<div class="mt-3">';
+    html += '<h6>Recent Visits: <span class="badge bg-secondary">' + visitCount + ' ' + visitLabel + '</span></h6>';
+    html += '<div class="visits-scroll-wrapper"><div class="visits-scroll">' + visitsHtml + '</div></div>';
+    html += '</div></div>';
+
+    document.getElementById('patientInfo').innerHTML = html;
     feather.replace();
 }
 
