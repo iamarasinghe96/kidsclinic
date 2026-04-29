@@ -325,9 +325,12 @@ setInterval(function() {
     fetch('/get_selected_patient/' + consultantId)
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            if (data.registration_number && data.registration_number !== currentSelectedPatient) {
-                showPatientDetails(data.registration_number);
-            } else if (!data.registration_number && currentSelectedPatient) {
+            var reg = data.registration_number;
+            // Only show if patient is still physically in the waiting queue
+            var stillWaiting = reg && document.querySelector('#waitingQueueList [data-reg-number="' + reg + '"]');
+            if (stillWaiting && reg !== currentSelectedPatient) {
+                showPatientDetails(reg);
+            } else if ((!reg || !stillWaiting) && currentSelectedPatient) {
                 clearPatientDisplay();
             }
         })
