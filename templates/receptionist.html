@@ -257,9 +257,6 @@
                             <button class="btn btn-sm btn-outline-primary" onclick="printPatientInfo()" id="printBtn">
                                 <i data-feather="printer"></i> Print
                             </button>
-                            <button class="btn btn-sm btn-warning" onclick="endShift()" id="endShiftBtn">
-                                <i data-feather="log-out"></i> End Shift
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -269,32 +266,6 @@
 </div>
 
 
-
-<!-- Shift Summary Modal -->
-<div class="modal fade" id="shiftSummaryModal" tabindex="-1" aria-labelledby="shiftSummaryModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="shiftSummaryModalLabel">
-                    <i data-feather="check-circle"></i>
-                    Shift Summary
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-                <div id="summaryContent">
-                    <!-- Content will be populated by JavaScript -->
-                </div>
-            </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="window.location.href='/receptionist'">
-                    <i data-feather="check"></i>
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Patient Details Modal -->
 <div class="modal fade" id="patientDetailsModal" tabindex="-1">
@@ -789,109 +760,6 @@ function printPatientInfo() {
         });
 }
 
-// Enhanced end shift functionality for receptionist
-async function endShift() {
-    if (!currentPatientRegNumber) {
-        alert('Please select a patient first to identify the consultant');
-        return;
-    }
-    
-    if (!confirm('Are you sure you want to end this shift? This will clear completed consultations and generate a shift summary.')) {
-        return;
-    }
-    
-    // Find consultant ID from selected patient
-    try {
-        const response = await fetch(`/get_patient_details/${currentPatientRegNumber}`);
-        const patientData = await response.json();
-        
-        if (patientData.error) {
-            alert('Error identifying consultant. Please select a patient first.');
-            return;
-        }
-        
-        const consultantId = patientData.consultant_id;
-        
-        // Disable the button to prevent multiple clicks
-        const endShiftBtn = document.getElementById('endShiftBtn');
-        const originalHtml = endShiftBtn.innerHTML;
-        endShiftBtn.disabled = true;
-        endShiftBtn.innerHTML = '<i data-feather="loader"></i> Ending Shift...';
-        feather.replace();
-        
-        const formData = new FormData();
-        formData.append('consultant_id', consultantId);
-        
-        const shiftResponse = await fetch('/end_shift', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await shiftResponse.json();
-        
-        if (shiftResponse.ok) {
-            showShiftSummary(data);
-        } else {
-            alert('Error ending shift: ' + (data.error || 'Unknown error'));
-            endShiftBtn.disabled = false;
-            endShiftBtn.innerHTML = originalHtml;
-            feather.replace();
-        }
-    } catch (error) {
-        console.error('Error ending shift:', error);
-        alert('Error ending shift. Please try again.');
-        document.getElementById('endShiftBtn').disabled = false;
-        document.getElementById('endShiftBtn').innerHTML = '<i data-feather="log-out"></i> End Shift';
-        feather.replace();
-    }
-}
-
-function showShiftSummary(data) {
-    const summaryContent = document.getElementById('summaryContent');
-    
-    // Create animated summary content with earnings
-    summaryContent.innerHTML = `
-        <div class="shift-summary-animation">
-            <div class="mb-4">
-                <div class="display-4 text-success mb-3 animate-number" data-target="${data.total_completed}">0</div>
-                <h5>Consultations Completed</h5>
-            </div>
-            
-            <div class="row text-center mb-4">
-                <div class="col-md-4">
-                    <div class="card bg-light h-100">
-                        <div class="card-body d-flex flex-column justify-content-center" style="min-height: 100px;">
-                            <div class="h3 text-warning animate-number mb-2" data-target="${data.remaining_patients}">0</div>
-                            <small>Remaining Patients</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-light h-100">
-                        <div class="card-body d-flex flex-column justify-content-center" style="min-height: 100px;">
-                            <div class="h3 text-success mb-2">LKR ${data.total_earnings.toFixed(2)}</div>
-                            <small>Total Earnings</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-light h-100">
-                        <div class="card-body d-flex flex-column justify-content-center" style="min-height: 100px;">
-                            <div class="h3 text-muted mb-2">${data.shift_date}</div>
-                            <small>Shift Date</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('shiftSummaryModal'));
-    modal.show();
-    
-    feather.replace();
-}
 
 // Load patient details for returning patient
 function loadPatientDetails() {

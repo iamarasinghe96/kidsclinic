@@ -6,16 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="text-nowrap mb-0">
         <i data-feather="users" class="me-2"></i>Queue Management
-        <small class="text-muted ms-2" id="lastUpdate"></small>
     </h3>
-    <div class="btn-group">
-        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshNow()" title="Refresh queue now">
-            <i data-feather="refresh-cw" class="me-1"></i>Refresh
-        </button>
-        <button type="button" class="btn btn-outline-warning" onclick="endShift()" title="End shift and clear queue">
-            <i data-feather="power" class="me-2"></i>End Shift
-        </button>
-    </div>
 </div>
 
 <div class="row">
@@ -469,36 +460,9 @@ function resetPatientDisplay() {
     });
 }
 
-// End shift function
-function endShift() {
-    if (confirm('⚠️ END SHIFT: This will clear all waiting patients and mark shift as ended. Continue?')) {
-        if (confirm('This action cannot be undone. All non-completed consultations will be cleared. Proceed?')) {
-            fetch('/end_shift', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Set queue as empty after shift end
-                    localStorage.setItem('queueWasEmpty', 'true');
-                    alert('✅ Shift ended successfully!');
-                    window.location.reload();
-                } else {
-                    alert('❌ Error ending shift: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error ending shift:', error);
-                alert('❌ Error ending shift. Please try again.');
-            });
-        }
-    }
-}
-
 // Initialize feather icons and restore selection when page loads
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
-    updateLastRefreshTime();
     
     // Check for auto-selection after consultation completion
     const autoSelectNext = localStorage.getItem('autoSelectNextPatient');
@@ -607,7 +571,7 @@ function checkForNewRegistrations() {
                 localStorage.setItem('previousPatientCount', currentPatientCount.toString());
                 
                 showNotification('New patient registered! Refreshing queue...', 'success');
-                setTimeout(() => refreshNow(), 1000);
+                setTimeout(() => window.location.reload(), 1000);
             }
         })
         .catch(error => {
@@ -627,32 +591,12 @@ window.addEventListener('storage', function(e) {
         
         showNotification('New patient registered! Refreshing queue...', 'success');
         setTimeout(() => {
-            // Clear the trigger
             localStorage.removeItem('queueRefreshTrigger');
-            refreshNow();
+            window.location.reload();
         }, 500);
     }
 });
 
-// Update last refresh time
-function updateLastRefreshTime() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', {hour12: true, timeStyle: 'short'});
-    document.getElementById('lastUpdate').textContent = `(Updated: ${timeString})`;
-}
-
-// Manual refresh function
-function refreshNow() {
-    updateLastRefreshTime();
-    window.location.reload();
-}
-
-// Refresh queue immediately after patient actions
-function refreshQueue() {
-    setTimeout(function() {
-        refreshNow();
-    }, 1000);
-}
 </script>
 
 <style>
