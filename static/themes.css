@@ -44,7 +44,8 @@
 [data-theme="poya"] .holiday-badge,
 [data-theme="vesak"] .holiday-badge,
 [data-theme="islamic"] .holiday-badge,
-[data-theme="pongal"] .holiday-badge {
+[data-theme="pongal"] .holiday-badge,
+[data-theme="independence"] .holiday-badge {
     right: 70px;
 }
 
@@ -234,20 +235,17 @@
 }
 
 /* =====================================================
-   INDEPENDENCE — gold ribbon streamers
+   INDEPENDENCE — Sri Lanka flag in corner
    ===================================================== */
-@keyframes streamerFall {
-    0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
-    100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
-}
-
-.streamer {
-    position: absolute;
-    top: -20px;
-    width: 6px;
-    height: 20px;
-    border-radius: 3px;
-    animation: streamerFall linear infinite;
+.independence-flag {
+    position: fixed;
+    top: 9px;
+    right: 8px;
+    font-size: 2.4rem;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 9992;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
 }
 
 /* =====================================================

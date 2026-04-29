@@ -135,17 +135,11 @@
         document.body.appendChild(sun);
     }
 
-    function createStreamers(n) {
-        n = n || 40;
-        var colors = ['#ffd700','#ff4444','#ffffff','#4488ff'];
-        for (var i = 0; i < n; i++) {
-            var s = el('div', 'streamer');
-            s.style.left               = rand(0, 100) + '%';
-            s.style.background         = colors[Math.floor(Math.random() * colors.length)];
-            s.style.animationDuration  = rand(5, 11) + 's';
-            s.style.animationDelay     = rand(0, 9)  + 's';
-            overlay.appendChild(s);
-        }
+    function createFlag() {
+        var f = document.createElement('div');
+        f.className = 'independence-flag';
+        f.textContent = '🇱🇰';
+        document.body.appendChild(f);
     }
 
     function createShimmer(n) {
@@ -194,11 +188,12 @@
             break;
 
         case 'independence':
-            createStreamers(40);
+            createFlag();
             break;
 
         case 'hindu':
-            createStars(50, 'hindu-star');
+            createDiyas(30);
+            createStars(20, 'star');
             break;
 
         case 'christian':
