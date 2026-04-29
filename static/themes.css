@@ -69,6 +69,43 @@
 [data-theme="public_holiday"] .btn-success       { background-color: #6a8a3a !important; border-color: #6a8a3a !important; color: #fff !important; }
 [data-theme="public_holiday"] .btn-success:hover { background-color: #526c2c !important; border-color: #526c2c !important; }
 
+/* --- Per-theme badge (bg-success) and text-success colours --- */
+/* bg-success: count badges e.g. "completed today" number           */
+/* text-success: completed timestamp text                           */
+
+[data-theme="poya"]         .bg-success { background-color: #1a2a5a !important; }
+[data-theme="poya"]         .text-success { color: #3a5a9a !important; }
+
+[data-theme="vesak"]        .bg-success { background-color: #5c2d8a !important; }
+[data-theme="vesak"]        .text-success { color: #8050b8 !important; }
+
+[data-theme="christmas"]    .bg-success { background-color: #165b33 !important; }
+[data-theme="christmas"]    .text-success { color: #1e7a44 !important; }
+
+[data-theme="pongal"]       .bg-success { background-color: #b5631a !important; }
+[data-theme="pongal"]       .text-success { color: #b5631a !important; }
+
+[data-theme="islamic"]      .bg-success { background-color: #1b5e3a !important; }
+[data-theme="islamic"]      .text-success { color: #1b8a52 !important; }
+
+[data-theme="deepavali"]    .bg-success { background-color: #1a1a2e !important; }
+[data-theme="deepavali"]    .text-success { color: #5555aa !important; }
+
+[data-theme="new_year"]     .bg-success { background-color: #c44b8a !important; }
+[data-theme="new_year"]     .text-success { color: #c44b8a !important; }
+
+[data-theme="independence"] .bg-success { background-color: #8B0000 !important; }
+[data-theme="independence"] .text-success { color: #aa2020 !important; }
+
+[data-theme="hindu"]        .bg-success { background-color: #4a1a6a !important; }
+[data-theme="hindu"]        .text-success { color: #7030a0 !important; }
+
+[data-theme="christian"]    .bg-success { background-color: #2d5a1a !important; }
+[data-theme="christian"]    .text-success { color: #3a7822 !important; }
+
+[data-theme="public_holiday"] .bg-success { background-color: #6a8a3a !important; }
+[data-theme="public_holiday"] .text-success { color: #6a8a3a !important; }
+
 /* --- Shared overlay container --- */
 #theme-overlay {
     position: fixed;
