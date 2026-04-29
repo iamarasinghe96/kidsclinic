@@ -328,3 +328,56 @@
     background: #a8d8a8;
     animation: shimmer ease-in-out infinite;
 }
+
+/* =====================================================
+   btn-primary: override inline style on Register New Patient button
+   (receptionist_simple.html uses btn-primary + inline #8EC641 style)
+   ===================================================== */
+[data-theme="poya"]         .btn-primary         { background-color: #1a2a5a !important; border-color: #1a2a5a !important; color: #fff !important; }
+[data-theme="poya"]         .btn-primary:hover   { background-color: #0f1a3d !important; border-color: #0f1a3d !important; }
+
+[data-theme="vesak"]        .btn-primary         { background-color: #5c2d8a !important; border-color: #5c2d8a !important; color: #fff !important; }
+[data-theme="vesak"]        .btn-primary:hover   { background-color: #4a2470 !important; border-color: #4a2470 !important; }
+
+[data-theme="christmas"]    .btn-primary         { background-color: #165b33 !important; border-color: #165b33 !important; color: #fff !important; }
+[data-theme="christmas"]    .btn-primary:hover   { background-color: #0e3d22 !important; border-color: #0e3d22 !important; }
+
+[data-theme="pongal"]       .btn-primary         { background-color: #b5631a !important; border-color: #b5631a !important; color: #fff !important; }
+[data-theme="pongal"]       .btn-primary:hover   { background-color: #8f4e14 !important; border-color: #8f4e14 !important; }
+
+[data-theme="islamic"]      .btn-primary         { background-color: #1b5e3a !important; border-color: #1b5e3a !important; color: #fff !important; }
+[data-theme="islamic"]      .btn-primary:hover   { background-color: #124028 !important; border-color: #124028 !important; }
+
+[data-theme="deepavali"]    .btn-primary         { background-color: #1a1a2e !important; border-color: #1a1a2e !important; color: #fff !important; }
+[data-theme="deepavali"]    .btn-primary:hover   { background-color: #0f0f1e !important; border-color: #0f0f1e !important; }
+
+[data-theme="new_year"]     .btn-primary         { background-color: #c44b8a !important; border-color: #c44b8a !important; color: #fff !important; }
+[data-theme="new_year"]     .btn-primary:hover   { background-color: #a33c72 !important; border-color: #a33c72 !important; }
+
+[data-theme="independence"] .btn-primary         { background-color: #8B0000 !important; border-color: #8B0000 !important; color: #fff !important; }
+[data-theme="independence"] .btn-primary:hover   { background-color: #6d0000 !important; border-color: #6d0000 !important; }
+
+[data-theme="hindu"]        .btn-primary         { background-color: #4a1a6a !important; border-color: #4a1a6a !important; color: #fff !important; }
+[data-theme="hindu"]        .btn-primary:hover   { background-color: #371250 !important; border-color: #371250 !important; }
+
+[data-theme="christian"]    .btn-primary         { background-color: #2d5a1a !important; border-color: #2d5a1a !important; color: #fff !important; }
+[data-theme="christian"]    .btn-primary:hover   { background-color: #1e3d11 !important; border-color: #1e3d11 !important; }
+
+[data-theme="public_holiday"] .btn-primary       { background-color: #6a8a3a !important; border-color: #6a8a3a !important; color: #fff !important; }
+[data-theme="public_holiday"] .btn-primary:hover { background-color: #526c2c !important; border-color: #526c2c !important; }
+
+/* =====================================================
+   #waitingBadge: match same colour as text-success per theme
+   (consultant view — waiting count should match completed count)
+   ===================================================== */
+[data-theme="poya"]           #waitingBadge { color: #3a5a9a !important; }
+[data-theme="vesak"]          #waitingBadge { color: #8050b8 !important; }
+[data-theme="christmas"]      #waitingBadge { color: #1e7a44 !important; }
+[data-theme="pongal"]         #waitingBadge { color: #b5631a !important; }
+[data-theme="islamic"]        #waitingBadge { color: #1b8a52 !important; }
+[data-theme="deepavali"]      #waitingBadge { color: #5555aa !important; }
+[data-theme="new_year"]       #waitingBadge { color: #c44b8a !important; }
+[data-theme="independence"]   #waitingBadge { color: #aa2020 !important; }
+[data-theme="hindu"]          #waitingBadge { color: #7030a0 !important; }
+[data-theme="christian"]      #waitingBadge { color: #3a7822 !important; }
+[data-theme="public_holiday"] #waitingBadge { color: #6a8a3a !important; }
