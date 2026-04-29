@@ -1,7 +1,10 @@
 import os
 import time
 import logging
-from flask import Flask
+import urllib.request
+import json
+from datetime import date
+from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -50,6 +53,69 @@ def no_cache(response):
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
     return response
+
+# ---------- Holiday theme system ----------
+
+THEME_KEYWORDS = [
+    ('vesak',        'vesak'),
+    ('christmas',    'christmas'),
+    ('pongal',       'pongal'),
+    ('eid',          'islamic'),
+    ('milad',        'islamic'),
+    ('ramadan',      'islamic'),
+    ('deepavali',    'deepavali'),
+    ('sinhala',      'new_year'),
+    ('avurudu',      'new_year'),
+    ('independence', 'independence'),
+    ('sivarathri',   'hindu'),
+    ('good friday',  'christian'),
+]
+
+_holiday_cache = {'date': None, 'theme': 'default', 'name': None}
+
+
+def get_today_holiday():
+    today = date.today()
+    if _holiday_cache['date'] == today:
+        return _holiday_cache
+    try:
+        url = (
+            f'https://raw.githubusercontent.com/Dilshan-H/srilanka-holidays'
+            f'/main/json/{today.year}.json'
+        )
+        with urllib.request.urlopen(url, timeout=5) as r:
+            holidays = json.loads(r.read())
+    except Exception:
+        holidays = []
+    today_str = today.isoformat()
+    for h in holidays:
+        if h['start'] <= today_str < h['end']:
+            name = h['summary']
+            cats = h.get('categories', [])
+            name_lower = name.lower()
+            theme = 'public_holiday'
+            if 'Poya' in cats:
+                theme = 'vesak' if 'vesak' in name_lower else 'poya'
+            else:
+                for kw, t in THEME_KEYWORDS:
+                    if kw in name_lower:
+                        theme = t
+                        break
+            _holiday_cache.update({'date': today, 'theme': theme, 'name': name})
+            return _holiday_cache
+    _holiday_cache.update({'date': today, 'theme': 'default', 'name': None})
+    return _holiday_cache
+
+
+@app.context_processor
+def inject_holiday():
+    h = get_today_holiday()
+    return {'today_theme': h['theme'], 'today_holiday': h['name']}
+
+
+@app.route('/clinic-logo.png')
+def clinic_logo():
+    return send_from_directory('templates', 'removed-bg.png')
 
 with app.app_context():
     # Import models and routes

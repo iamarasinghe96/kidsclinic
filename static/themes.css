@@ -1,0 +1,243 @@
+/* =====================================================
+   Holiday Theme System — navbar colours + animations
+   ===================================================== */
+
+/* --- Navbar colour overrides --- */
+[data-theme="default"]      .navbar { background-color: #8EC641 !important; }
+[data-theme="poya"]         .navbar { background-color: #1a2a5a !important; }
+[data-theme="vesak"]        .navbar { background-color: #5c2d8a !important; }
+[data-theme="christmas"]    .navbar { background-color: #165b33 !important; }
+[data-theme="pongal"]       .navbar { background-color: #b5631a !important; }
+[data-theme="islamic"]      .navbar { background-color: #1b5e3a !important; }
+[data-theme="deepavali"]    .navbar { background-color: #1a1a2e !important; }
+[data-theme="new_year"]     .navbar { background-color: #c44b8a !important; }
+[data-theme="independence"] .navbar { background-color: #8B0000 !important; }
+[data-theme="hindu"]        .navbar { background-color: #4a1a6a !important; }
+[data-theme="christian"]    .navbar { background-color: #2d5a1a !important; }
+[data-theme="public_holiday"] .navbar { background-color: #6a8a3a !important; }
+
+/* --- Holiday name badge --- */
+.holiday-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* --- Shared overlay container --- */
+#theme-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9990;
+    overflow: hidden;
+}
+
+/* =====================================================
+   CHRISTMAS — snowflakes
+   ===================================================== */
+@keyframes snowfall {
+    0%   { transform: translateY(-20px) translateX(0) rotate(0deg);   opacity: 0.9; }
+    80%  { opacity: 0.8; }
+    100% { transform: translateY(105vh) translateX(40px) rotate(360deg); opacity: 0; }
+}
+
+.snowflake {
+    position: absolute;
+    top: -20px;
+    color: #fff;
+    font-size: 1.1em;
+    animation: snowfall linear infinite;
+    user-select: none;
+}
+
+/* =====================================================
+   POYA — moon glow
+   ===================================================== */
+@keyframes moonGlow {
+    0%, 100% { box-shadow: 0 0 20px 10px rgba(220,210,150,0.4); transform: scale(1); }
+    50%       { box-shadow: 0 0 40px 20px rgba(220,210,150,0.7); transform: scale(1.05); }
+}
+
+.poya-moon {
+    position: fixed;
+    top: 70px;
+    right: 30px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff9d6, #ddd090);
+    animation: moonGlow 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 9991;
+}
+
+/* =====================================================
+   VESAK — golden moon + floating lanterns
+   ===================================================== */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-18px); }
+}
+
+.vesak-moon {
+    position: fixed;
+    top: 70px;
+    right: 30px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff7a0, #c8960c);
+    box-shadow: 0 0 30px 15px rgba(200, 150, 12, 0.5);
+    animation: moonGlow 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 9991;
+}
+
+.vesak-lantern {
+    position: absolute;
+    font-size: 1.8em;
+    animation: float ease-in-out infinite;
+    user-select: none;
+}
+
+/* =====================================================
+   ISLAMIC — crescent + twinkling stars
+   ===================================================== */
+@keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50%       { opacity: 1;   transform: scale(1.2); }
+}
+
+.star {
+    position: absolute;
+    color: #ffd700;
+    font-size: 0.9em;
+    animation: twinkle ease-in-out infinite;
+    user-select: none;
+}
+
+.crescent {
+    position: fixed;
+    top: 68px;
+    right: 28px;
+    font-size: 3rem;
+    color: #ffd700;
+    text-shadow: 0 0 16px rgba(255,215,0,0.7);
+    animation: moonGlow 5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 9991;
+    line-height: 1;
+}
+
+/* =====================================================
+   NEW YEAR (Sinhala/Tamil) — falling petals
+   ===================================================== */
+@keyframes petalFall {
+    0%   { transform: translateY(-20px) rotate(0deg) translateX(0);   opacity: 1; }
+    80%  { opacity: 0.8; }
+    100% { transform: translateY(105vh) rotate(540deg) translateX(30px); opacity: 0; }
+}
+
+.petal {
+    position: absolute;
+    top: -20px;
+    font-size: 1.2em;
+    animation: petalFall linear infinite;
+    user-select: none;
+}
+
+/* =====================================================
+   DEEPAVALI — diya glow dots
+   ===================================================== */
+@keyframes diyaGlow {
+    0%   { box-shadow: 0 0 6px 3px #ff6a00;  background: #ff6a00; }
+    33%  { box-shadow: 0 0 10px 5px #ff0080; background: #ff0080; }
+    66%  { box-shadow: 0 0 10px 5px #ffe100; background: #ffe100; }
+    100% { box-shadow: 0 0 6px 3px #ff6a00;  background: #ff6a00; }
+}
+
+.diya-light {
+    position: fixed;
+    bottom: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: diyaGlow 2s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 9991;
+}
+
+/* =====================================================
+   PONGAL — animated sun
+   ===================================================== */
+@keyframes spinRays {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.pongal-sun {
+    position: fixed;
+    top: 68px;
+    right: 28px;
+    font-size: 3rem;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 9991;
+    animation: spinRays 12s linear infinite;
+    transform-origin: center center;
+}
+
+/* =====================================================
+   INDEPENDENCE — gold ribbon streamers
+   ===================================================== */
+@keyframes streamerFall {
+    0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+    100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+}
+
+.streamer {
+    position: absolute;
+    top: -20px;
+    width: 6px;
+    height: 20px;
+    border-radius: 3px;
+    animation: streamerFall linear infinite;
+}
+
+/* =====================================================
+   HINDU (Sivarathri) — subtle star field
+   ===================================================== */
+.hindu-star {
+    position: absolute;
+    color: #dda0ff;
+    font-size: 0.7em;
+    animation: twinkle ease-in-out infinite;
+    user-select: none;
+}
+
+/* =====================================================
+   CHRISTIAN (Good Friday) — gentle shimmer
+   ===================================================== */
+@keyframes shimmer {
+    0%, 100% { opacity: 0.15; }
+    50%       { opacity: 0.45; }
+}
+
+.shimmer-dot {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #a8d8a8;
+    animation: shimmer ease-in-out infinite;
+}
