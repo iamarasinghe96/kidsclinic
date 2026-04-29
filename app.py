@@ -75,6 +75,25 @@ _holiday_cache = {'date': None, 'theme': 'default', 'name': None}
 
 
 def get_today_holiday():
+    # Allow start.bat to force a specific theme for testing
+    test_theme = os.environ.get('HOLIDAY_THEME_TEST', '').strip()
+    if test_theme:
+        name_map = {
+            'christmas':    'Christmas Day (test)',
+            'poya':         'Full Moon Poya Day (test)',
+            'vesak':        'Vesak Full Moon Poya Day (test)',
+            'pongal':       'Thai Pongal (test)',
+            'islamic':      'Eid ul-Fitr (test)',
+            'deepavali':    'Deepavali (test)',
+            'new_year':     'Sinhala & Tamil New Year (test)',
+            'independence': 'Independence Day (test)',
+            'hindu':        'Maha Sivarathri (test)',
+            'christian':    'Good Friday (test)',
+            'public_holiday': 'Public Holiday (test)',
+            'default':      None,
+        }
+        return {'date': None, 'theme': test_theme, 'name': name_map.get(test_theme)}
+
     today = date.today()
     if _holiday_cache['date'] == today:
         return _holiday_cache
