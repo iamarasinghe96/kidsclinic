@@ -500,8 +500,7 @@ def get_patient_details(reg_number):
         # Get recent visits with weight data
         recent_visits = Visit.query.filter_by(patient_id=patient.id)\
                                   .filter(Visit.status.in_(['completed', 'completed_archived']))\
-                                  .order_by(Visit.visit_date.desc())\
-                                  .limit(5).all()
+                                  .order_by(Visit.visit_date.desc()).all()
 
         total_visits = Visit.query.filter_by(patient_id=patient.id).count()
 
@@ -557,8 +556,7 @@ def get_patient_info_html(reg_number):
 
     recent_visits = Visit.query.filter_by(patient_id=patient.id)\
                                .filter(Visit.status.in_(['completed', 'completed_archived']))\
-                               .order_by(Visit.visit_date.desc())\
-                               .limit(10).all()
+                               .order_by(Visit.visit_date.desc()).all()
     total_visits = Visit.query.filter_by(patient_id=patient.id).count()
 
     current_visit = Visit.query.filter_by(patient_id=patient.id)\
