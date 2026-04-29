@@ -60,25 +60,39 @@
     user-select: none;
 }
 
+/* When a right-side element sits in the navbar, push the badge left to avoid overlap */
+[data-theme="poya"] .holiday-badge,
+[data-theme="vesak"] .holiday-badge,
+[data-theme="islamic"] .holiday-badge,
+[data-theme="pongal"] .holiday-badge {
+    margin-right: 56px;
+}
+
 /* =====================================================
    POYA — moon glow
    ===================================================== */
 @keyframes moonGlow {
-    0%, 100% { box-shadow: 0 0 20px 10px rgba(220,210,150,0.4); transform: scale(1); }
-    50%       { box-shadow: 0 0 40px 20px rgba(220,210,150,0.7); transform: scale(1.05); }
+    0%, 100% { box-shadow: 0 0 14px 7px rgba(220,210,150,0.35), inset -3px -3px 8px rgba(100,80,20,0.25); transform: scale(1); }
+    50%       { box-shadow: 0 0 28px 14px rgba(220,210,150,0.6), inset -3px -3px 8px rgba(100,80,20,0.25); transform: scale(1.05); }
 }
 
 .poya-moon {
     position: fixed;
-    top: 70px;
-    right: 30px;
-    width: 70px;
-    height: 70px;
+    top: 9px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #fff9d6, #ddd090);
+    background:
+        radial-gradient(circle at 63% 27%, rgba(100,80,20,0.45)  8%,   transparent  9.5%),
+        radial-gradient(circle at 30% 58%, rgba(100,80,20,0.40)  6%,   transparent  7.5%),
+        radial-gradient(circle at 78% 70%, rgba(100,80,20,0.35)  4.5%, transparent  6%),
+        radial-gradient(circle at 18% 30%, rgba(100,80,20,0.28) 10%,   transparent 12%),
+        radial-gradient(circle at 52% 82%, rgba(100,80,20,0.28)  3.5%, transparent  5%),
+        radial-gradient(circle at 35% 35%, #fff9d6, #d4c870);
     animation: moonGlow 4s ease-in-out infinite;
     pointer-events: none;
-    z-index: 9991;
+    z-index: 9992;
 }
 
 /* =====================================================
@@ -91,16 +105,21 @@
 
 .vesak-moon {
     position: fixed;
-    top: 70px;
-    right: 30px;
-    width: 70px;
-    height: 70px;
+    top: 9px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #fff7a0, #c8960c);
-    box-shadow: 0 0 30px 15px rgba(200, 150, 12, 0.5);
+    background:
+        radial-gradient(circle at 60% 25%, rgba(90,60,10,0.50)  8%,   transparent  9.5%),
+        radial-gradient(circle at 28% 60%, rgba(90,60,10,0.42)  5.5%, transparent  7%),
+        radial-gradient(circle at 76% 68%, rgba(90,60,10,0.38)  4%,   transparent  5.5%),
+        radial-gradient(circle at 17% 32%, rgba(90,60,10,0.30) 10%,   transparent 12%),
+        radial-gradient(circle at 50% 80%, rgba(90,60,10,0.28)  3.5%, transparent  5%),
+        radial-gradient(circle at 35% 35%, #fff7a0, #c8960c);
     animation: moonGlow 4s ease-in-out infinite;
     pointer-events: none;
-    z-index: 9991;
+    z-index: 9992;
 }
 
 .vesak-lantern {
@@ -128,14 +147,14 @@
 
 .crescent {
     position: fixed;
-    top: 68px;
-    right: 28px;
-    font-size: 3rem;
+    top: 10px;
+    right: 10px;
+    font-size: 2.2rem;
     color: #ffd700;
-    text-shadow: 0 0 16px rgba(255,215,0,0.7);
+    text-shadow: 0 0 12px rgba(255,215,0,0.7);
     animation: moonGlow 5s ease-in-out infinite;
     pointer-events: none;
-    z-index: 9991;
+    z-index: 9992;
     line-height: 1;
 }
 
@@ -187,12 +206,12 @@
 
 .pongal-sun {
     position: fixed;
-    top: 68px;
-    right: 28px;
-    font-size: 3rem;
+    top: 10px;
+    right: 10px;
+    font-size: 2.2rem;
     line-height: 1;
     pointer-events: none;
-    z-index: 9991;
+    z-index: 9992;
     animation: spinRays 12s linear infinite;
     transform-origin: center center;
 }
