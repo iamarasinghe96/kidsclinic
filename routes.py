@@ -547,6 +547,75 @@ def get_patient_details(reg_number):
         })
     return jsonify({'error': 'Patient not found'}), 404
 
+@app.route('/get_patient_info_html/<reg_number>')
+def get_patient_info_html(reg_number):
+    """Return server-rendered HTML for the patient info panel."""
+    from flask import render_template_string
+    patient = Patient.query.filter_by(registration_number=reg_number).first()
+    if not patient:
+        return '<p class="text-danger">Patient not found</p>', 404
+
+    recent_visits = Visit.query.filter_by(patient_id=patient.id)\
+                               .filter(Visit.status.in_(['completed', 'completed_archived']))\
+                               .order_by(Visit.visit_date.desc())\
+                               .limit(10).all()
+    total_visits = Visit.query.filter_by(patient_id=patient.id).count()
+
+    current_visit = Visit.query.filter_by(patient_id=patient.id)\
+                               .filter(Visit.status.in_(['waiting', 'completed']))\
+                               .order_by(Visit.visit_date.desc()).first()
+    weight_kg = current_visit.weight_kg if current_visit and current_visit.weight_kg else None
+
+    age = patient.age
+    gender = patient.gender
+    if age <= 5:
+        calc_title = 'Baby'
+    elif age <= 17:
+        calc_title = 'Master' if gender == 'Male' else 'Miss'
+    else:
+        calc_title = 'Adult Male' if gender == 'Male' else 'Adult Female'
+
+    title_colors = {
+        'Baby': '#fd7e14', 'Master': '#0d6efd', 'Miss': '#d63384',
+        'Adult Male': '#198754', 'Adult Female': '#6f42c1'
+    }
+    title_color = title_colors.get(calc_title, '#6c757d')
+
+    tmpl = """
+<div class="patient-details">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="fw-bold fs-6">{{ patient.full_name }}</span>
+    <span style="background:{{ title_color }};color:white;border-radius:10px;padding:2px 10px;font-size:0.78rem;white-space:nowrap;">{{ calc_title }}</span>
+  </div>
+  <div class="info-row mb-2"><span class="fw-bold">Registration #:</span><span class="ms-2">{{ patient.registration_number }}</span></div>
+  <div class="info-row mb-2"><span class="fw-bold">Age:</span><span class="ms-2">{{ patient.age }} years</span></div>
+  <div class="info-row mb-2"><span class="fw-bold">Gender:</span><span class="ms-2">{{ patient.gender }}{% if weight_kg %} &nbsp;·&nbsp; {{ weight_kg }} kg{% endif %}</span></div>
+  <div class="info-row mb-2"><span class="fw-bold">Date of Birth:</span><span class="ms-2">{{ patient.date_of_birth.strftime('%d/%m/%Y') }}</span></div>
+  {% if patient.parent_name %}<div class="info-row mb-2"><span class="fw-bold">Parent:</span><span class="ms-2">{{ patient.parent_name }}</span></div>{% endif %}
+  {% if patient.email %}<div class="info-row mb-2"><span class="fw-bold">Email:</span><span class="ms-2">{{ patient.email }}</span></div>{% endif %}
+  <div class="mt-3">
+    <h6>Recent Visits: <span class="badge bg-secondary">{{ total_visits }} visit{{ 's' if total_visits != 1 else '' }}</span></h6>
+    <div class="visits-scroll-wrapper">
+      <div class="visits-scroll">
+        {% for v in recent_visits %}
+          <span class="visit-chip">{{ v.visit_date.strftime('%d/%m/%Y') }}{% if v.weight_kg %} &middot; {{ v.weight_kg }} kg{% endif %}</span>
+        {% else %}
+          <span class="text-muted small">No previous visits</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+"""
+    html = render_template_string(tmpl,
+        patient=patient,
+        recent_visits=recent_visits,
+        total_visits=total_visits,
+        weight_kg=weight_kg,
+        calc_title=calc_title,
+        title_color=title_color)
+    return html
+
 @app.route('/mark_complete', methods=['POST'])
 def mark_complete():
     """Mark consultation as complete"""

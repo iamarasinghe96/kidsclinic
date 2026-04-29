@@ -232,26 +232,17 @@ function showPatientDetails(regNumber) {
         selectedItem.classList.add('active');
     }
     
-    // Load patient information
-    fetch(`/get_patient_details/${regNumber}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            
-            displayPatientInfo(data);
+    // Load server-rendered patient info HTML (avoids any client-side caching issues)
+    fetch('/get_patient_info_html/' + regNumber)
+        .then(function(response) { return response.text(); })
+        .then(function(html) {
+            document.getElementById('patientInfo').innerHTML = html;
             currentSelectedPatient = regNumber;
-        })
-        .catch(error => {
-            console.error('[CONSULTANT] Error loading patient info:', error);
-            document.getElementById('patientInfo').innerHTML = `
-                <div class="alert alert-warning">
-                    <i data-feather="info"></i>
-                    Patient information will appear when receptionist selects a patient
-                </div>
-            `;
             feather.replace();
+        })
+        .catch(function(error) {
+            console.error('[CONSULTANT] Error loading patient info:', error);
+            document.getElementById('patientInfo').innerHTML = '<div class="alert alert-warning">Could not load patient information.</div>';
         });
 }
 
