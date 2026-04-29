@@ -170,11 +170,11 @@
                         </a>
                     </li>
                 </ul>
-                {% if today_holiday %}
-                <span class="holiday-badge ms-3">{{ today_holiday }}</span>
-                {% endif %}
             </div>
         </div>
+        {% if today_holiday %}
+        <span class="holiday-badge">{{ today_holiday }}</span>
+        {% endif %}
     </nav>
 
     <!-- Flash Messages -->

@@ -2,6 +2,12 @@
    Holiday Theme System — navbar colours + animations
    ===================================================== */
 
+/* --- Consistent navbar height --- */
+.navbar {
+    min-height: 62px;
+    height: 62px;
+}
+
 /* --- Navbar colour overrides --- */
 [data-theme="default"]      .navbar { background-color: #8EC641 !important; }
 [data-theme="poya"]         .navbar { background-color: #1a2a5a !important; }
@@ -16,9 +22,12 @@
 [data-theme="christian"]    .navbar { background-color: #2d5a1a !important; }
 [data-theme="public_holiday"] .navbar { background-color: #6a8a3a !important; }
 
-/* --- Holiday name badge --- */
+/* --- Holiday name badge: absolute so it never affects navbar height --- */
 .holiday-badge {
-    display: inline-block;
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
     background: rgba(255, 255, 255, 0.25);
     color: #fff;
     font-size: 0.75rem;
@@ -28,6 +37,19 @@
     white-space: nowrap;
     letter-spacing: 0.02em;
     border: 1px solid rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+}
+
+/* Themes with a right-side decoration: push badge left to clear it */
+[data-theme="poya"] .holiday-badge,
+[data-theme="vesak"] .holiday-badge,
+[data-theme="islamic"] .holiday-badge,
+[data-theme="pongal"] .holiday-badge {
+    right: 70px;
+}
+
+@media (max-width: 991px) {
+    .holiday-badge { display: none; }
 }
 
 /* --- Shared overlay container --- */
@@ -58,14 +80,6 @@
     font-size: 1.1em;
     animation: snowfall linear infinite;
     user-select: none;
-}
-
-/* When a right-side element sits in the navbar, push the badge left to avoid overlap */
-[data-theme="poya"] .holiday-badge,
-[data-theme="vesak"] .holiday-badge,
-[data-theme="islamic"] .holiday-badge,
-[data-theme="pongal"] .holiday-badge {
-    margin-right: 56px;
 }
 
 /* =====================================================
@@ -145,17 +159,20 @@
     user-select: none;
 }
 
+@keyframes islamicGlow {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(255,215,0,0.45)); transform: scale(1); }
+    50%       { filter: drop-shadow(0 0 14px rgba(255,215,0,0.9)); transform: scale(1.05); }
+}
+
 .crescent {
     position: fixed;
-    top: 10px;
-    right: 10px;
-    font-size: 2.2rem;
-    color: #ffd700;
-    text-shadow: 0 0 12px rgba(255,215,0,0.7);
-    animation: moonGlow 5s ease-in-out infinite;
+    top: 8px;
+    right: 6px;
+    width: 52px;
+    height: 48px;
     pointer-events: none;
     z-index: 9992;
-    line-height: 1;
+    animation: islamicGlow 5s ease-in-out infinite;
 }
 
 /* =====================================================

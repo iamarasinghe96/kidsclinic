@@ -68,9 +68,18 @@
     }
 
     function createCrescent() {
+        var uid = 'im' + Math.floor(Math.random() * 1e6);
         var c = document.createElement('div');
         c.className = 'crescent';
-        c.textContent = '☪';
+        c.innerHTML =
+            '<svg width="52" height="48" viewBox="0 0 52 48" xmlns="http://www.w3.org/2000/svg">' +
+            '<defs><mask id="' + uid + '">' +
+            '<rect width="52" height="48" fill="white"/>' +
+            '<circle cx="24" cy="22" r="13" fill="black"/>' +
+            '</mask></defs>' +
+            '<circle cx="18" cy="24" r="16" fill="#ffd700" mask="url(#' + uid + ')"/>' +
+            '<polygon fill="#ffd700" points="40,6 42,11.2 47.6,11.5 43.3,15.1 44.7,20.5 40,17.5 35.3,20.5 36.7,15.1 32.4,11.5 38,11.2"/>' +
+            '</svg>';
         document.body.appendChild(c);
     }
 
@@ -92,7 +101,8 @@
 
     function createPetals(n) {
         n = n || 50;
-        var icons = ['🌸', '🌺', '🌼', '🌷'];
+        // Sinhala/Tamil New Year: kavum, kokis, and non-rose flowers
+        var icons = ['🥮', '🍪', '🌸', '🌼', '🌻', '🌸', '🌼'];
         for (var i = 0; i < n; i++) {
             var p = el('div', 'petal');
             p.textContent = icons[Math.floor(Math.random() * icons.length)];
