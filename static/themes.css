@@ -22,36 +22,52 @@
 [data-theme="christian"]    .navbar { background-color: #2d5a1a !important; }
 [data-theme="public_holiday"] .navbar { background-color: #6a8a3a !important; }
 
-/* --- Holiday name badge: absolute so it never affects navbar height --- */
-.holiday-badge {
-    position: absolute;
-    top: 50%;
-    right: 14px;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 20px;
-    white-space: nowrap;
-    letter-spacing: 0.02em;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    pointer-events: none;
-}
+/* --- Per-theme card headers and primary action buttons --- */
+/* Each theme reuses its navbar colour for .card-header and .btn-success   */
 
-/* Themes with a right-side decoration: push badge left to clear it */
-[data-theme="poya"] .holiday-badge,
-[data-theme="vesak"] .holiday-badge,
-[data-theme="islamic"] .holiday-badge,
-[data-theme="pongal"] .holiday-badge,
-[data-theme="independence"] .holiday-badge {
-    right: 70px;
-}
+[data-theme="poya"]         .card-header,
+[data-theme="poya"]         .btn-success         { background-color: #1a2a5a !important; border-color: #1a2a5a !important; color: #fff !important; }
+[data-theme="poya"]         .btn-success:hover   { background-color: #0f1a3d !important; border-color: #0f1a3d !important; }
 
-@media (max-width: 991px) {
-    .holiday-badge { display: none; }
-}
+[data-theme="vesak"]        .card-header,
+[data-theme="vesak"]        .btn-success         { background-color: #5c2d8a !important; border-color: #5c2d8a !important; color: #fff !important; }
+[data-theme="vesak"]        .btn-success:hover   { background-color: #4a2470 !important; border-color: #4a2470 !important; }
+
+[data-theme="christmas"]    .card-header,
+[data-theme="christmas"]    .btn-success         { background-color: #165b33 !important; border-color: #165b33 !important; color: #fff !important; }
+[data-theme="christmas"]    .btn-success:hover   { background-color: #0e3d22 !important; border-color: #0e3d22 !important; }
+
+[data-theme="pongal"]       .card-header,
+[data-theme="pongal"]       .btn-success         { background-color: #b5631a !important; border-color: #b5631a !important; color: #fff !important; }
+[data-theme="pongal"]       .btn-success:hover   { background-color: #8f4e14 !important; border-color: #8f4e14 !important; }
+
+[data-theme="islamic"]      .card-header,
+[data-theme="islamic"]      .btn-success         { background-color: #1b5e3a !important; border-color: #1b5e3a !important; color: #fff !important; }
+[data-theme="islamic"]      .btn-success:hover   { background-color: #124028 !important; border-color: #124028 !important; }
+
+[data-theme="deepavali"]    .card-header,
+[data-theme="deepavali"]    .btn-success         { background-color: #1a1a2e !important; border-color: #1a1a2e !important; color: #fff !important; }
+[data-theme="deepavali"]    .btn-success:hover   { background-color: #0f0f1e !important; border-color: #0f0f1e !important; }
+
+[data-theme="new_year"]     .card-header,
+[data-theme="new_year"]     .btn-success         { background-color: #c44b8a !important; border-color: #c44b8a !important; color: #fff !important; }
+[data-theme="new_year"]     .btn-success:hover   { background-color: #a33c72 !important; border-color: #a33c72 !important; }
+
+[data-theme="independence"] .card-header,
+[data-theme="independence"] .btn-success         { background-color: #8B0000 !important; border-color: #8B0000 !important; color: #fff !important; }
+[data-theme="independence"] .btn-success:hover   { background-color: #6d0000 !important; border-color: #6d0000 !important; }
+
+[data-theme="hindu"]        .card-header,
+[data-theme="hindu"]        .btn-success         { background-color: #4a1a6a !important; border-color: #4a1a6a !important; color: #fff !important; }
+[data-theme="hindu"]        .btn-success:hover   { background-color: #371250 !important; border-color: #371250 !important; }
+
+[data-theme="christian"]    .card-header,
+[data-theme="christian"]    .btn-success         { background-color: #2d5a1a !important; border-color: #2d5a1a !important; color: #fff !important; }
+[data-theme="christian"]    .btn-success:hover   { background-color: #1e3d11 !important; border-color: #1e3d11 !important; }
+
+[data-theme="public_holiday"] .card-header,
+[data-theme="public_holiday"] .btn-success       { background-color: #6a8a3a !important; border-color: #6a8a3a !important; color: #fff !important; }
+[data-theme="public_holiday"] .btn-success:hover { background-color: #526c2c !important; border-color: #526c2c !important; }
 
 /* --- Shared overlay container --- */
 #theme-overlay {

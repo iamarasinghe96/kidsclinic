@@ -54,16 +54,32 @@
         n = n || 12;
         var icons = ['🏮', '🪔', '🏮', '🏮', '🪔', '🏮'];
         var colW = 100 / n;
+
+        // Upper/mid spread — one per column for even distribution
         for (var i = 0; i < n; i++) {
             var l = el('div', 'vesak-lantern');
             l.textContent = icons[i % icons.length];
-            // evenly spaced: one per column, random within that column
             l.style.left              = (i * colW + rand(colW * 0.15, colW * 0.85)) + '%';
             l.style.top               = rand(14, 62) + '%';
             l.style.fontSize          = rand(1.3, 2.1) + 'em';
             l.style.animationDuration = rand(3, 6) + 's';
             l.style.animationDelay    = rand(0, 4) + 's';
             overlay.appendChild(l);
+        }
+
+        // Extra lanterns in the lower content area
+        var lowerIcons = ['🏮', '🪔', '🕯', '🏮', '🪔', '🕯', '🏮', '🏮'];
+        var nLower = 10;
+        var colW2 = 100 / nLower;
+        for (var j = 0; j < nLower; j++) {
+            var l2 = el('div', 'vesak-lantern');
+            l2.textContent = lowerIcons[j % lowerIcons.length];
+            l2.style.left              = (j * colW2 + rand(colW2 * 0.1, colW2 * 0.9)) + '%';
+            l2.style.top               = rand(65, 93) + '%';
+            l2.style.fontSize          = rand(1.0, 1.8) + 'em';
+            l2.style.animationDuration = rand(4, 7) + 's';
+            l2.style.animationDelay    = rand(0, 5) + 's';
+            overlay.appendChild(l2);
         }
     }
 
