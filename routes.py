@@ -33,31 +33,47 @@ def index():
 @app.route('/queue_management')
 def queue_management():
     today = date.today()
-    
-    # Get all consultants
+
+    # Get all consultants for dropdown
     consultants = Consultant.query.all()
-    
-    # Get today's waiting visits
-    waiting_visits = Visit.query.join(Patient).join(Consultant).filter(
+
+    # Selected consultant filter — default to Dr. Ajith if no param given
+    selected_consultant_id = request.args.get('consultant_id', type=int)
+    if selected_consultant_id is None:
+        ajith = Consultant.query.filter(Consultant.name.ilike('%ajith%')).first()
+        if ajith:
+            selected_consultant_id = ajith.id
+
+    selected_consultant = Consultant.query.get(selected_consultant_id) if selected_consultant_id else None
+
+    # Base queries for today
+    waiting_q = Visit.query.join(Patient).join(Consultant).filter(
         Visit.status == 'waiting',
         func.date(Visit.visit_date) == today
-    ).order_by(Visit.visit_date.asc()).all()
-    
-    # Get today's completed visits
-    completed_visits = Visit.query.join(Patient).join(Consultant).filter(
+    )
+    completed_q = Visit.query.join(Patient).join(Consultant).filter(
         Visit.status == 'completed',
         func.date(Visit.visit_date) == today
-    ).order_by(Visit.completed_at.desc()).all()
-    
-    # Calculate totals
+    )
+
+    # Apply consultant filter
+    if selected_consultant_id:
+        waiting_q = waiting_q.filter(Visit.consultant_id == selected_consultant_id)
+        completed_q = completed_q.filter(Visit.consultant_id == selected_consultant_id)
+
+    waiting_visits = waiting_q.order_by(Visit.visit_date.asc()).all()
+    completed_visits = completed_q.order_by(Visit.completed_at.desc()).all()
+
     total_waiting = len(waiting_visits)
     total_completed = len(completed_visits)
     total_patients_today = total_waiting + total_completed
-    
+
     return render_template('queue_management.html',
                          waiting_visits=waiting_visits,
                          completed_visits=completed_visits,
                          consultants=consultants,
+                         selected_consultant_id=selected_consultant_id,
+                         selected_consultant=selected_consultant,
                          total_waiting=total_waiting,
                          total_completed=total_completed,
                          total_patients_today=total_patients_today)
@@ -66,19 +82,24 @@ def queue_management():
 def api_queue_status():
     """API endpoint to check current queue status without full page load"""
     today = date.today()
-    
-    # Get today's waiting visits count
-    waiting_count = Visit.query.join(Patient).filter(
+    consultant_id = request.args.get('consultant_id', type=int)
+
+    waiting_q = Visit.query.join(Patient).filter(
         Visit.status == 'waiting',
         func.date(Visit.visit_date) == today
-    ).count()
-    
-    # Get today's completed visits count
-    completed_count = Visit.query.join(Patient).filter(
+    )
+    completed_q = Visit.query.join(Patient).filter(
         Visit.status == 'completed',
         func.date(Visit.visit_date) == today
-    ).count()
-    
+    )
+
+    if consultant_id:
+        waiting_q = waiting_q.filter(Visit.consultant_id == consultant_id)
+        completed_q = completed_q.filter(Visit.consultant_id == consultant_id)
+
+    waiting_count = waiting_q.count()
+    completed_count = completed_q.count()
+
     return jsonify({
         'waiting_count': waiting_count,
         'completed_count': completed_count,
