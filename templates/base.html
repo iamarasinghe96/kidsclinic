@@ -134,48 +134,48 @@
                 <img src="/clinic-logo.png" height="38" alt="Clinic Logo" style="margin-right:8px; object-fit:contain;">
                 The Kids Clinic / Allergy and Asthma Center
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link text-white {% if request.endpoint == 'receptionist' %}fw-bold{% endif %}" 
+                        <a class="nav-link text-white {% if request.endpoint == 'receptionist' %}fw-bold{% endif %}"
                            href="{{ url_for('receptionist') }}">
                             <i data-feather="user-plus"></i>
                             Patient Registration
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white {% if request.endpoint == 'queue_management' %}fw-bold{% endif %}" 
+                        <a class="nav-link text-white {% if request.endpoint == 'queue_management' %}fw-bold{% endif %}"
                            href="{{ url_for('queue_management') }}">
                             <i data-feather="users"></i>
                             Queue Management
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white {% if request.endpoint == 'consultant' %}fw-bold{% endif %}" 
+                        <a class="nav-link text-white {% if request.endpoint == 'consultant' %}fw-bold{% endif %}"
                            href="{{ url_for('consultant') }}">
                             <i data-feather="eye"></i>
                             Consultant View
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white {% if request.endpoint == 'report' %}fw-bold{% endif %}" 
+                        <a class="nav-link text-white {% if request.endpoint == 'report' %}fw-bold{% endif %}"
                            href="{{ url_for('report') }}">
                             <i data-feather="bar-chart-2"></i>
                             Reports
                         </a>
                     </li>
                 </ul>
-                {% if today_theme == 'independence' %}
-                <img src="/flag-lk.png" alt="Sri Lanka" class="ms-3 d-none d-lg-inline-block"
-                     style="height:32px;width:auto;border-radius:3px;box-shadow:0 1px 5px rgba(0,0,0,0.4);">
-                {% endif %}
             </div>
         </div>
+        {% if today_theme == 'independence' %}
+        <img src="/flag-lk.png" alt="Sri Lanka"
+             style="position:absolute;right:10px;top:50%;transform:translateY(-50%);height:38px;width:auto;border-radius:3px;box-shadow:0 1px 6px rgba(0,0,0,0.45);pointer-events:none;">
+        {% endif %}
     </nav>
 
     <!-- Flash Messages -->
