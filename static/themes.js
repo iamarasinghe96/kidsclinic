@@ -154,7 +154,7 @@
     function createFlag() {
         var f = document.createElement('div');
         f.className = 'independence-flag';
-        f.innerHTML = '🇱🇰';
+        f.innerHTML = '<img src="/flag-lk.png" alt="Sri Lanka" style="width:100%;height:auto;">';
         document.body.appendChild(f);
     }
 

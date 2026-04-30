@@ -136,6 +136,10 @@ def inject_holiday():
 def clinic_logo():
     return send_from_directory('templates', 'removed-bg.png')
 
+@app.route('/flag-lk.png')
+def flag_lk():
+    return send_from_directory('templates', '1f1f1-1f1f0.png')
+
 with app.app_context():
     # Import models and routes
     import models
