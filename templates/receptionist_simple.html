@@ -12,11 +12,10 @@
                     Patient Registration
                 </h5>
                 <div class="btn-group" role="group" id="registrationTabs">
-                    <button class="btn btn-light active" id="new-patient-tab" type="button"
-                            style="font-weight:600;">
+                    <button class="btn reg-tab active" id="new-patient-tab" type="button">
                         <i data-feather="user-plus"></i> New Patient
                     </button>
-                    <button class="btn btn-outline-light" id="returning-patient-tab" type="button">
+                    <button class="btn reg-tab" id="returning-patient-tab" type="button">
                         <i data-feather="repeat"></i> Returning Patient
                     </button>
                 </div>
@@ -432,13 +431,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('new-patient-tab').addEventListener('click', function() {
         document.getElementById('new-patient').classList.add('show', 'active');
         document.getElementById('returning-patient').classList.remove('show', 'active');
-        this.classList.add('btn-light');
-        this.classList.remove('btn-outline-light');
-        this.style.fontWeight = '600';
-        const ret = document.getElementById('returning-patient-tab');
-        ret.classList.add('btn-outline-light');
-        ret.classList.remove('btn-light');
-        ret.style.fontWeight = '';
+        this.classList.add('active');
+        document.getElementById('returning-patient-tab').classList.remove('active');
         document.getElementById('searchResults').innerHTML = '';
         document.getElementById('returningPatientForm').style.display = 'none';
         document.getElementById('patientSearch').value = '';
@@ -446,13 +440,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('returning-patient-tab').addEventListener('click', function() {
         document.getElementById('returning-patient').classList.add('show', 'active');
         document.getElementById('new-patient').classList.remove('show', 'active');
-        this.classList.add('btn-light');
-        this.classList.remove('btn-outline-light');
-        this.style.fontWeight = '600';
-        const np = document.getElementById('new-patient-tab');
-        np.classList.add('btn-outline-light');
-        np.classList.remove('btn-light');
-        np.style.fontWeight = '';
+        this.classList.add('active');
+        document.getElementById('new-patient-tab').classList.remove('active');
     });
 });
 
