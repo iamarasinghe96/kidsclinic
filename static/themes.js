@@ -154,8 +154,7 @@
     function createFlag() {
         var f = document.createElement('div');
         f.className = 'independence-flag';
-        f.innerHTML =
-            '<svg</svg>';
+        f.innerHTML = '<img src="templates/1f1f1-1f1f0.png" alt="Independence Flag" style="width:100%;height:auto;">';
         document.body.appendChild(f);
     }
 
