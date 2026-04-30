@@ -190,13 +190,10 @@ function showPatientDetails(regNumber) {
             currentPatientRegNumber = regNumber;
             
             // Notify consultant view about selected patient
-            const formData = new FormData();
-            formData.append('registration_number', regNumber);
-            formData.append('consultant_id', data.consultant_id);
-            
             fetch('/set_selected_patient', {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ registration_number: regNumber, consultant_id: data.consultant_id })
             }).then(response => response.json())
               .then(result => {
                   console.log('[QUEUE] Notified consultant about patient selection:', regNumber);
@@ -425,7 +422,8 @@ function clearPatientSelection() {
     // Clear consultant synchronization
     fetch('/set_selected_patient', {
         method: 'POST',
-        body: new FormData() // Empty form to clear selection
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registration_number: null, consultant_id: null })
     }).catch(error => {
         console.error('[QUEUE] Error clearing patient selection:', error);
     });
