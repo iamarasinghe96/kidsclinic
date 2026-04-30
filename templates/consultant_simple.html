@@ -57,7 +57,7 @@
                                     {% endif %}
                                 </div>
                                 <button class="btn btn-success btn-sm ms-3 flex-shrink-0"
-                                        onclick="completeConsultation('{{ visit.patient.registration_number }}', event)">
+                                        onclick="completeConsultation('{{ visit.patient.registration_number }}', this)">
                                     <i data-feather="check" style="width:14px;height:14px;"></i> Done
                                 </button>
                             </div>
@@ -245,7 +245,7 @@ function buildWaitingItem(patient) {
             '<p class="mb-0">Reg: ' + patient.reg + '</p>' +
             (patient.weight ? '<small class="text-muted">Weight: ' + patient.weight + ' kg</small>' : '') +
         '</div>' +
-        '<button class="btn btn-success btn-sm ms-3 flex-shrink-0" onclick="completeConsultation(\'' + patient.reg + '\', event)">' +
+        '<button class="btn btn-success btn-sm ms-3 flex-shrink-0" onclick="completeConsultation(\'' + patient.reg + '\', this)">' +
             '<i data-feather="check" style="width:14px;height:14px;"></i> Done' +
         '</button>';
     return div;
@@ -345,17 +345,29 @@ setInterval(function() {
 }, 4000);
 
 // ── Complete consultation ────────────────────────────────────────────────────
-function completeConsultation(regNumber, event) {
-    event.stopPropagation();
-    const btn = event.currentTarget;
-    btn.disabled = true;
-    btn.innerHTML = '...';
-    const formData = new FormData();
+function completeConsultation(regNumber, btnEl) {
+    if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = '...';
+    }
+    var formData = new FormData();
     formData.append('registration_number', regNumber);
     fetch('/mark_complete', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(() => { window.location.reload(); })
-        .catch(() => { window.location.reload(); });
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                // Re-enable the button and show what went wrong
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = '<i data-feather="check" style="width:14px;height:14px;"></i> Done';
+                    feather.replace();
+                }
+                alert('Could not complete: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(function() { window.location.reload(); });
 }
 
 // ── Print patient summary ────────────────────────────────────────────────────
