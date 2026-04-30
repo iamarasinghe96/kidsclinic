@@ -152,10 +152,7 @@
     }
 
     function createFlag() {
-        var f = document.createElement('div');
-        f.className = 'independence-flag';
-        f.innerHTML = '<img src="/flag-lk.png" alt="Sri Lanka" style="width:100%;height:auto;">';
-        document.body.appendChild(f);
+        // Flag is rendered inline in the navbar (base.html) — nothing to do here.
     }
 
     function createShimmer(n) {
