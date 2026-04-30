@@ -16,8 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialize patient item click handlers
-    initializePatientHandlers();
+    // Initialize patient item click handlers — only on pages that have the
+    // receptionist patient-actions panel (receptionist.html).  Other pages
+    // (consultant, queue management) manage their own click handlers inline.
+    if (document.getElementById('patientActions')) {
+        initializePatientHandlers();
+    }
     
     // Set max date for date inputs to today
     const dateInputs = document.querySelectorAll('input[type="date"]');
@@ -289,18 +293,10 @@ function displayPatientInfo(patient) {
     feather.replace();
 }
 
-// Complete consultation
-function completeConsultation() {
-    if (!currentPatientRegNumber) {
-        alert('No patient selected');
-        return;
-    }
-    
-    if (confirm('Mark this consultation as completed?')) {
-        document.getElementById('completeRegNumber').value = currentPatientRegNumber;
-        document.getElementById('completeForm').submit();
-    }
-}
+// completeConsultation is defined per-template (consultant_simple.html uses a
+// form POST; receptionist.html uses an async fetch to /complete_consultation).
+// Do NOT define it here — a global definition would override the inline versions
+// because script.js loads after {% block content %} scripts.
 
 // Reset patient information
 function resetPatientInfo() {
