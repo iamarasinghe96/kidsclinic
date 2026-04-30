@@ -325,8 +325,8 @@
    ===================================================== */
 .independence-flag {
     position: fixed;
-    top: 12px;
-    right: 12px;
+    top: 70px;
+    right: 16px;
     width: 58px;
     height: 38px;
     pointer-events: none;
