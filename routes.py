@@ -516,9 +516,11 @@ def get_selected_patient(consultant_id):
 
 @app.route('/get_patient_details/<reg_number>')
 def get_patient_details(reg_number):
-    patient = Patient.query.filter_by(registration_number=reg_number).first()
-    if patient:
-        # Get recent visits with weight data
+    try:
+        patient = Patient.query.filter_by(registration_number=reg_number).first()
+        if not patient:
+            return jsonify({'error': 'Patient not found'}), 404
+
         recent_visits = Visit.query.filter_by(patient_id=patient.id)\
                                   .filter(Visit.status.in_(['completed', 'completed_archived']))\
                                   .order_by(Visit.visit_date.desc()).all()
@@ -527,21 +529,18 @@ def get_patient_details(reg_number):
 
         visit_data = []
         for visit in recent_visits:
-            visit_info = {
+            visit_data.append({
                 'date': visit.visit_date.strftime('%d/%m/%Y'),
                 'weight': f"{visit.weight_kg} kg" if visit.weight_kg else None
-            }
-            visit_data.append(visit_info)
-        
-        # Get most recent visit weight if any
+            })
+
         current_visit = Visit.query.filter_by(patient_id=patient.id)\
                                   .filter(Visit.status.in_(['waiting', 'completed']))\
                                   .order_by(Visit.visit_date.desc())\
                                   .first()
-        
+
         current_weight = current_visit.weight_kg if current_visit and current_visit.weight_kg else None
-        
-        # Calculate age-based title from DOB + gender
+
         age = patient.age
         gender = patient.gender
         if age <= 5:
@@ -565,7 +564,9 @@ def get_patient_details(reg_number):
             'consultant_id': patient.consultant_id,
             'recent_visits': visit_data
         })
-    return jsonify({'error': 'Patient not found'}), 404
+    except Exception as e:
+        logging.exception('get_patient_details failed for %s', reg_number)
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/get_queue_state/<int:consultant_id>')
 def get_queue_state(consultant_id):
@@ -601,36 +602,37 @@ def get_queue_state(consultant_id):
 def get_patient_info_html(reg_number):
     """Return server-rendered HTML for the patient info panel."""
     from flask import render_template_string
-    patient = Patient.query.filter_by(registration_number=reg_number).first()
-    if not patient:
-        return '<p class="text-danger">Patient not found</p>', 404
+    try:
+        patient = Patient.query.filter_by(registration_number=reg_number).first()
+        if not patient:
+            return '<p class="text-danger">Patient not found</p>', 404
 
-    recent_visits = Visit.query.filter_by(patient_id=patient.id)\
-                               .filter(Visit.status.in_(['completed', 'completed_archived']))\
-                               .order_by(Visit.visit_date.desc()).all()
-    total_visits = Visit.query.filter_by(patient_id=patient.id).count()
+        recent_visits = Visit.query.filter_by(patient_id=patient.id)\
+                                   .filter(Visit.status.in_(['completed', 'completed_archived']))\
+                                   .order_by(Visit.visit_date.desc()).all()
+        total_visits = Visit.query.filter_by(patient_id=patient.id).count()
 
-    current_visit = Visit.query.filter_by(patient_id=patient.id)\
-                               .filter(Visit.status.in_(['waiting', 'completed']))\
-                               .order_by(Visit.visit_date.desc()).first()
-    weight_kg = current_visit.weight_kg if current_visit and current_visit.weight_kg else None
+        current_visit = Visit.query.filter_by(patient_id=patient.id)\
+                                   .filter(Visit.status.in_(['waiting', 'completed']))\
+                                   .order_by(Visit.visit_date.desc()).first()
+        weight_kg = current_visit.weight_kg if current_visit and current_visit.weight_kg else None
 
-    age = patient.age
-    gender = patient.gender
-    if age <= 5:
-        calc_title = 'Baby'
-    elif age <= 17:
-        calc_title = 'Master' if gender == 'Male' else 'Miss'
-    else:
-        calc_title = 'Adult Male' if gender == 'Male' else 'Adult Female'
+        age = patient.age
+        gender = patient.gender
+        if age <= 5:
+            calc_title = 'Baby'
+        elif age <= 17:
+            calc_title = 'Master' if gender == 'Male' else 'Miss'
+        else:
+            calc_title = 'Adult Male' if gender == 'Male' else 'Adult Female'
 
-    title_colors = {
-        'Baby': '#fd7e14', 'Master': '#0d6efd', 'Miss': '#d63384',
-        'Adult Male': '#198754', 'Adult Female': '#6f42c1'
-    }
-    title_color = title_colors.get(calc_title, '#6c757d')
+        title_colors = {
+            'Baby': '#fd7e14', 'Master': '#0d6efd', 'Miss': '#d63384',
+            'Adult Male': '#198754', 'Adult Female': '#6f42c1'
+        }
+        title_color = title_colors.get(calc_title, '#6c757d')
 
-    tmpl = """
+        tmpl = """
 <div class="patient-details">
   <div class="d-flex align-items-center gap-2 mb-3">
     <span class="fw-bold fs-6">{{ patient.full_name }}</span>
@@ -656,14 +658,17 @@ def get_patient_info_html(reg_number):
   </div>
 </div>
 """
-    html = render_template_string(tmpl,
-        patient=patient,
-        recent_visits=recent_visits,
-        total_visits=total_visits,
-        weight_kg=weight_kg,
-        calc_title=calc_title,
-        title_color=title_color)
-    return html
+        html = render_template_string(tmpl,
+            patient=patient,
+            recent_visits=recent_visits,
+            total_visits=total_visits,
+            weight_kg=weight_kg,
+            calc_title=calc_title,
+            title_color=title_color)
+        return html
+    except Exception as e:
+        logging.exception('get_patient_info_html failed for %s', reg_number)
+        return f'<p class="text-danger">Error loading patient information: {e}</p>', 500
 
 @app.route('/mark_complete', methods=['POST'])
 def mark_complete():
