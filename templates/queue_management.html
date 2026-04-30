@@ -7,6 +7,14 @@
     <h3 class="text-nowrap mb-0">
         <i data-feather="users" class="me-2"></i>Queue Management
     </h3>
+    <div class="d-flex align-items-center gap-2">
+        <label class="mb-0 me-1 text-muted small fw-semibold">Doctor:</label>
+        <select class="form-select form-select-sm" id="consultantFilter" style="width: auto;" onchange="filterByConsultant(this.value)">
+            {% for c in consultants %}
+            <option value="{{ c.id }}" {% if c.id == selected_consultant_id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
 </div>
 
 <div class="row">
@@ -545,38 +553,52 @@ function checkForEmptyQueueAutoSelect() {
     }
 }
 
-// Check for new registrations periodically (every 10 seconds) but only refresh if changes detected
+// Check for queue changes every 5 seconds (new patients OR consultant completions)
 let checkForUpdatesInterval = setInterval(function() {
     checkForNewRegistrations();
-}, 10000);
+}, 5000);
 
-// Function to check for new registrations without full page refresh
+let lastKnownCompletedCount = {{ total_completed }};
+
+// Function to detect queue changes and refresh
 function checkForNewRegistrations() {
-    fetch('/api/queue_status')
+    const consultantFilter = document.getElementById('consultantFilter');
+    const consultantId = consultantFilter ? consultantFilter.value : '';
+    const url = '/api/queue_status' + (consultantId ? '?consultant_id=' + consultantId : '');
+
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             const currentPatientCount = document.querySelectorAll('.patient-item').length;
-            const serverPatientCount = data.waiting_count;
-            
-            // If server has more patients than what we're showing, refresh the page
-            if (serverPatientCount > currentPatientCount) {
-                console.log(`[QUEUE] New registrations detected: ${serverPatientCount} vs ${currentPatientCount}`);
-                
+            const serverWaiting = data.waiting_count;
+            const serverCompleted = data.completed_count;
+
+            // Refresh if waiting count changed (new patient OR consultant completed)
+            // OR if completed count went up (handles consultant-side completions)
+            if (serverWaiting !== currentPatientCount || serverCompleted !== lastKnownCompletedCount) {
+                console.log(`[QUEUE] Queue change detected: waiting ${currentPatientCount}→${serverWaiting}, completed ${lastKnownCompletedCount}→${serverCompleted}`);
+
                 // Save current selection before refresh
                 if (currentPatientRegNumber) {
                     localStorage.setItem('selectedPatientRegNumber', currentPatientRegNumber);
                 }
-                
-                // Store current patient count before refresh
+
                 localStorage.setItem('previousPatientCount', currentPatientCount.toString());
-                
-                showNotification('New patient registered! Refreshing queue...', 'success');
-                setTimeout(() => window.location.reload(), 1000);
+
+                if (serverWaiting > currentPatientCount) {
+                    showNotification('New patient registered! Refreshing queue...', 'success');
+                }
+                setTimeout(() => window.location.reload(), 800);
             }
         })
         .catch(error => {
             console.error('[QUEUE] Error checking for updates:', error);
         });
+}
+
+// Redirect page when doctor filter changes
+function filterByConsultant(consultantId) {
+    window.location.href = '/queue_management?consultant_id=' + consultantId;
 }
 
 // Listen for storage events to detect immediate refresh requests from other tabs
