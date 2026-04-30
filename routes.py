@@ -669,24 +669,31 @@ def get_patient_info_html(reg_number):
 def mark_complete():
     """Mark consultation as complete"""
     reg_number = request.form['registration_number']
+    redirect_url = request.form.get('redirect_url')
     patient = Patient.query.filter_by(registration_number=reg_number).first()
-    
+
     if not patient:
+        if redirect_url:
+            return redirect(redirect_url)
         return jsonify({'success': False, 'error': 'Patient not found'}), 404
-    
+
     # Find the most recent waiting visit for this patient (allow multiple visits per day)
     visit = Visit.query.filter(
         Visit.patient_id == patient.id,
         Visit.status == 'waiting'
     ).order_by(Visit.visit_date.desc()).first()
-    
+
     if not visit:
+        if redirect_url:
+            return redirect(redirect_url)
         return jsonify({'success': False, 'error': 'No active visit found for this patient'}), 400
-    
+
     # Mark consultation as complete
     visit.mark_completed()
     db.session.commit()
-    
+
+    if redirect_url:
+        return redirect(redirect_url)
     return jsonify({
         'success': True,
         'message': f'Consultation completed for {patient.full_name}'

@@ -315,7 +315,10 @@ function showPatientDetails(regNumber) {
     var sel = document.querySelector('[data-reg-number="' + regNumber + '"]');
     if (sel) sel.classList.add('active');
     fetch('/get_patient_info_html/' + regNumber)
-        .then(function(r) { return r.text(); })
+        .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+        })
         .then(function(html) {
             document.getElementById('patientInfo').innerHTML = html;
             document.getElementById('consultantPatientActions').style.display = 'block';
@@ -324,6 +327,7 @@ function showPatientDetails(regNumber) {
         })
         .catch(function() {
             document.getElementById('patientInfo').innerHTML = '<div class="alert alert-warning">Could not load patient information.</div>';
+            document.getElementById('consultantPatientActions').style.display = 'none';
         });
 }
 
@@ -350,24 +354,21 @@ function completeConsultation(regNumber, btnEl) {
         btnEl.disabled = true;
         btnEl.innerHTML = '...';
     }
-    var formData = new FormData();
-    formData.append('registration_number', regNumber);
-    fetch('/mark_complete', { method: 'POST', body: formData })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                // Re-enable the button and show what went wrong
-                if (btnEl) {
-                    btnEl.disabled = false;
-                    btnEl.innerHTML = '<i data-feather="check" style="width:14px;height:14px;"></i> Done';
-                    feather.replace();
-                }
-                alert('Could not complete: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(function() { window.location.reload(); });
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/mark_complete';
+    var rInput = document.createElement('input');
+    rInput.type = 'hidden';
+    rInput.name = 'registration_number';
+    rInput.value = regNumber;
+    form.appendChild(rInput);
+    var uInput = document.createElement('input');
+    uInput.type = 'hidden';
+    uInput.name = 'redirect_url';
+    uInput.value = window.location.href;
+    form.appendChild(uInput);
+    document.body.appendChild(form);
+    form.submit();
 }
 
 // ── Print patient summary ────────────────────────────────────────────────────
