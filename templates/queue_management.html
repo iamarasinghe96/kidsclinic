@@ -43,17 +43,19 @@
                                  onclick="showPatientDetails('{{ visit.patient.registration_number }}')">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1">{{ visit.patient.display_name }}</h6>
-                                    <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center gap-1">
                                         <small class="me-2">{{ visit.visit_date.strftime('%H:%M') }}</small>
-                                        <button type="button" class="btn btn-outline-success btn-sm me-1" 
+                                        <button type="button"
                                                 onclick="openWhatsApp(event, '{{ visit.patient.registration_number }}', '{{ visit.patient.display_name }}', '{{ visit.patient.contact_number if visit.patient.contact_number else '' }}')"
-                                                title="Send WhatsApp message">
-                                            <i data-feather="message-circle" style="width: 14px; height: 14px;"></i>
+                                                title="Send WhatsApp message"
+                                                style="background:#25D366;border:none;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.25);">
+                                            <i data-feather="message-circle" style="width:13px;height:13px;color:white;stroke-width:2.5;"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                        <button type="button"
                                                 onclick="deleteVisit(event, {{ visit.id }}, '{{ visit.patient.display_name }}')"
-                                                title="Remove visit from queue">
-                                            <i data-feather="minus" style="width: 14px; height: 14px;"></i>
+                                                title="Remove visit from queue"
+                                                style="background:#e74c3c;border:none;border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.25);">
+                                            <i data-feather="x" style="width:13px;height:13px;color:white;stroke-width:3;"></i>
                                         </button>
                                     </div>
                                 </div>
