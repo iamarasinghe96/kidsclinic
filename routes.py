@@ -584,12 +584,29 @@ def get_queue_state(consultant_id):
         func.date(Visit.visit_date) == today
     ).order_by(Visit.completed_at.desc()).all()
 
+    _title_colors = {
+        'Baby': '#fd7e14', 'Master': '#0d6efd', 'Miss': '#d63384',
+        'Adult Male': '#198754', 'Adult Female': '#6f42c1'
+    }
+
+    def _badge(p):
+        age, gender = p.age, p.gender
+        if age <= 5:
+            t = 'Baby'
+        elif age <= 17:
+            t = 'Master' if gender == 'Male' else 'Miss'
+        else:
+            t = 'Adult Male' if gender == 'Male' else 'Adult Female'
+        return t, _title_colors.get(t, '#6c757d')
+
     return jsonify({
         'waiting': [{
-            'reg':    v.patient.registration_number,
-            'name':   v.patient.display_name,
-            'time':   v.visit_date.strftime('%H:%M'),
-            'weight': v.weight_kg
+            'reg':        v.patient.registration_number,
+            'name':       v.patient.full_name,
+            'time':       v.visit_date.strftime('%H:%M'),
+            'weight':     v.weight_kg,
+            'calcTitle':  _badge(v.patient)[0],
+            'titleColor': _badge(v.patient)[1],
         } for v in waiting],
         'completed': [{
             'reg':  v.patient.registration_number,
