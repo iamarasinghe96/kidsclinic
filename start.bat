@@ -24,6 +24,18 @@ echo Checking for updates...
 git fetch origin
 git reset --hard origin/main
 echo.
+echo Backing up database...
+set BACKUP_DIR=%USERPROFILE%\OneDrive\KidsClinicBackup
+if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
+for /f "tokens=2 delims==" %%a in ('wmic os get localdatetime /value') do set DT=%%a
+set BACKUP_FILE=%BACKUP_DIR%\clinic_%DT:~0,8%.db
+if not exist "%BACKUP_FILE%" (
+    copy /Y clinic.db "%BACKUP_FILE%" >nul
+    echo Backup saved to OneDrive: clinic_%DT:~0,8%.db
+) else (
+    echo Backup already exists for today.
+)
+echo.
 echo Starting server...
 start "" http://localhost:5000
 python main.py
