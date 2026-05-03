@@ -4,6 +4,19 @@ let lastSelectedPatient = null;
 let previousPatientCount = 0;
 let queueWasEmpty = false;
 
+// Capitalize first letter of every word; neutralizes caps lock for name/address fields
+function titleCaseField(el) {
+    var pos = el.selectionStart;
+    var val = el.value;
+    var transformed = val.replace(/\S+/g, function(w) {
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    });
+    if (val !== transformed) {
+        el.value = transformed;
+        try { el.setSelectionRange(pos, pos); } catch(e) {}
+    }
+}
+
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize search functionality
@@ -30,6 +43,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!input.value) {
             input.max = today;
         }
+    });
+
+    // Auto title-case for name and address fields
+    ['input[name="full_name"]', 'input[name="parent_name"]', 'textarea[name="address"]'].forEach(function(sel) {
+        document.querySelectorAll(sel).forEach(function(el) {
+            el.addEventListener('input', function() { titleCaseField(el); });
+        });
     });
 });
 
