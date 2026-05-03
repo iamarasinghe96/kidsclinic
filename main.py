@@ -3,10 +3,10 @@ from app import app, db
 from models import Patient
 
 def _tc(s):
-    """Capitalize first letter of each word, lowercase the rest."""
+    """Lowercase everything, then capitalize after start/whitespace/punctuation."""
     if not s:
         return s
-    return re.sub(r'\S+', lambda m: m.group(0)[0].upper() + m.group(0)[1:].lower(), s)
+    return re.sub(r'(^|[\s,.\-/\\])([a-z])', lambda m: m.group(1) + m.group(2).upper(), s.lower())
 
 def migrate_title_case():
     """One-time idempotent migration: title-case all patient name/address fields."""
