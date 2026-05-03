@@ -48,7 +48,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Auto title-case for name and address fields
-    ['input[name="full_name"]', 'input[name="parent_name"]', 'textarea[name="address"]'].forEach(function(sel) {
+    // Includes split address sub-fields used by receptionist_simple.html
+    [
+        'input[name="full_name"]', 'input[name="parent_name"]', 'textarea[name="address"]',
+        '#new_addr1', '#new_addr2', '#new_addr_city',
+        '#ret_addr1', '#ret_addr2', '#ret_addr_city'
+    ].forEach(function(sel) {
         document.querySelectorAll(sel).forEach(function(el) {
             el.addEventListener('input', function() { titleCaseField(el); });
         });
