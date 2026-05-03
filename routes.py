@@ -78,6 +78,11 @@ def queue_management():
                          total_completed=total_completed,
                          total_patients_today=total_patients_today)
 
+@app.route('/api/consultants')
+def api_consultants():
+    consultants = Consultant.query.order_by(Consultant.name).all()
+    return jsonify([{'id': c.id, 'name': c.name} for c in consultants])
+
 @app.route('/api/queue_status')
 def api_queue_status():
     """API endpoint to check current queue status without full page load"""
