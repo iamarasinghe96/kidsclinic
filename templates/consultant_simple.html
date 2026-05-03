@@ -180,8 +180,9 @@ function pollQueueState() {
             var newCompletedKey = data.completed.map(function(p) { return p.reg; }).join(',');
 
             if (newWaitingKey !== lastWaitingKey) {
+                var wasEmpty = !lastWaitingKey || lastWaitingKey === '';
                 lastWaitingKey = newWaitingKey;
-                updateWaitingQueue(data.waiting);
+                updateWaitingQueue(data.waiting, wasEmpty);
             }
             if (newCompletedKey !== lastCompletedKey) {
                 lastCompletedKey = newCompletedKey;
@@ -193,7 +194,7 @@ function pollQueueState() {
 setInterval(pollQueueState, 5000);
 
 // ── Update waiting queue (smooth add/remove) ─────────────────────────────────
-function updateWaitingQueue(patients) {
+function updateWaitingQueue(patients, wasEmpty) {
     document.getElementById('waitingBadge').textContent = patients.length;
     var body = document.getElementById('waitingQueueBody');
 
@@ -243,6 +244,12 @@ function updateWaitingQueue(patients) {
     if (currentSelectedPatient) {
         var sel = list.querySelector('[data-reg-number="' + currentSelectedPatient + '"]');
         if (sel) sel.classList.add('active');
+    }
+
+    // Auto-select first patient when queue gets its first entry
+    if (wasEmpty && patients.length > 0 && !currentSelectedPatient) {
+        var firstCard = list.querySelector('.patient-item');
+        if (firstCard) setTimeout(function() { selectPatient(firstCard.dataset.regNumber); }, 50);
     }
 }
 
@@ -601,10 +608,11 @@ function dismissEmergencyMessage() {
 // Check for emergency messages every 2 seconds
 setInterval(checkEmergencyMessages, 2000);
 
-// Initialize feather icons and auto-select next patient after Done redirect
+// Initialize feather icons; auto-select on load
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
 
+    // After Done redirect: restore the next-patient selection
     var autoSelect = localStorage.getItem('consultantAutoSelect');
     if (autoSelect) {
         localStorage.removeItem('consultantAutoSelect');
@@ -612,10 +620,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (card) {
             selectPatient(autoSelect);
         } else {
-            // Stored patient not in queue — fall back to first available
             var first = document.querySelector('#waitingQueueList .patient-item');
             if (first) selectPatient(first.dataset.regNumber);
         }
+    } else if (!currentSelectedPatient) {
+        // Normal load: auto-select first patient if queue already has entries
+        var firstCard = document.querySelector('#waitingQueueList .patient-item');
+        if (firstCard) selectPatient(firstCard.dataset.regNumber);
     }
 });
 </script>
