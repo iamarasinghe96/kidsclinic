@@ -43,7 +43,9 @@
                     <div class="list-group" id="waitingQueueList">
                         {% for visit in waiting_visits %}
                             <div class="list-group-item patient-item d-flex justify-content-between align-items-center"
+                                 style="cursor:pointer;"
                                  data-reg-number="{{ visit.patient.registration_number }}"
+                                 onclick="selectPatient('{{ visit.patient.registration_number }}')"
                                  onmouseenter="showHoverTooltip(event, '{{ visit.patient.registration_number }}')"
                                  onmouseleave="hideHoverTooltip()">
                                 <div style="flex:1;">
@@ -57,7 +59,7 @@
                                     {% endif %}
                                 </div>
                                 <button class="btn btn-success btn-sm ms-3 flex-shrink-0"
-                                        onclick="completeConsultation('{{ visit.patient.registration_number }}', this)">
+                                        onclick="event.stopPropagation(); completeConsultation('{{ visit.patient.registration_number }}', this)">
                                     <i data-feather="check" style="width:14px;height:14px;"></i> Done
                                 </button>
                             </div>
@@ -233,7 +235,9 @@ function updateWaitingQueue(patients) {
 function buildWaitingItem(patient) {
     var div = document.createElement('div');
     div.className = 'list-group-item patient-item d-flex justify-content-between align-items-center';
+    div.style.cursor = 'pointer';
     div.dataset.regNumber = patient.reg;
+    div.addEventListener('click', function() { selectPatient(patient.reg); });
     div.addEventListener('mouseenter', function(e) { showHoverTooltip(e, patient.reg); });
     div.addEventListener('mouseleave', hideHoverTooltip);
     div.innerHTML =
@@ -245,7 +249,7 @@ function buildWaitingItem(patient) {
             '<p class="mb-0">Reg: ' + patient.reg + '</p>' +
             (patient.weight ? '<small class="text-muted">Weight: ' + patient.weight + ' kg</small>' : '') +
         '</div>' +
-        '<button class="btn btn-success btn-sm ms-3 flex-shrink-0" onclick="completeConsultation(\'' + patient.reg + '\', this)">' +
+        '<button class="btn btn-success btn-sm ms-3 flex-shrink-0" onclick="event.stopPropagation(); completeConsultation(\'' + patient.reg + '\', this)">' +
             '<i data-feather="check" style="width:14px;height:14px;"></i> Done' +
         '</button>';
     return div;
@@ -298,15 +302,24 @@ function updateCompletedSection(completed) {
 }
 
 // ── Patient info panel ───────────────────────────────────────────────────────
+var consultantHasSelected = false; // true when doctor manually clicked a card
+
+// Called when the doctor clicks a patient card directly
+function selectPatient(regNumber) {
+    consultantHasSelected = true;
+    showPatientDetails(regNumber);
+}
+
 function clearPatientDisplay() {
     document.getElementById('patientInfo').innerHTML =
         '<div class="text-center text-muted">' +
             '<i data-feather="user"></i>' +
-            '<p>Patient information will appear when receptionist selects a patient</p>' +
+            '<p>Click a patient card to view details</p>' +
         '</div>';
     document.getElementById('consultantPatientActions').style.display = 'none';
     document.querySelectorAll('.patient-item').forEach(function(item) { item.classList.remove('active'); });
     currentSelectedPatient = null;
+    consultantHasSelected = false;
     feather.replace();
 }
 
@@ -331,19 +344,27 @@ function showPatientDetails(regNumber) {
         });
 }
 
-// Poll for receptionist-selected patient every 4 seconds
+// Poll for receptionist-selected patient every 4 seconds.
+// Priority: receptionist selection always wins. If the receptionist has no
+// patient selected, the doctor's own card click is preserved.
 setInterval(function() {
     fetch('/get_selected_patient/' + consultantId)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             var reg = data.registration_number;
-            // Only show if patient is still physically in the waiting queue
             var stillWaiting = reg && document.querySelector('#waitingQueueList [data-reg-number="' + reg + '"]');
-            if (stillWaiting && reg !== currentSelectedPatient) {
-                showPatientDetails(reg);
-            } else if ((!reg || !stillWaiting) && currentSelectedPatient) {
+
+            if (stillWaiting) {
+                // Receptionist has an active selection — always takes priority
+                if (reg !== currentSelectedPatient) {
+                    showPatientDetails(reg);
+                    consultantHasSelected = false;
+                }
+            } else if (!consultantHasSelected && currentSelectedPatient) {
+                // No receptionist selection and doctor hasn't manually picked — clear
                 clearPatientDisplay();
             }
+            // If doctor manually selected and receptionist has no selection, keep it shown
         })
         .catch(function() {});
 }, 4000);
