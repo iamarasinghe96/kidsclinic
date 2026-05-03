@@ -4,12 +4,14 @@ let lastSelectedPatient = null;
 let previousPatientCount = 0;
 let queueWasEmpty = false;
 
-// Capitalize first letter of every word; neutralizes caps lock for name/address fields
+// Capitalize first letter of every word; neutralizes caps lock for name/address fields.
+// Treats start-of-string, whitespace, and punctuation (,./-\) as word boundaries so
+// addresses like "no.39,colombo" correctly produce "No.39,Colombo".
 function titleCaseField(el) {
     var pos = el.selectionStart;
     var val = el.value;
-    var transformed = val.replace(/\S+/g, function(w) {
-        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    var transformed = val.toLowerCase().replace(/(^|[\s,.\-\/\\])([a-z])/g, function(_, sep, ch) {
+        return sep + ch.toUpperCase();
     });
     if (val !== transformed) {
         el.value = transformed;
