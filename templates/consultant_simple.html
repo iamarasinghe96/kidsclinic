@@ -42,6 +42,17 @@
                 {% if waiting_visits %}
                     <div class="list-group" id="waitingQueueList">
                         {% for visit in waiting_visits %}
+                            {% set age = visit.patient.age %}
+                            {% set gender = visit.patient.gender %}
+                            {% if age <= 5 %}
+                                {% set calc_title = 'Baby' %}{% set title_color = '#fd7e14' %}
+                            {% elif age <= 17 %}
+                                {% if gender == 'Male' %}{% set calc_title = 'Master' %}{% set title_color = '#0d6efd' %}
+                                {% else %}{% set calc_title = 'Miss' %}{% set title_color = '#d63384' %}{% endif %}
+                            {% else %}
+                                {% if gender == 'Male' %}{% set calc_title = 'Adult Male' %}{% set title_color = '#198754' %}
+                                {% else %}{% set calc_title = 'Adult Female' %}{% set title_color = '#6f42c1' %}{% endif %}
+                            {% endif %}
                             <div class="list-group-item patient-item d-flex justify-content-between align-items-center"
                                  style="cursor:pointer;"
                                  data-reg-number="{{ visit.patient.registration_number }}"
@@ -49,9 +60,12 @@
                                  onmouseenter="showHoverTooltip(event, '{{ visit.patient.registration_number }}')"
                                  onmouseleave="hideHoverTooltip()">
                                 <div style="flex:1;">
-                                    <div class="d-flex justify-content-between">
-                                        <h6 class="mb-1">{{ visit.patient.display_name }}</h6>
-                                        <small>{{ visit.visit_date.strftime('%H:%M') }}</small>
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <h6 class="mb-1 d-flex align-items-center gap-2">
+                                            {{ visit.patient.full_name }}
+                                            <span style="background:{{ title_color }};color:white;border-radius:10px;padding:1px 8px;font-size:0.75rem;white-space:nowrap;">{{ calc_title }}</span>
+                                        </h6>
+                                        <small class="ms-2 flex-shrink-0">{{ visit.visit_date.strftime('%H:%M') }}</small>
                                     </div>
                                     <p class="mb-0">Reg: {{ visit.patient.registration_number }}</p>
                                     {% if visit.weight_kg %}
@@ -242,9 +256,12 @@ function buildWaitingItem(patient) {
     div.addEventListener('mouseleave', hideHoverTooltip);
     div.innerHTML =
         '<div style="flex:1;">' +
-            '<div class="d-flex justify-content-between">' +
-                '<h6 class="mb-1">' + patient.name + '</h6>' +
-                '<small>' + patient.time + '</small>' +
+            '<div class="d-flex align-items-center justify-content-between">' +
+                '<h6 class="mb-1 d-flex align-items-center gap-2">' +
+                    patient.name +
+                    '<span style="background:' + patient.titleColor + ';color:white;border-radius:10px;padding:1px 8px;font-size:0.75rem;white-space:nowrap;">' + patient.calcTitle + '</span>' +
+                '</h6>' +
+                '<small class="ms-2 flex-shrink-0">' + patient.time + '</small>' +
             '</div>' +
             '<p class="mb-0">Reg: ' + patient.reg + '</p>' +
             (patient.weight ? '<small class="text-muted">Weight: ' + patient.weight + ' kg</small>' : '') +
@@ -371,6 +388,12 @@ setInterval(function() {
 
 // ── Complete consultation ────────────────────────────────────────────────────
 function completeConsultation(regNumber, btnEl) {
+    // Find the next patient card before navigating away
+    var cards = Array.from(document.querySelectorAll('#waitingQueueList .patient-item'));
+    var idx = cards.findIndex(function(c) { return c.dataset.regNumber === regNumber; });
+    var next = cards[idx + 1] || cards[idx - 1];
+    if (next) localStorage.setItem('consultantAutoSelect', next.dataset.regNumber);
+
     if (btnEl) {
         btnEl.disabled = true;
         btnEl.innerHTML = '...';
@@ -578,9 +601,22 @@ function dismissEmergencyMessage() {
 // Check for emergency messages every 2 seconds
 setInterval(checkEmergencyMessages, 2000);
 
-// Initialize feather icons when page loads
+// Initialize feather icons and auto-select next patient after Done redirect
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
+
+    var autoSelect = localStorage.getItem('consultantAutoSelect');
+    if (autoSelect) {
+        localStorage.removeItem('consultantAutoSelect');
+        var card = document.querySelector('#waitingQueueList [data-reg-number="' + autoSelect + '"]');
+        if (card) {
+            selectPatient(autoSelect);
+        } else {
+            // Stored patient not in queue — fall back to first available
+            var first = document.querySelector('#waitingQueueList .patient-item');
+            if (first) selectPatient(first.dataset.regNumber);
+        }
+    }
 });
 </script>
 
