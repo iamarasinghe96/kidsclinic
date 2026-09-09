@@ -60,7 +60,7 @@
                                     </div>
                                 </div>
                                 <p class="mb-1">
-                                    <span class="badge" style="background-color: {{ visit.consultant.color if visit.consultant.color else '#6c757d' }};">
+                                    <span class="badge" style="background-color: {{ visit.consultant_id | doctor_color }};">
                                         {{ visit.consultant.name }}
                                     </span>
                                     <span class="ms-2">{{ visit.patient.registration_number }}</span>
@@ -104,10 +104,10 @@
                         <button type="button" class="btn btn-success" onclick="markComplete()">
                             <i data-feather="check-circle" class="me-2"></i>Mark Consultation Complete
                         </button>
-                        <button type="button" class="btn btn-outline-info" onclick="printPatientSummary()" title="Print patient summary">
+                        <button type="button" class="btn btn-outline-primary" onclick="printPatientSummary()" title="Print patient summary">
                             <i data-feather="printer" class="me-2"></i>Print
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="resetPatientDisplay()" title="Clear patient information">
+                        <button type="button" class="btn btn-outline-dark" onclick="resetPatientDisplay()" title="Clear patient information">
                             <i data-feather="x-circle" class="me-2"></i>Reset
                         </button>
                     </div>
@@ -140,7 +140,7 @@
                                             <small>{{ visit.patient.registration_number }}</small>
                                         </p>
                                         <p class="card-text mb-1">
-                                            <span class="badge bg-success">{{ visit.consultant.name }}</span>
+                                            <span class="badge" style="background-color: {{ visit.consultant_id | doctor_color }};">{{ visit.consultant.name }}</span>
                                         </p>
                                         <small class="text-success">{{ visit.completed_at.strftime('%H:%M') }}</small>
                                     </div>
