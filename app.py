@@ -39,8 +39,29 @@ def format_datetime(dt):
     """Format datetime as DD/MM - H:MM AM/PM"""
     return dt.strftime('%d/%m - %I:%M %p')
 
-# Add filter to Jinja2 environment
+# Distinct badge colours per consultant, assigned deterministically by id so a
+# doctor always keeps the same colour. Greens are deliberately excluded — these
+# badges sit on the patient card, which turns green while selected.
+DOCTOR_COLORS = [
+    '#4F46E5',  # indigo
+    '#DB2777',  # pink
+    '#D97706',  # amber
+    '#7C3AED',  # violet
+    '#0891B2',  # cyan
+    '#DC2626',  # red
+    '#EA580C',  # orange
+    '#C026D3',  # fuchsia
+]
+
+def doctor_color(consultant_id):
+    """Return a stable badge colour for a consultant."""
+    if not consultant_id:
+        return DOCTOR_COLORS[0]
+    return DOCTOR_COLORS[(consultant_id - 1) % len(DOCTOR_COLORS)]
+
+# Add filters to Jinja2 environment
 app.jinja_env.filters['datetime'] = format_datetime
+app.jinja_env.filters['doctor_color'] = doctor_color
 
 # Unique ID stamped into every page so browsers detect a server restart
 # and hard-reload instead of serving cached JavaScript
