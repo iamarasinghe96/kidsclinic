@@ -638,6 +638,13 @@ window.addEventListener('storage', function(e) {
     border-left: 4px solid #4169E1;
 }
 
+/* On the selected (green) card the green WhatsApp button blends in — give the
+   card's action buttons a white outline so their edges stay visible.
+   !important is needed because the buttons set border:none inline. */
+.patient-item.active button {
+    border: 2px solid #fff !important;
+}
+
 .info-row {
     border-bottom: 1px solid #eee;
     padding-bottom: 5px;
