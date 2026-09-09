@@ -546,15 +546,6 @@ def get_patient_details(reg_number):
 
         current_weight = current_visit.weight_kg if current_visit and current_visit.weight_kg else None
 
-        age = patient.age
-        gender = patient.gender
-        if age <= 5:
-            calc_title = 'Baby'
-        elif age <= 17:
-            calc_title = 'Master' if gender == 'Male' else 'Miss'
-        else:
-            calc_title = 'Adult Male' if gender == 'Male' else 'Adult Female'
-
         return jsonify({
             'registration_number': patient.registration_number,
             'full_name': patient.full_name,
@@ -564,7 +555,7 @@ def get_patient_details(reg_number):
             'date_of_birth': patient.date_of_birth.strftime('%d/%m/%Y'),
             'email': patient.email,
             'total_visits': total_visits,
-            'calc_title': calc_title,
+            'calc_title': patient.category,
             'weight_kg': current_weight,
             'consultant_id': patient.consultant_id,
             'recent_visits': visit_data
@@ -589,29 +580,14 @@ def get_queue_state(consultant_id):
         func.date(Visit.visit_date) == today
     ).order_by(Visit.completed_at.desc()).all()
 
-    _title_colors = {
-        'Baby': '#fd7e14', 'Master': '#0d6efd', 'Miss': '#d63384',
-        'Adult Male': '#198754', 'Adult Female': '#6f42c1'
-    }
-
-    def _badge(p):
-        age, gender = p.age, p.gender
-        if age <= 5:
-            t = 'Baby'
-        elif age <= 17:
-            t = 'Master' if gender == 'Male' else 'Miss'
-        else:
-            t = 'Adult Male' if gender == 'Male' else 'Adult Female'
-        return t, _title_colors.get(t, '#6c757d')
-
     return jsonify({
         'waiting': [{
             'reg':        v.patient.registration_number,
             'name':       v.patient.full_name,
             'time':       v.visit_date.strftime('%H:%M'),
             'weight':     v.weight_kg,
-            'calcTitle':  _badge(v.patient)[0],
-            'titleColor': _badge(v.patient)[1],
+            'calcTitle':  v.patient.category,
+            'titleColor': v.patient.category_color,
         } for v in waiting],
         'completed': [{
             'reg':  v.patient.registration_number,
@@ -639,20 +615,8 @@ def get_patient_info_html(reg_number):
                                    .order_by(Visit.visit_date.desc()).first()
         weight_kg = current_visit.weight_kg if current_visit and current_visit.weight_kg else None
 
-        age = patient.age
-        gender = patient.gender
-        if age <= 5:
-            calc_title = 'Baby'
-        elif age <= 17:
-            calc_title = 'Master' if gender == 'Male' else 'Miss'
-        else:
-            calc_title = 'Adult Male' if gender == 'Male' else 'Adult Female'
-
-        title_colors = {
-            'Baby': '#fd7e14', 'Master': '#0d6efd', 'Miss': '#d63384',
-            'Adult Male': '#198754', 'Adult Female': '#6f42c1'
-        }
-        title_color = title_colors.get(calc_title, '#6c757d')
+        calc_title = patient.category
+        title_color = patient.category_color
 
         tmpl = """
 <div class="patient-details">
