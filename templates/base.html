@@ -42,8 +42,25 @@
         .navbar-brand {
             font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
             font-weight: 700;
-            font-size: 1.3rem;
+            font-size: 1.15rem;
             letter-spacing: 0.01em;
+            white-space: nowrap;
+        }
+
+        /* The serif brand is wider than the old sans-serif, which was pushing
+           the nav links into wrapping mid-phrase ("Patient / Registration").
+           Keep each link on one line and tighten the gaps to buy back room. */
+        .navbar-nav .nav-link {
+            white-space: nowrap;
+            padding-left: 0.6rem;
+            padding-right: 0.6rem;
+        }
+
+        /* Between the lg breakpoint (where the nav collapses to a burger) and
+           1200px the row is tight, so shrink the brand rather than let the
+           links wrap again. */
+        @media (max-width: 1199.98px) {
+            .navbar-brand { font-size: 0.95rem; }
         }
 
         .patient-details .info-row {
