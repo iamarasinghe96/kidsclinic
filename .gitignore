@@ -4,3 +4,8 @@ __pycache__/
 instance/
 *.db-journal
 .env
+
+# Patient database — must never be committed. It is live clinical data,
+# and tracking it makes "git reset --hard" overwrite the real database.
+clinic.db
+backups/
