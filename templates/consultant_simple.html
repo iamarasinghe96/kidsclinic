@@ -642,6 +642,13 @@ document.addEventListener('DOMContentLoaded', function() {
     border-left: 4px solid #4169E1;
 }
 
+/* On the selected (green) card the green Done button blends in — give it a
+   white outline so its edges stay visible. */
+.patient-item.active .btn-success {
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
 .info-row {
     border-bottom: 1px solid #eee;
     padding-bottom: 5px;
