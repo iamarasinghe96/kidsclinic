@@ -42,7 +42,7 @@
 }
 
 /* --- Navbar colour overrides --- */
-[data-theme="default"]      .navbar { background-color: #8EC641 !important; }
+[data-theme="default"]      .navbar { background-color: #4169E1 !important; }
 [data-theme="poya"]         .navbar { background-color: #1a2a5a !important; }
 [data-theme="vesak"]        .navbar { background-color: #5c2d8a !important; }
 [data-theme="christmas"]    .navbar { background-color: #165b33 !important; }
@@ -364,7 +364,7 @@
 
 /* =====================================================
    btn-primary: override inline style on Register New Patient button
-   (receptionist_simple.html uses btn-primary + inline #8EC641 style)
+   (receptionist_simple.html uses btn-primary + inline #4169E1 style)
    ===================================================== */
 [data-theme="poya"]         .btn-primary         { background-color: #1a2a5a !important; border-color: #1a2a5a !important; color: #fff !important; }
 [data-theme="poya"]         .btn-primary:hover   { background-color: #0f1a3d !important; border-color: #0f1a3d !important; }
