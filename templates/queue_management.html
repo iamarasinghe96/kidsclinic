@@ -42,7 +42,10 @@
                                  data-consultant-id="{{ visit.consultant_id }}"
                                  onclick="showPatientDetails('{{ visit.patient.registration_number }}')">
                                 <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">{{ visit.patient.display_name }}</h6>
+                                    <h6 class="mb-1 d-flex align-items-center gap-2">
+                                        {{ visit.patient.full_name }}
+                                        <span style="background:{{ visit.patient.category_color }};color:white;border-radius:10px;padding:1px 8px;font-size:0.75rem;white-space:nowrap;">{{ visit.patient.category }}</span>
+                                    </h6>
                                     <div class="d-flex align-items-center gap-1">
                                         <small class="me-2">{{ visit.visit_date.strftime('%H:%M') }}</small>
                                         <button type="button"

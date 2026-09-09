@@ -6,6 +6,15 @@ import pytz
 # Sri Lankan timezone
 SL_TZ = pytz.timezone('Asia/Colombo')
 
+# Badge colours for the age/gender categories used across the queue views.
+CATEGORY_COLORS = {
+    'Baby': '#fd7e14',
+    'Master': '#0d6efd',
+    'Miss': '#d63384',
+    'Adult Male': '#198754',
+    'Adult Female': '#6f42c1',
+}
+
 class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     registration_number = db.Column(db.String(20), unique=True, nullable=False)
@@ -40,7 +49,27 @@ class Patient(db.Model):
         today = datetime.now().date()
         born = self.date_of_birth
         return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
-    
+
+    @property
+    def category(self):
+        """Age/gender category shown as a badge in the queues.
+
+        Derived from date of birth every time it's read, so a patient who
+        returns years later is categorised by their age today - the stored
+        `title` field is not consulted.
+        """
+        age = self.age
+        if age <= 5:
+            return 'Baby'
+        if age <= 17:
+            return 'Master' if self.gender == 'Male' else 'Miss'
+        return 'Adult Male' if self.gender == 'Male' else 'Adult Female'
+
+    @property
+    def category_color(self):
+        """Badge colour for this patient's category."""
+        return CATEGORY_COLORS.get(self.category, '#6c757d')
+
     def get_recent_visits(self, limit=5):
         """Get the most recent visits for this patient"""
         return Visit.query.filter_by(patient_id=self.id)\
