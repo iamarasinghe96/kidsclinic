@@ -47,7 +47,7 @@
                             <div class="list-group-item list-group-item-action patient-item"
                                  data-reg-number="{{ visit.patient.registration_number }}"
                                  data-consultant-id="{{ visit.consultant_id }}"
-                                 style="border-left: 5px solid {{ visit.consultant_id | doctor_color }}; background-color: {{ visit.consultant_id | doctor_color }}33;"
+                                 style="border-left: 5px solid {{ visit.consultant_id | doctor_color }}; background-color: {{ visit.consultant_id | doctor_color }}33; --doctor-color: {{ visit.consultant_id | doctor_color }};"
                                  onclick="showPatientDetails('{{ visit.patient.registration_number }}')">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1 d-flex align-items-center gap-2">
@@ -648,12 +648,24 @@ window.addEventListener('storage', function(e) {
 /* Selection is a heavy outline, not a fill, so the card keeps the doctor
    colour applied inline. outline (rather than border) is drawn outside the
    box model, so the selected card doesn't grow and nudge its neighbours.
-   No background is set here - that would override the inline doctor tint. */
+   No background is set here - that would override the inline doctor tint.
+   The outline colour comes from --doctor-color (set inline per card, see
+   above) so a selected card is outlined in ITS OWN doctor's colour, not a
+   flat black - e.g. Dr. Shiranthi's card gets a pink outline when selected.
+   #212529 is only a fallback for the unlikely case the variable is unset.
+
+   color is set explicitly here because Bootstrap's own .list-group-item.active
+   rule sets color:#fff, and with equal selector specificity the rule that
+   actually declares a value for a property wins regardless of source -
+   our earlier version never declared `color` at all, so Bootstrap's white
+   text applied by default and became unreadable against the light doctor
+   tint. */
 .patient-item.active {
-    outline: 3px solid #212529;
+    outline: 3px solid var(--doctor-color, #212529);
     outline-offset: -3px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
     font-weight: 600;
+    color: #212529;
 }
 
 .info-row {

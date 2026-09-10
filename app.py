@@ -40,17 +40,26 @@ def format_datetime(dt):
     return dt.strftime('%d/%m - %I:%M %p')
 
 # Distinct badge colours per consultant, assigned deterministically by id so a
-# doctor always keeps the same colour. Greens are deliberately excluded — these
-# badges sit on the patient card, which turns green while selected.
+# doctor always keeps the same colour. Greens (hue 65-165) are excluded — these
+# badges sit on the patient card, which turns green while selected in the
+# consultant view, and green is also the "Completed Today" colour.
+#
+# Hues are spread 32.5 degrees apart across the remaining 260-degree range so
+# that no two adjacent doctors (by id) land on visually similar colours -
+# the original indigo/violet pair was only 19 degrees apart and became
+# near-indistinguishable once tinted for the card background. Lightness is
+# tuned per-hue (not a single fixed value) because hues like teal/blue/amber
+# read as lighter than indigo/red/pink at the same lightness, and white badge
+# text needs >=4.5:1 contrast on every one of them.
 DOCTOR_COLORS = [
-    '#4F46E5',  # indigo
-    '#DB2777',  # pink
-    '#D97706',  # amber
-    '#7C3AED',  # violet
-    '#0891B2',  # cyan
-    '#DC2626',  # red
-    '#EA580C',  # orange
-    '#C026D3',  # fuchsia
+    '#1B8369',  # teal
+    '#227FA5',  # blue
+    '#2B47D4',  # indigo
+    '#6A2BD4',  # violet
+    '#C22ACF',  # magenta
+    '#D42B87',  # pink
+    '#D42B2B',  # red
+    '#A56922',  # amber
 ]
 
 def doctor_color(consultant_id):
