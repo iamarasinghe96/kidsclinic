@@ -6,6 +6,37 @@ from models import Patient, Consultant, Visit
 import logging
 import io
 import csv
+import os
+import shutil
+
+# --- Weekly Google Drive backup reminder -----------------------------------
+# A second, manual backup path alongside the automatic daily OneDrive copy in
+# start.bat. Once a week is enough for a second offsite copy without making
+# it a chore, so it only prompts the receptionist, not every user.
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+WEEKLY_BACKUP_DRIVE_URL = 'https://drive.google.com/drive/folders/1Bw-cqAi_exOtptUCdAXTa-HUhI6jIXIc?usp=sharing'
+_MONDAY_POPUP_MARKER = os.path.join(_APP_DIR, '.monday_backup_popup_marker')
+_WEEKLY_BACKUP_DIR = os.path.join(_APP_DIR, 'weekly_backup_upload')
+
+def _should_show_monday_backup_popup():
+    """True only the first time the receptionist page loads on a Monday.
+
+    A marker file records the date it was last shown, so it will not
+    reappear later the same Monday - including after closing and reopening
+    the app - and only fires again the following Monday.
+    """
+    if date.today().weekday() != 0:  # Monday
+        return False
+    today_str = date.today().isoformat()
+    try:
+        with open(_MONDAY_POPUP_MARKER) as f:
+            if f.read().strip() == today_str:
+                return False
+    except FileNotFoundError:
+        pass
+    with open(_MONDAY_POPUP_MARKER, 'w') as f:
+        f.write(today_str)
+    return True
 
 def generate_registration_number():
     """Generate a unique registration number"""
@@ -118,7 +149,39 @@ def api_queue_status():
 @app.route('/receptionist')
 def receptionist():
     consultants = Consultant.query.all()
-    return render_template('receptionist_simple.html', consultants=consultants)
+    return render_template('receptionist_simple.html', consultants=consultants,
+                            show_monday_backup_popup=_should_show_monday_backup_popup(),
+                            weekly_backup_drive_url=WEEKLY_BACKUP_DRIVE_URL)
+
+@app.route('/prepare_weekly_backup', methods=['POST'])
+def prepare_weekly_backup():
+    """Copy the live database into a folder holding only that one file, then
+    open the folder so it can be dragged into the Google Drive tab.
+
+    The folder is emptied first so there is always exactly one file in it -
+    this week's - rather than an accumulating pile to pick through.
+    """
+    try:
+        db_path = os.path.join(_APP_DIR, 'clinic.db')
+        if not os.path.exists(db_path):
+            return jsonify({'success': False, 'error': 'clinic.db not found'}), 404
+
+        os.makedirs(_WEEKLY_BACKUP_DIR, exist_ok=True)
+        for name in os.listdir(_WEEKLY_BACKUP_DIR):
+            os.remove(os.path.join(_WEEKLY_BACKUP_DIR, name))
+
+        dest_name = f'clinic_backup_{date.today().isoformat()}.db'
+        shutil.copy2(db_path, os.path.join(_WEEKLY_BACKUP_DIR, dest_name))
+
+        try:
+            os.startfile(_WEEKLY_BACKUP_DIR)  # Windows only
+        except AttributeError:
+            app.logger.info('os.startfile unavailable on this platform - folder not opened automatically')
+
+        return jsonify({'success': True, 'filename': dest_name})
+    except Exception as e:
+        app.logger.error(f'Error preparing weekly backup: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Consultant route moved to avoid conflict
 

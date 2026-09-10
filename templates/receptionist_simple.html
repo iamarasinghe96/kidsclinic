@@ -522,4 +522,65 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 
+{% if show_monday_backup_popup %}
+<div class="modal fade" id="mondayBackupModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color:#4169E1;color:white;">
+                <h5 class="modal-title"><i data-feather="cloud"></i> Weekly Database Backup</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>It's Monday — time for the weekly backup of the clinic database to Google Drive.</p>
+                <p class="text-muted small mb-0">
+                    <strong>Backup Now</strong> opens the Google Drive folder in your browser and a folder
+                    on this computer with today's backup file already in it. Drag that one file into the
+                    Drive folder to upload it.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Remind Me Later</button>
+                <button type="button" class="btn btn-primary" id="mondayBackupBtn">
+                    <i data-feather="upload-cloud" class="me-1"></i>Backup Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modalEl = document.getElementById('mondayBackupModal');
+    if (!modalEl) return;
+    var modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    document.getElementById('mondayBackupBtn').addEventListener('click', function() {
+        var btn = this;
+        btn.disabled = true;
+        btn.innerHTML = 'Preparing…';
+        fetch('/prepare_weekly_backup', { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    window.open('{{ weekly_backup_drive_url }}', '_blank');
+                    modal.hide();
+                } else {
+                    alert('Could not prepare backup: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-feather="upload-cloud" class="me-1"></i>Backup Now';
+                    feather.replace();
+                }
+            })
+            .catch(function() {
+                alert('Error preparing backup. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<i data-feather="upload-cloud" class="me-1"></i>Backup Now';
+                feather.replace();
+            });
+    });
+});
+</script>
+{% endif %}
+
 {% endblock %}

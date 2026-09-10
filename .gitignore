@@ -9,3 +9,8 @@ instance/
 # and tracking it makes "git reset --hard" overwrite the real database.
 clinic.db
 backups/
+
+# Weekly Google Drive backup: per-install marker + the single-file staging
+# folder the receptionist drags into Drive. Neither should ever be committed.
+.monday_backup_popup_marker
+weekly_backup_upload/
