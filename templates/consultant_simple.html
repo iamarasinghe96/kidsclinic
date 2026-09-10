@@ -625,8 +625,28 @@ document.addEventListener('DOMContentLoaded', function() {
     transition: all 0.2s ease;
 }
 
-/* Selection is the outline set in base.html, so no fill is applied here and
-   the Done button no longer needs a white edge to stay visible. */
+/* Consultant view keeps the original look: selected card filled green,
+   unselected cards plain. (Queue management differs - it outlines instead,
+   to preserve its per-doctor card colours.) */
+.patient-item.active {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+}
+
+.patient-item.active h6,
+.patient-item.active p,
+.patient-item.active small {
+    color: white;
+}
+
+/* On the green selected card the green Done button blends in - give it a
+   white outline so its edges stay visible. */
+.patient-item.active .btn-success {
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
 
 .info-row {
     border-bottom: 1px solid #eee;
