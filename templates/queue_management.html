@@ -10,6 +10,7 @@
     <div class="d-flex align-items-center gap-2">
         <label class="mb-0 me-1 text-muted small fw-semibold">Doctor:</label>
         <select class="form-select form-select-sm" id="consultantFilter" style="width: auto;" onchange="filterByConsultant(this.value)">
+            <option value="0" {% if not selected_consultant_id %}selected{% endif %}>All Doctors</option>
             {% for c in consultants %}
             <option value="{{ c.id }}" {% if c.id == selected_consultant_id %}selected{% endif %}>{{ c.name }}</option>
             {% endfor %}
@@ -37,9 +38,14 @@
                 {% if waiting_visits %}
                     <div class="list-group">
                         {% for visit in waiting_visits %}
-                            <div class="list-group-item list-group-item-action patient-item" 
+                            {# Tint each card with its doctor's colour so a mixed
+                               "All Doctors" list is readable at a glance. The 8-digit
+                               hex adds ~8% alpha for a subtle wash; the selected-card
+                               green in base.html uses !important so it still wins. #}
+                            <div class="list-group-item list-group-item-action patient-item"
                                  data-reg-number="{{ visit.patient.registration_number }}"
                                  data-consultant-id="{{ visit.consultant_id }}"
+                                 style="border-left: 5px solid {{ visit.consultant_id | doctor_color }}; background-color: {{ visit.consultant_id | doctor_color }}14;"
                                  onclick="showPatientDetails('{{ visit.patient.registration_number }}')">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1 d-flex align-items-center gap-2">
@@ -136,7 +142,7 @@
                     <div class="row">
                         {% for visit in completed_visits %}
                             <div class="col-md-3 mb-2">
-                                <div class="card border-success">
+                                <div class="card" style="border-left: 5px solid {{ visit.consultant_id | doctor_color }};">
                                     <div class="card-body p-2">
                                         <h6 class="card-title mb-1">{{ visit.patient.display_name }}</h6>
                                         <p class="card-text mb-1">

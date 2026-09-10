@@ -37,7 +37,10 @@ def queue_management():
     # Get all consultants for dropdown
     consultants = Consultant.query.all()
 
-    # Selected consultant filter — default to Dr. Ajith if no param given
+    # Selected consultant filter. consultant_id=0 means "All Doctors" - it is
+    # falsy, so the filter below is skipped and every consultant's patients are
+    # listed, colour-coded by doctor in the template. Omitting the parameter
+    # entirely still defaults to Dr. Ajith.
     selected_consultant_id = request.args.get('consultant_id', type=int)
     if selected_consultant_id is None:
         ajith = Consultant.query.filter(Consultant.name.ilike('%ajith%')).first()
@@ -1302,7 +1305,28 @@ def update_patient():
             patient.email = request.form.get('email', '').strip()
         if request.form.get('address'):
             patient.address = request.form.get('address').strip()
-        
+
+        # Gender and date of birth are correctable after registration. Only
+        # Patient columns change here - Visit rows are untouched, so the
+        # patient's visit history is preserved. Note both feed the age/gender
+        # category badge, which is computed live, so past visits will show the
+        # corrected category too.
+        gender = request.form.get('gender', '').strip()
+        if gender in ('Male', 'Female'):
+            patient.gender = gender
+
+        dob_raw = request.form.get('date_of_birth', '').strip()
+        if dob_raw:
+            try:
+                new_dob = datetime.strptime(dob_raw, '%d/%m/%Y').date()
+            except ValueError:
+                return jsonify({'success': False,
+                                'error': 'Date of birth must be DD/MM/YYYY'}), 400
+            if new_dob > date.today():
+                return jsonify({'success': False,
+                                'error': 'Date of birth cannot be in the future'}), 400
+            patient.date_of_birth = new_dob
+
         db.session.commit()
         app.logger.info(f"Patient updated: {patient.registration_number} - {patient.display_name}")
         
