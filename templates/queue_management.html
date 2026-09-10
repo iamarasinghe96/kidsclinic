@@ -144,7 +144,9 @@
                     <div class="row">
                         {% for visit in completed_visits %}
                             <div class="col-md-3 mb-2">
-                                <div class="card" style="border-left: 5px solid {{ visit.consultant_id | doctor_color }};">
+                                {# Same doctor colour-coding as the waiting list, so an
+                                   "All Doctors" view is readable in both panels. #}
+                                <div class="card" style="border-left: 5px solid {{ visit.consultant_id | doctor_color }}; background-color: {{ visit.consultant_id | doctor_color }}33;">
                                     <div class="card-body p-2">
                                         <h6 class="card-title mb-1">{{ visit.patient.display_name }}</h6>
                                         <p class="card-text mb-1">
@@ -643,8 +645,16 @@ window.addEventListener('storage', function(e) {
     border-color: #4169E1;
 }
 
-/* No background or border overrides here: the card must keep the doctor
-   colour it was given inline. Selection is the outline set in base.html. */
+/* Selection is a heavy outline, not a fill, so the card keeps the doctor
+   colour applied inline. outline (rather than border) is drawn outside the
+   box model, so the selected card doesn't grow and nudge its neighbours.
+   No background is set here - that would override the inline doctor tint. */
+.patient-item.active {
+    outline: 3px solid #212529;
+    outline-offset: -3px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+    font-weight: 600;
+}
 
 .info-row {
     border-bottom: 1px solid #eee;
