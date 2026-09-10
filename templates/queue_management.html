@@ -38,14 +38,16 @@
                 {% if waiting_visits %}
                     <div class="list-group">
                         {% for visit in waiting_visits %}
-                            {# Tint each card with its doctor's colour so a mixed
-                               "All Doctors" list is readable at a glance. The 8-digit
-                               hex adds ~8% alpha for a subtle wash; the selected-card
-                               green in base.html uses !important so it still wins. #}
+                            {# Tint each card with its doctor's colour so patients are
+                               identifiable by doctor at a glance. The 8-digit hex adds
+                               20% alpha; every doctor colour keeps body text above 11:1
+                               contrast at that strength. The tint stays visible while
+                               the card is selected - selection is an outline, not a
+                               fill (see base.html). #}
                             <div class="list-group-item list-group-item-action patient-item"
                                  data-reg-number="{{ visit.patient.registration_number }}"
                                  data-consultant-id="{{ visit.consultant_id }}"
-                                 style="border-left: 5px solid {{ visit.consultant_id | doctor_color }}; background-color: {{ visit.consultant_id | doctor_color }}14;"
+                                 style="border-left: 5px solid {{ visit.consultant_id | doctor_color }}; background-color: {{ visit.consultant_id | doctor_color }}33;"
                                  onclick="showPatientDetails('{{ visit.patient.registration_number }}')">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1 d-flex align-items-center gap-2">
@@ -641,18 +643,8 @@ window.addEventListener('storage', function(e) {
     border-color: #4169E1;
 }
 
-.patient-item.active {
-    background-color: #e8f5e8;
-    border-color: #4169E1;
-    border-left: 4px solid #4169E1;
-}
-
-/* On the selected (green) card the green WhatsApp button blends in — give the
-   card's action buttons a white outline so their edges stay visible.
-   !important is needed because the buttons set border:none inline. */
-.patient-item.active button {
-    border: 2px solid #fff !important;
-}
+/* No background or border overrides here: the card must keep the doctor
+   colour it was given inline. Selection is the outline set in base.html. */
 
 .info-row {
     border-bottom: 1px solid #eee;
