@@ -25,6 +25,12 @@ def _should_show_monday_backup_popup():
     reappear later the same Monday - including after closing and reopening
     the app - and only fires again the following Monday.
     """
+    if os.environ.get('MONDAY_BACKUP_TEST', '').strip():
+        # test_mode.bat sets this. Always show, every load, and never touch
+        # the marker file - so testing can't disturb the real weekly cadence
+        # or make the popup skip a genuine Monday later.
+        return True
+
     if date.today().weekday() != 0:  # Monday
         return False
     today_str = date.today().isoformat()
